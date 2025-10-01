@@ -41,6 +41,7 @@ class ScanOrchestrator:
         # Create scan run record
         scan_run = ScanRun(
             id=run_id or ScanRun().id,
+            user_id=user_id,
             filter_scope=filter_scope,
             min_price=min_price,
             max_price=max_price,
