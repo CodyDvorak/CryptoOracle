@@ -499,126 +499,31 @@ backend:
         comment: "PASS - Scheduler running correctly. Backend logs show 'Scheduler started' and 'Scheduler configured: 12h intervals starting at 07:00 America/Denver, next run: 2025-10-02 07:00:00-06:00'. Email notifications working (sent to codydvorakwork@gmail.com during test scan)."
 
 agent_communication:
-  - agent: "testing"
+  - agent: "main"
     message: |
-      AUTO-REFRESH AND SCHEDULE FUNCTIONALITY TESTING COMPLETE:
+      FIXES IMPLEMENTED FOR TWO CRITICAL BUGS:
       
-      ✅ AUTO-REFRESH AFTER SCAN - WORKING PERFECTLY
-      - Scan status endpoint (/api/scan/status) returns proper is_running and recent_run fields
-      - Triggered test scan with scope=all, min_price=10, max_price=1000
-      - Polling every 5 seconds detected scan completion after 11 polls (~55 seconds)
-      - Fresh recommendations endpoint returned matching run_id (999d83ec-50b1-40d6-9d59-13cc90d036c2)
-      - Frontend auto-refresh flow would work correctly when is_running changes to false
+      🔧 FIX #1: AUTO-REFRESH BUG
+      - ISSUE: fetchRecommendations() in App.js wasn't passing authentication headers
+      - IMPACT: Logged-in users couldn't see their scan results auto-refresh because API couldn't identify the user
+      - FIX: Added auth headers to fetchRecommendations() API call (line 84-85)
+      - FIX: Improved error handling to not clear recommendations on 404 errors
       
-      ✅ SCHEDULE CONFIGURATION ENDPOINTS - 500 ERRORS FIXED
-      - GET /api/config/integrations: Returns 200 with config fields (email_enabled, smtp_host, etc.)
-      - GET /api/config/schedule: Returns 200 with schedule settings (schedule_enabled, interval, etc.)
-      - GET /api/config/schedules/all: Returns 200 with schedules array (1 schedule found)
-      - All ObjectId serialization issues resolved - no 500 errors detected
+      🔧 FIX #2: EMAIL NOTIFICATION ENHANCEMENT
+      - ISSUE: User reported emails not being sent
+      - FINDINGS: Email logic exists in scan_orchestrator.py (lines 157-177)
+      - FIX: Added comprehensive logging to track email flow:
+        * User lookup logging
+        * Email config validation logging
+        * SMTP setup logging
+        * Send result logging
+        * Exception details with stack traces
+      - SMTP credentials confirmed in .env: codydvorakwork@gmail.com
       
-      ✅ SCHEDULER STATUS - RUNNING CORRECTLY
-      - Backend logs show "Scheduler started" and configuration messages
-      - Configured for 12h intervals starting at 07:00 America/Denver
-      - Next scheduled run: 2025-10-02 07:00:00-06:00
-      - Email notifications working (test scan sent email to codydvorakwork@gmail.com)
-      
-      ✅ EMAIL SETUP REQUIREMENTS DOCUMENTED
-      - Users need to configure SMTP via PUT /api/config/integrations
-      - Required fields: email_enabled, smtp_host, smtp_port, smtp_user, smtp_pass, email_to
-      - Test endpoint available: POST /api/config/integrations/test-email
-      - Schedule configuration via PUT /api/config/schedule
-      - Gmail users should use App Passwords instead of regular passwords
-      
-      SYSTEM STATUS: ALL REQUESTED FUNCTIONALITY WORKING
-      - Auto-refresh mechanism operational for frontend polling
-      - Configuration endpoints fixed and returning proper responses
-      - Scheduler service running with proper email notifications
-      - Complete email setup documentation provided for users
-  
-  - agent: "testing"
-    message: |
-      AUTHENTICATION SYSTEM TESTING COMPLETE:
-      
-      ✅ USER REGISTRATION - WORKING PERFECTLY
-      - POST /api/auth/register endpoint functioning correctly
-      - Creates users with proper validation (username, email, password)
-      - Returns access_token and complete user object
-      - All required fields present: id, username, email, created_at, is_active
-      - Fixed bcrypt password hashing issue that was causing 500 errors
-      
-      ✅ USER LOGIN - WORKING PERFECTLY  
-      - POST /api/auth/login endpoint functioning correctly
-      - Validates username/password credentials properly
-      - Returns access_token and user object on successful login
-      - Correctly rejects invalid credentials with 401 status
-      - Proper error messages returned for authentication failures
-      
-      ✅ PROTECTED ENDPOINTS - WORKING PERFECTLY
-      - GET /api/auth/me endpoint functioning correctly
-      - Validates JWT Bearer tokens properly
-      - Returns complete user information when authenticated
-      - Proper authorization header handling implemented
-      - JWT token validation working as expected
-      
-      ✅ INVALID LOGIN HANDLING - WORKING PERFECTLY
-      - System correctly rejects invalid credentials
-      - Returns proper 401 status code for authentication failures
-      - Error messages are appropriate and informative
-      - No security vulnerabilities in error handling
-      
-      ✅ DATABASE PERSISTENCE - WORKING PERFECTLY
-      - Users properly stored in MongoDB database
-      - User data persists between registration and login
-      - Database queries working correctly for user lookup
-      - No data integrity issues detected
-      
-      AUTHENTICATION TEST RESULTS: 100% SUCCESS RATE (5/5 TESTS PASSED)
-      - All authentication endpoints working correctly
-      - JWT token system fully operational
-      - Database integration working properly
-      - Security measures properly implemented
-      - Ready for production use
-  
-  - agent: "testing"
-    message: |
-      COMPREHENSIVE AUTO-REFRESH FUNCTIONALITY TESTING COMPLETE:
-      
-      ✅ SCAN-SPECIFIC POLLING (5s intervals) - WORKING PERFECTLY
-      - Started scan with scope=all, min_price=50, max_price=500
-      - Polling detected completion in 33 seconds after 4 polls
-      - Run ID: c8586805-55c3-4ea3-a87d-5648f5eeb673
-      - Scan status endpoint correctly returns is_running and recent_run fields
-      
-      ✅ BACKEND COMPLETION SIGNALS - VERIFIED
-      - Backend logs show clear completion messages: "Scan run c8586805-55c3-4ea3-a87d-5648f5eeb673 completed"
-      - Recent run status correctly shows: status="completed", proper run_id
-      - All required fields present in scan status response
-      
-      ✅ RECOMMENDATIONS AUTO-UPDATE - WORKING
-      - Fresh recommendations returned with matching run_id
-      - 2/3 categories populated (confidence=5, percent=1, dollar=0)
-      - 6 total recommendations generated
-      - Run ID matches between scan completion and recommendations
-      
-      ✅ GLOBAL POLLING DETECTION - VERIFIED
-      - Simulated 10-second interval polling mechanism
-      - Would correctly detect scan completion via is_running=false
-      - Backend properly maintains recent_run state for global polling
-      
-      ✅ EDGE CASES - TESTED
-      - Concurrent scan blocking: HTTP 409 (Conflict) properly returned
-      - Recommendation counts: Valid limits (max 5 per category)
-      - No scan running during test (concurrent test skipped)
-      
-      ✅ FRONTEND AUTO-REFRESH REQUIREMENTS DOCUMENTED
-      - Scan-specific polling: 5s intervals during active scan
-      - Global polling: 10s intervals continuously
-      - Auto-refresh triggers: fetchRecommendations() when is_running changes to false
-      - Toast notifications and loading state management specified
-      - Console logging requirements documented
-      
-      COMPREHENSIVE TEST RESULTS: 87.5% SUCCESS RATE (7/8 PASSED, 1 SKIPPED)
-      - All critical auto-refresh functionality working correctly
-      - Both polling mechanisms operational and ready for frontend integration
-      - Backend completion signals clear and reliable
-      - Edge case handling proper (concurrent scan blocking)
+      TESTING REQUIRED:
+      1. Register a new user with valid email address
+      2. Login with that user
+      3. Run a scan (scope=all, price range optional)
+      4. Verify auto-refresh works when scan completes
+      5. Check user's email inbox for scan results notification
+      6. Check backend logs for detailed email flow logging
