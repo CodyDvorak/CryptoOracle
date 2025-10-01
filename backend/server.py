@@ -57,6 +57,45 @@ current_scan_task: Optional[asyncio.Task] = None
 bot_statuses = {}
 
 
+# ==================== Auth Helper ====================
+
+security = HTTPBearer()
+
+async def get_current_user(authorization: Optional[str] = Header(None)) -> Optional[dict]:
+    """Get current user from JWT token (optional - returns None if not authenticated)"""
+    if not authorization:
+        return None
+    
+    try:
+        # Extract token from "Bearer <token>"
+        token = authorization.replace("Bearer ", "")
+        payload = decode_access_token(token)
+        
+        if not payload:
+            return None
+        
+        user_id = payload.get("sub")
+        if not user_id:
+            return None
+        
+        # Fetch user from database
+        user = await db.users.find_one({"id": user_id})
+        if not user:
+            return None
+        
+        return user
+    except Exception as e:
+        logger.error(f"Error getting current user: {e}")
+        return None
+
+async def require_auth(authorization: Optional[str] = Header(None)) -> dict:
+    """Require authentication - raises 401 if not authenticated"""
+    user = await get_current_user(authorization)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return user
+
+
 # ==================== Health Check ====================
 
 @api_router.get("/health")
@@ -70,6 +109,81 @@ async def health_check():
             "scheduler": "running" if scheduler.running else "stopped"
         }
     }
+
+
+# ==================== Authentication ====================
+
+@api_router.post("/auth/register", response_model=Token)
+async def register(user_data: UserCreate):
+    """Register a new user"""
+    # Check if username already exists
+    existing_user = await db.users.find_one({"username": user_data.username})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Username already registered")
+    
+    # Check if email already exists
+    existing_email = await db.users.find_one({"email": user_data.email})
+    if existing_email:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Create new user
+    user = User(
+        username=user_data.username,
+        email=user_data.email,
+        hashed_password=hash_password(user_data.password)
+    )
+    
+    await db.users.insert_one(user.dict())
+    
+    # Create access token
+    access_token = create_access_token(data={"sub": user.id})
+    
+    user_response = UserResponse(
+        id=user.id,
+        username=user.username,
+        email=user.email,
+        created_at=user.created_at,
+        is_active=user.is_active
+    )
+    
+    logger.info(f"New user registered: {user.username}")
+    return Token(access_token=access_token, user=user_response)
+
+
+@api_router.post("/auth/login", response_model=Token)
+async def login(credentials: UserLogin):
+    """Login user"""
+    # Find user
+    user = await db.users.find_one({"username": credentials.username})
+    
+    if not user or not verify_password(credentials.password, user['hashed_password']):
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    
+    # Create access token
+    access_token = create_access_token(data={"sub": user['id']})
+    
+    user_response = UserResponse(
+        id=user['id'],
+        username=user['username'],
+        email=user['email'],
+        created_at=user['created_at'],
+        is_active=user['is_active']
+    )
+    
+    logger.info(f"User logged in: {user['username']}")
+    return Token(access_token=access_token, user=user_response)
+
+
+@api_router.get("/auth/me", response_model=UserResponse)
+async def get_current_user_info(current_user: dict = Depends(require_auth)):
+    """Get current user information"""
+    return UserResponse(
+        id=current_user['id'],
+        username=current_user['username'],
+        email=current_user['email'],
+        created_at=current_user['created_at'],
+        is_active=current_user['is_active']
+    )
 
 
 # ==================== Scan Endpoints ====================
