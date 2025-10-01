@@ -244,33 +244,34 @@ function App() {
           
           console.log(`Scan running: ${statusData.is_running}, Status: ${statusData.recent_run?.status}`);
           
-          // Check if scan completed
-          if (!statusData.is_running && statusData.recent_run?.status === 'completed') {
-            // Scan completed successfully
-            console.log('Scan completed! Fetching fresh recommendations...');
+          // Check if scan completed (less strict check)
+          if (!statusData.is_running) {
+            // Scan stopped - try to fetch recommendations regardless
+            console.log('Scan stopped. Fetching fresh recommendations...');
+            console.log('Status data:', statusData.recent_run?.status);
             clearInterval(pollIntervalId);
             
-            // Fetch fresh recommendations
-            console.log('[AUTO-REFRESH] Fetching recommendations inline...');
-            const recsResponse = await axios.get(`${API}/recommendations/top5`, {
-              headers: getAuthHeader()
-            });
-            console.log(`[AUTO-REFRESH] Received ${recsResponse.data.top_confidence?.length || 0} confidence, ${recsResponse.data.top_percent_movers?.length || 0} percent, ${recsResponse.data.top_dollar_movers?.length || 0} dollar recommendations`);
+            // ALWAYS fetch fresh recommendations when scan stops
+            try {
+              console.log('[AUTO-REFRESH] Fetching recommendations inline...');
+              const recsResponse = await axios.get(`${API}/recommendations/top5`, {
+                headers: getAuthHeader()
+              });
+              console.log(`[AUTO-REFRESH] Received ${recsResponse.data.top_confidence?.length || 0} confidence, ${recsResponse.data.top_percent_movers?.length || 0} percent, ${recsResponse.data.top_dollar_movers?.length || 0} dollar recommendations`);
+              
+              setTopConfidence(recsResponse.data.top_confidence || []);
+              setTopPercent(recsResponse.data.top_percent_movers || []);
+              setTopDollar(recsResponse.data.top_dollar_movers || []);
+              setCurrentRunId(recsResponse.data.run_id || null);
+              
+              toast.success('✨ Scan completed! Recommendations loaded automatically!');
+              console.log('✅ AUTO-REFRESH COMPLETE! Check the recommendations above.');
+            } catch (err) {
+              console.error('[AUTO-REFRESH] Error fetching recommendations:', err);
+              toast.error('Scan completed but failed to load recommendations. Please refresh.');
+            }
             
-            setTopConfidence(recsResponse.data.top_confidence || []);
-            setTopPercent(recsResponse.data.top_percent_movers || []);
-            setTopDollar(recsResponse.data.top_dollar_movers || []);
-            setCurrentRunId(recsResponse.data.run_id || null);
-            
-            toast.success('✨ Scan completed! Recommendations loaded automatically!');
             setLoading(false);
-            console.log('✅ AUTO-REFRESH COMPLETE! Check the recommendations above.');
-          } else if (!statusData.is_running) {
-            // Scan stopped but not completed successfully
-            console.log('Scan stopped but not completed successfully');
-            clearInterval(pollIntervalId);
-            setLoading(false);
-            toast.warning('Scan stopped. Results may be incomplete.');
           } else if (pollCount >= maxPolls) {
             // Timeout reached
             console.log('Poll timeout reached');
