@@ -11,7 +11,8 @@ import { toast } from 'sonner';
 const API = `${process.env.REACT_APP_BACKEND_URL || ''}/api`;
 
 const History = () => {
-  const { getAuthHeader, user } = useAuth();
+  const navigate = useNavigate();
+  const { getAuthHeader, user, logout } = useAuth();
   const [history, setHistory] = useState([]);
   const [selectedRun, setSelectedRun] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
