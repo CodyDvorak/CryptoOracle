@@ -24,6 +24,8 @@ export const CoinRecommendationCard = ({ recommendation, rank, runId }) => {
     predicted_dollar_change = 0
   } = recommendation;
   
+  const [showBotDetails, setShowBotDetails] = useState(false);
+  
   const isLong = consensus_direction === 'long';
   const profitPct = isLong 
     ? ((avg_take_profit - avg_entry) / avg_entry * 100)
