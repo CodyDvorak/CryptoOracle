@@ -37,11 +37,15 @@ class Recommendation(BaseModel):
     id: str = Field(default_factory=uuid_str)
     run_id: str
     coin: str
+    current_price: float
     consensus_direction: str  # 'long' or 'short'
     avg_confidence: float
     avg_take_profit: float
     avg_stop_loss: float
     avg_entry: float
+    avg_predicted_24h: float
+    avg_predicted_48h: float
+    avg_predicted_7d: float
     bot_count: int = 20
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
