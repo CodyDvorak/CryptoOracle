@@ -436,11 +436,11 @@ agent_communication:
 backend:
   - task: "Auto-refresh after scan completion"
     implemented: true
-    working: true
-    file: "backend/server.py"
-    stuck_count: 0
+    working: false
+    file: "backend/server.py, frontend/src/App.js"
+    stuck_count: 1
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
@@ -451,6 +451,24 @@ backend:
       - working: true
         agent: "testing"
         comment: "COMPREHENSIVE AUTO-REFRESH TESTING COMPLETE - All polling mechanisms verified working perfectly. Scan-specific polling (5s intervals) detected completion in 33s after 4 polls. Backend completion signals confirmed in logs. Fresh recommendations returned with matching run_id (c8586805-55c3-4ea3-a87d-5648f5eeb673). Global polling detection verified. Edge cases tested: concurrent scan blocking works (HTTP 409), recommendation counts valid (5 max per category). Success rate: 87.5% (7/8 tests passed, 1 skipped). Both scan-specific and global polling mechanisms operational for frontend auto-refresh functionality."
+      - working: false
+        agent: "main"
+        comment: "USER REPORTED: Auto-refresh not working. ISSUE FOUND: fetchRecommendations() in App.js (line 84) doesn't pass authentication headers when called from global polling (line 148). For logged-in users, recommendations are filtered by user_id, but without auth headers the API can't identify the user. FIX: Add auth headers to fetchRecommendations() API call."
+  
+  - task: "Email notification after scan completion"
+    implemented: true
+    working: false
+    file: "backend/services/scan_orchestrator.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Auto-send email notification after scan completion for logged-in users"
+      - working: false
+        agent: "main"
+        comment: "USER REPORTED: Email notifications not being sent. SMTP credentials confirmed in .env (codydvorakwork@gmail.com). Logic exists in scan_orchestrator.py lines 157-172 to send email to user's registered email. Need to investigate if: 1) notify_results is being called correctly, 2) email_service is working properly, 3) error handling is suppressing failures."
 
   - task: "Schedule configuration endpoints ObjectId fix"
     implemented: true
