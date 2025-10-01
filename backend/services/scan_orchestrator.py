@@ -141,10 +141,20 @@ class ScanOrchestrator:
         
         # 3. Run all bots
         bot_results = []
+        current_price = features.get('current_price', 0)
+        
         for bot in self.bots:
             try:
                 result = bot.analyze(features)
                 if result:
+                    # Ensure predicted prices exist (fallback to current price)
+                    if 'predicted_24h' not in result:
+                        result['predicted_24h'] = current_price
+                    if 'predicted_48h' not in result:
+                        result['predicted_48h'] = current_price
+                    if 'predicted_7d' not in result:
+                        result['predicted_7d'] = current_price
+                    
                     # Save bot result to DB
                     bot_result = BotResult(
                         run_id=run_id,
@@ -155,7 +165,10 @@ class ScanOrchestrator:
                         take_profit=result['take_profit'],
                         stop_loss=result['stop_loss'],
                         confidence=result['confidence'],
-                        rationale=result['rationale']
+                        rationale=result['rationale'],
+                        predicted_24h=result.get('predicted_24h'),
+                        predicted_48h=result.get('predicted_48h'),
+                        predicted_7d=result.get('predicted_7d')
                     )
                     await self.db.bot_results.insert_one(bot_result.dict())
                     bot_results.append(result)
@@ -167,7 +180,7 @@ class ScanOrchestrator:
             return None
         
         # 4. Aggregate results
-        aggregated = self.aggregation_engine.aggregate_coin_results(coin, bot_results)
+        aggregated = self.aggregation_engine.aggregate_coin_results(coin, bot_results, current_price)
         
         # 5. Optional: LLM synthesis (if time permits)
         # This adds enhanced rationale but is not critical for MVP
