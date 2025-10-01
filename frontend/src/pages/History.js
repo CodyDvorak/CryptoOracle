@@ -221,13 +221,6 @@ const History = () => {
                               <p className="font-bold text-[var(--primary)]">{scan.recommendations_count}</p>
                             </div>
 
-                            <div className="text-right">
-                              <p className="text-sm text-[var(--muted)]">Success Rate</p>
-                              <p className={`font-bold ${scan.success_rate > 0 ? 'text-[var(--success)]' : 'text-[var(--muted)]'}`}>
-                                {scan.success_rate > 0 ? `${scan.success_rate.toFixed(1)}%` : 'In Progress'}
-                              </p>
-                            </div>
-
                             <TrendingUp className="w-5 h-5 text-[var(--primary)]" />
                           </div>
                         </div>
