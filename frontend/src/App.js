@@ -24,6 +24,7 @@ function App() {
   const [bots, setBots] = useState([]);
   const [scanStatus, setScanStatus] = useState({ is_running: false });
   const [filter, setFilter] = useState('all');
+  const [maxPrice, setMaxPrice] = useState('');  // Price filter (empty = no limit)
   const [scheduleInterval, setScheduleInterval] = useState('12h');
   const [loading, setLoading] = useState(false);
   
@@ -122,7 +123,11 @@ function App() {
     toast.info('Starting scan... This may take a few minutes.');
     
     try {
-      await axios.post(`${API}/scan/run`, { scope: filter });
+      const requestBody = { 
+        scope: filter,
+        max_price: maxPrice ? parseFloat(maxPrice) : null  // Only send if not empty
+      };
+      await axios.post(`${API}/scan/run`, requestBody);
       toast.success('Scan started successfully!');
       
       // Poll for updates
@@ -201,6 +206,21 @@ function App() {
               <SelectOption value="all">All Coins</SelectOption>
               <SelectOption value="alt">Alt Coins</SelectOption>
             </Select>
+            
+            {/* Price Filter */}
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-[var(--muted)]" />
+              <Input 
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="Max price"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+                className="w-24 h-9 text-sm"
+                data-testid="price-filter-input"
+              />
+            </div>
             
             {/* Interval Selector */}
             <div className="hidden sm:flex gap-1 bg-[var(--panel)] p-1 rounded-lg border border-[var(--card-border)]" data-testid="scheduler-toggle">
