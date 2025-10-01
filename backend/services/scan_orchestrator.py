@@ -93,13 +93,13 @@ class ScanOrchestrator:
             
             scan_run.total_coins = len(selected_tokens)
             
-            # 4. Analyze each token with bots + TokenMetrics AI enhancement
+            # 4. Analyze each token with bots using CryptoCompare data
             all_aggregated_results = []
             
             for symbol, display_name, current_price in selected_tokens:
                 try:
-                    # Analyze with CryptoCompare data + TokenMetrics AI enhancement
-                    coin_result = await self._analyze_coin_with_dual_source(
+                    # Analyze with CryptoCompare data
+                    coin_result = await self._analyze_coin_with_cryptocompare(
                         symbol, display_name, current_price, scan_run.id
                     )
                     if coin_result:
