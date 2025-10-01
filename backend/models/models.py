@@ -12,9 +12,11 @@ class ScanRun(BaseModel):
     completed_at: Optional[datetime] = None
     interval: Optional[str] = None  # '6h', '12h', '24h' or None for manual
     filter_scope: str = 'all'  # 'all' or 'alt'
-    max_price: Optional[float] = None  # Optional price filter (e.g., only coins under $1)
+    min_price: Optional[float] = None  # Optional minimum price filter
+    max_price: Optional[float] = None  # Optional maximum price filter
     status: str = 'running'  # 'running', 'completed', 'failed'
-    total_coins: int = 0
+    total_coins: int = 0  # Number of coins analyzed
+    total_available_coins: int = 0  # Total coins available from source
     total_bots: int = 20
     error_message: Optional[str] = None
 
