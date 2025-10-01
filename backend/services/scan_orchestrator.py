@@ -175,6 +175,153 @@ class ScanOrchestrator:
                 'error': str(e)
             }
     
+    async def _analyze_coin_with_dual_source(self, symbol: str, display_name: str, current_price: float, run_id: str) -> Optional[Dict]:
+        """Analyze a coin using CryptoCompare data enhanced with TokenMetrics AI analytics.
+        
+        This is the primary analysis method that combines:
+        - CryptoCompare: Historical price data for technical indicators
+        - TokenMetrics: AI grades and signals for enhanced analysis
+        
+        Args:
+            symbol: Coin symbol (e.g., 'BTC')
+            display_name: Display name for results
+            current_price: Current price from CryptoCompare
+            run_id: Scan run ID
+        
+        Returns:
+            Aggregated result dict or None if insufficient data
+        """
+        try:
+            # 1. Fetch historical data from CryptoCompare
+            candles = await self.crypto_client.get_historical_data(symbol, days=365)
+            
+            if len(candles) < 50:
+                logger.warning(f"Insufficient CryptoCompare data for {symbol}: {len(candles)} candles")
+                return None
+            
+            # 2. Update most recent candle with current price
+            if candles and current_price > 0:
+                candles[-1]['close'] = current_price
+                candles[-1]['high'] = max(candles[-1]['high'], current_price)
+                candles[-1]['low'] = min(candles[-1]['low'], current_price)
+            
+            # 3. Compute technical indicators
+            features = self.indicator_engine.compute_all_indicators(candles)
+            
+            if not features:
+                logger.warning(f"Failed to compute indicators for {symbol}")
+                return None
+            
+            # Ensure current price is accurate
+            features['current_price'] = current_price
+            
+            # 4. Try to enhance with TokenMetrics AI data (optional, don't fail if unavailable)
+            try:
+                # Get AI analytics from TokenMetrics
+                ai_token_data = await self.token_client.get_token_by_symbol(symbol)
+                
+                if ai_token_data:
+                    trader_grade = ai_token_data.get('trader_grade', 0)
+                    investor_grade = ai_token_data.get('investor_grade', 0)
+                    token_id = ai_token_data.get('token_id')
+                    
+                    # Add AI grades to features
+                    features['trader_grade'] = trader_grade
+                    features['investor_grade'] = investor_grade
+                    
+                    # Try to get additional AI signals
+                    if token_id:
+                        try:
+                            ai_signals = await self.token_client.get_ai_signals(symbol)
+                            support_resistance = await self.token_client.get_support_resistance(token_id)
+                            
+                            if ai_signals:
+                                features['ai_signal_strength'] = ai_signals.get('signal_strength', 'weak')
+                                features['trader_trend'] = ai_signals.get('trader_trend', 'neutral')
+                            
+                            if support_resistance:
+                                features['resistance'] = support_resistance.get('resistance', current_price * 1.1)
+                                features['support'] = support_resistance.get('support', current_price * 0.9)
+                        except:
+                            pass  # AI signals are optional enhancement
+                    
+                    logger.info(f"Enhanced {symbol} with TokenMetrics AI: T:{trader_grade:.0f}/I:{investor_grade:.0f}")
+                else:
+                    logger.info(f"No TokenMetrics AI data for {symbol}, using technical analysis only")
+            except Exception as e:
+                logger.info(f"TokenMetrics enhancement skipped for {symbol}: {e}")
+                # Continue with technical analysis only
+            
+            # 5. Run all 21 bots with enhanced features
+            bot_results = []
+            
+            for bot in self.bots:
+                try:
+                    result = bot.analyze(features)
+                    if result:
+                        # Ensure predicted prices exist
+                        if 'predicted_24h' not in result:
+                            result['predicted_24h'] = current_price
+                        if 'predicted_48h' not in result:
+                            result['predicted_48h'] = current_price
+                        if 'predicted_7d' not in result:
+                            result['predicted_7d'] = current_price
+                        
+                        # Save bot result to DB
+                        bot_result = BotResult(
+                            run_id=run_id,
+                            coin=display_name,
+                            bot_name=bot.name,
+                            direction=result['direction'],
+                            entry_price=result['entry'],
+                            take_profit=result['take_profit'],
+                            stop_loss=result['stop_loss'],
+                            confidence=result['confidence'],
+                            rationale=result['rationale'],
+                            predicted_24h=result.get('predicted_24h'),
+                            predicted_48h=result.get('predicted_48h'),
+                            predicted_7d=result.get('predicted_7d')
+                        )
+                        await self.db.bot_results.insert_one(bot_result.dict())
+                        bot_results.append(result)
+                except Exception as e:
+                    logger.error(f"Bot {bot.name} failed for {symbol}: {e}", exc_info=True)
+            
+            if not bot_results:
+                logger.warning(f"No bot results for {symbol}")
+                return None
+            
+            # 6. Aggregate results
+            aggregated = self.aggregation_engine.aggregate_coin_results(display_name, bot_results, current_price)
+            
+            # 7. Add AI insights to aggregated results if available
+            if features.get('trader_grade', 0) > 0:
+                aggregated['trader_grade'] = features['trader_grade']
+                aggregated['investor_grade'] = features.get('investor_grade', 0)
+                if features.get('trader_trend'):
+                    aggregated['ai_trend'] = features['trader_trend']
+            
+            # 8. Optional: LLM synthesis
+            try:
+                ai_context = ""
+                if features.get('trader_grade', 0) > 0:
+                    ai_context = f"TokenMetrics AI Enhancement - Trader Grade: {features['trader_grade']:.0f}/100, Investor Grade: {features.get('investor_grade', 0):.0f}/100"
+                
+                features['ai_context'] = ai_context
+                enhanced_rationale = await self.llm_service.synthesize_recommendations(display_name, bot_results, features)
+                aggregated['rationale'] = enhanced_rationale
+            except Exception as e:
+                logger.warning(f"LLM synthesis skipped for {symbol}: {e}")
+                ai_suffix = f" (AI: T:{features.get('trader_grade', 0):.0f}/I:{features.get('investor_grade', 0):.0f})" if features.get('trader_grade', 0) > 0 else ""
+                aggregated['rationale'] = f"{len(bot_results)} bots analyzed{ai_suffix}"
+            
+            logger.info(f"✓ {symbol}: {len(bot_results)} bots, confidence={aggregated.get('avg_confidence', 0):.1f}, price=${current_price:.8f}")
+            return aggregated
+            
+        except Exception as e:
+            logger.error(f"Critical error analyzing {symbol}: {e}", exc_info=True)
+            return None
+    
     async def _analyze_coin_with_cryptocompare(self, symbol: str, display_name: str, current_price: float, run_id: str) -> Optional[Dict]:
         """Analyze a single coin with CryptoCompare historical data.
         
