@@ -372,6 +372,73 @@ class ScanOrchestrator:
             logger.error(f"Critical error analyzing {symbol}: {e}", exc_info=True)
             return None
     
+    async def _analyze_with_ai_only(self, symbol: str, display_name: str, current_price: float,
+                                    trader_grade: float, investor_grade: float, run_id: str) -> Optional[Dict]:
+        """Analyze token using only AI grades (for tokens without historical data).
+        
+        This is a fallback method for tokens where historical data is unavailable (401 errors).
+        Uses TokenMetrics AI grades to generate recommendations.
+        """
+        try:
+            # Use AI grades to generate a synthetic recommendation
+            # High trader grade = bullish, low = bearish
+            if trader_grade >= 60:
+                direction = 'long'
+                confidence = min(trader_grade / 10, 10)  # Scale 60-100 to 6-10
+            elif trader_grade <= 40:
+                direction = 'short'
+                confidence = min((100 - trader_grade) / 10, 10)
+            else:
+                # Neutral zone, skip
+                return None
+            
+            # Calculate simple TP/SL based on direction
+            if direction == 'long':
+                take_profit = current_price * 1.10  # 10% profit target
+                stop_loss = current_price * 0.95    # 5% stop loss
+            else:
+                take_profit = current_price * 0.90
+                stop_loss = current_price * 1.05
+            
+            # Predicted prices based on AI trend
+            grade_momentum = (trader_grade - 50) / 50  # -1 to 1
+            predicted_24h = current_price * (1 + grade_momentum * 0.02)
+            predicted_48h = current_price * (1 + grade_momentum * 0.03)
+            predicted_7d = current_price * (1 + grade_momentum * 0.05)
+            
+            # Create aggregated result
+            result = {
+                'coin': display_name,
+                'current_price': current_price,
+                'consensus_direction': direction,
+                'avg_confidence': confidence,
+                'avg_take_profit': take_profit,
+                'avg_stop_loss': stop_loss,
+                'avg_entry': current_price,
+                'avg_predicted_24h': predicted_24h,
+                'avg_predicted_48h': predicted_48h,
+                'avg_predicted_7d': predicted_7d,
+                'bot_count': 1,  # AI-only analysis
+                'rationale': f"AI-only analysis: Trader Grade {trader_grade:.0f}/100, Investor Grade {investor_grade:.0f}/100"
+            }
+            
+            # Save as recommendation directly
+            from models.models import Recommendation
+            recommendation = Recommendation(
+                run_id=run_id,
+                coin=display_name,
+                ticker=symbol,
+                **result
+            )
+            await self.db.recommendations.insert_one(recommendation.dict())
+            
+            logger.info(f"✓ {symbol}: AI-only analysis, confidence={confidence:.1f}, AI grades T:{trader_grade:.0f}/I:{investor_grade:.0f}")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error in AI-only analysis for {symbol}: {e}")
+            return None
+    
     async def _analyze_coin_with_cryptocompare(self, symbol: str, display_name: str, current_price: float, run_id: str) -> Optional[Dict]:
         """Analyze a single coin with CryptoCompare historical data.
         
