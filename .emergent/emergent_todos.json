@@ -1,11 +1,11 @@
 [
   {
     "content": "Install required Python packages (emergentintegrations, apscheduler, pandas, numpy, aiohttp, gspread, etc.)",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "Install required frontend packages (framer-motion, lightweight-charts, recharts, react-gauge-component, lucide-react, sonner)",
-    "status": "pending"
+    "status": "in_progress"
   },
   {
     "content": "Update index.css with design tokens and load fonts in public/index.html",
