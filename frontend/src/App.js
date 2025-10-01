@@ -411,6 +411,7 @@ function App() {
                       key={rec.id || index}
                       recommendation={rec}
                       rank={index + 1}
+                      runId={currentRunId}
                     />
                   ))}
                 </div>
@@ -426,6 +427,7 @@ function App() {
                       key={rec.id || index}
                       recommendation={rec}
                       rank={index + 1}
+                      runId={currentRunId}
                     />
                   ))}
                 </div>
@@ -441,6 +443,7 @@ function App() {
                       key={rec.id || index}
                       recommendation={rec}
                       rank={index + 1}
+                      runId={currentRunId}
                     />
                   ))}
                 </div>
