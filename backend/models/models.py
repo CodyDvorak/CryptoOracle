@@ -94,9 +94,10 @@ class BotStatus(BaseModel):
 
 # API Request/Response models
 class ScanRunRequest(BaseModel):
-    scope: str = 'all'  # 'all' or 'alt'
+    scope: str = 'all'  # 'all' or 'alt' or 'custom'
     min_price: Optional[float] = None  # Optional: filter for coins above this price
     max_price: Optional[float] = None  # Optional: filter for coins under this price
+    custom_symbols: Optional[List[str]] = None  # Optional: list of specific symbols to scan
 
 class Top5Response(BaseModel):
     recommendations: List[Recommendation]
