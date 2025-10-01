@@ -87,8 +87,8 @@ async def run_scan(request: ScanRunRequest, background_tasks: BackgroundTasks):
     # Start scan in background
     async def run_scan_task():
         try:
-            logger.info(f"Background scan task starting with scope={request.scope}")
-            result = await scan_orchestrator.run_scan(filter_scope=request.scope)
+            logger.info(f"Background scan task starting with scope={request.scope}, max_price={request.max_price}")
+            result = await scan_orchestrator.run_scan(filter_scope=request.scope, max_price=request.max_price)
             logger.info(f"Scan completed: {result}")
             
             # Send notifications if configured
