@@ -125,73 +125,79 @@ class ScanOrchestrator:
         Returns:
             Aggregated result dict or None if insufficient data
         """
-        # 1. Fetch OHLCV data (2 years)
-        candles = await self.coinalyze_client.get_ohlcv(coin, days=730)
-        
-        if len(candles) < 50:
-            logger.warning(f"Insufficient data for {coin}: {len(candles)} candles")
-            return None
-        
-        # 2. Compute indicators
-        features = self.indicator_engine.compute_all_indicators(candles)
-        
-        if not features:
-            logger.warning(f"Failed to compute indicators for {coin}")
-            return None
-        
-        # 3. Run all bots
-        bot_results = []
-        current_price = features.get('current_price', 0)
-        
-        for bot in self.bots:
-            try:
-                result = bot.analyze(features)
-                if result:
-                    # Ensure predicted prices exist (fallback to current price)
-                    if 'predicted_24h' not in result:
-                        result['predicted_24h'] = current_price
-                    if 'predicted_48h' not in result:
-                        result['predicted_48h'] = current_price
-                    if 'predicted_7d' not in result:
-                        result['predicted_7d'] = current_price
-                    
-                    # Save bot result to DB
-                    bot_result = BotResult(
-                        run_id=run_id,
-                        coin=coin,
-                        bot_name=bot.name,
-                        direction=result['direction'],
-                        entry_price=result['entry'],
-                        take_profit=result['take_profit'],
-                        stop_loss=result['stop_loss'],
-                        confidence=result['confidence'],
-                        rationale=result['rationale'],
-                        predicted_24h=result.get('predicted_24h'),
-                        predicted_48h=result.get('predicted_48h'),
-                        predicted_7d=result.get('predicted_7d')
-                    )
-                    await self.db.bot_results.insert_one(bot_result.dict())
-                    bot_results.append(result)
-            except Exception as e:
-                logger.error(f"Bot {bot.name} failed for {coin}: {e}")
-        
-        if not bot_results:
-            logger.warning(f"No bot results for {coin}")
-            return None
-        
-        # 4. Aggregate results
-        aggregated = self.aggregation_engine.aggregate_coin_results(coin, bot_results, current_price)
-        
-        # 5. Optional: LLM synthesis (if time permits)
-        # This adds enhanced rationale but is not critical for MVP
         try:
-            enhanced_rationale = await self.llm_service.synthesize_recommendations(coin, bot_results, features)
-            aggregated['rationale'] = enhanced_rationale
+            # 1. Fetch OHLCV data (2 years)
+            candles = await self.coinalyze_client.get_ohlcv(coin, days=730)
+            
+            if len(candles) < 50:
+                logger.warning(f"Insufficient data for {coin}: {len(candles)} candles")
+                return None
+            
+            # 2. Compute indicators
+            features = self.indicator_engine.compute_all_indicators(candles)
+            
+            if not features:
+                logger.warning(f"Failed to compute indicators for {coin}")
+                return None
+            
+            # 3. Run all bots
+            bot_results = []
+            current_price = features.get('current_price', 0)
+            
+            for bot in self.bots:
+                try:
+                    result = bot.analyze(features)
+                    if result:
+                        # Ensure predicted prices exist (fallback to current price)
+                        if 'predicted_24h' not in result:
+                            result['predicted_24h'] = current_price
+                        if 'predicted_48h' not in result:
+                            result['predicted_48h'] = current_price
+                        if 'predicted_7d' not in result:
+                            result['predicted_7d'] = current_price
+                        
+                        # Save bot result to DB
+                        bot_result = BotResult(
+                            run_id=run_id,
+                            coin=coin,
+                            bot_name=bot.name,
+                            direction=result['direction'],
+                            entry_price=result['entry'],
+                            take_profit=result['take_profit'],
+                            stop_loss=result['stop_loss'],
+                            confidence=result['confidence'],
+                            rationale=result['rationale'],
+                            predicted_24h=result.get('predicted_24h'),
+                            predicted_48h=result.get('predicted_48h'),
+                            predicted_7d=result.get('predicted_7d')
+                        )
+                        await self.db.bot_results.insert_one(bot_result.dict())
+                        bot_results.append(result)
+                except Exception as e:
+                    logger.error(f"Bot {bot.name} failed for {coin}: {e}", exc_info=True)
+            
+            if not bot_results:
+                logger.warning(f"No bot results for {coin}")
+                return None
+            
+            # 4. Aggregate results
+            aggregated = self.aggregation_engine.aggregate_coin_results(coin, bot_results, current_price)
+            
+            # 5. Optional: LLM synthesis (if time permits)
+            # This adds enhanced rationale but is not critical for MVP
+            try:
+                enhanced_rationale = await self.llm_service.synthesize_recommendations(coin, bot_results, features)
+                aggregated['rationale'] = enhanced_rationale
+            except Exception as e:
+                logger.warning(f"LLM synthesis skipped for {coin}: {e}")
+                aggregated['rationale'] = f"{len(bot_results)} bots analyzed"
+            
+            logger.info(f"Successfully analyzed {coin}: {len(bot_results)} bot results, confidence={aggregated.get('avg_confidence', 0):.1f}")
+            return aggregated
+            
         except Exception as e:
-            logger.warning(f"LLM synthesis skipped for {coin}: {e}")
-            aggregated['rationale'] = f"{len(bot_results)} bots analyzed"
-        
-        return aggregated
+            logger.error(f"Critical error analyzing {coin}: {e}", exc_info=True)
+            return None
     
     async def notify_results(self, run_id: str, email_config: Dict, sheets_config: Dict):
         """Send notifications via email and Google Sheets.
