@@ -135,7 +135,7 @@ class AggregationEngine:
             n: Number of top coins to return
         
         Returns:
-            Top N coins by predicted $ change (min confidence 6.5)
+            Top N coins by predicted $ change (min confidence 5.0)
         """
         results_with_volume = []
         for result in aggregated_results:
@@ -143,8 +143,8 @@ class AggregationEngine:
             predicted_7d = result.get('avg_predicted_7d', current)
             confidence = result.get('avg_confidence', 0)
             
-            # Only include if confidence >= 6.5
-            if current > 0 and confidence >= 6.5:
+            # Only include if confidence >= 5.0 (lowered threshold)
+            if current > 0 and confidence >= 5.0:
                 dollar_change = abs(predicted_7d - current)
                 result['predicted_dollar_change'] = dollar_change
                 results_with_volume.append(result)
