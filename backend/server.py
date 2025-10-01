@@ -1,67 +1,31 @@
-from fastapi import FastAPI, APIRouter
-from dotenv import load_dotenv
-from starlette.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, APIRouter, HTTPException, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
+from dotenv import load_dotenv
+from pathlib import Path
 import os
 import logging
-from pathlib import Path
-from pydantic import BaseModel, Field
-from typing import List
-import uuid
-from datetime import datetime
+from datetime import datetime, timezone
+from typing import List, Optional
+import asyncio
 
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.interval import IntervalTrigger
 
+from models.models import (
+    ScanRun, BotResult, Recommendation, IntegrationsConfig, Settings, BotStatus,
+    ScanRunRequest, Top5Response, UpdateIntegrationsRequest, UpdateScheduleRequest
+)
+from services.scan_orchestrator import ScanOrchestrator
+
+# Setup
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
-
-# Create the main app without a prefix
-app = FastAPI()
-
-# Create a router with the /api prefix
-api_router = APIRouter(prefix="/api")
-
-
-# Define Models
-class StatusCheck(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
-
-class StatusCheckCreate(BaseModel):
-    client_name: str
-
-# Add your routes to the router instead of directly to app
-@api_router.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.dict()
-    status_obj = StatusCheck(**status_dict)
-    _ = await db.status_checks.insert_one(status_obj.dict())
-    return status_obj
-
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    status_checks = await db.status_checks.find().to_list(1000)
-    return [StatusCheck(**status_check) for status_check in status_checks]
-
-# Include the router in the main app
-app.include_router(api_router)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+db = client[os.environ.get('DB_NAME', 'crypto_trend_hunter')]
 
 # Configure logging
 logging.basicConfig(
@@ -70,6 +34,353 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Create FastAPI app
+app = FastAPI(title="CryptoTrendHunter API")
+api_router = APIRouter(prefix="/api")
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Global state
+coinalyze_api_key = os.environ.get('COINALYZE_API_KEY', 'b5f63d0b-7286-4ffc-a6ab-3a9e5122e378')
+scan_orchestrator = ScanOrchestrator(db, coinalyze_api_key)
+scheduler = AsyncIOScheduler()
+current_scan_task: Optional[asyncio.Task] = None
+bot_statuses = {}
+
+
+# ==================== Health Check ====================
+
+@api_router.get("/health")
+async def health_check():
+    """Health check endpoint."""
+    return {
+        "status": "healthy",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "services": {
+            "database": "connected",
+            "scheduler": "running" if scheduler.running else "stopped"
+        }
+    }
+
+
+# ==================== Scan Endpoints ====================
+
+@api_router.post("/scan/run")
+async def run_scan(request: ScanRunRequest, background_tasks: BackgroundTasks):
+    """Trigger a manual scan of all coins.
+    
+    This runs in the background and returns immediately.
+    """
+    global current_scan_task
+    
+    # Check if a scan is already running
+    if current_scan_task and not current_scan_task.done():
+        raise HTTPException(status_code=409, detail="A scan is already running")
+    
+    # Start scan in background
+    async def run_scan_task():
+        try:
+            result = await scan_orchestrator.run_scan(filter_scope=request.scope)
+            
+            # Send notifications if configured
+            integrations = await db.integrations_config.find_one({})
+            if integrations:
+                await scan_orchestrator.notify_results(
+                    run_id=result['run_id'],
+                    email_config=integrations,
+                    sheets_config=integrations
+                )
+            
+            return result
+        except Exception as e:
+            logger.error(f"Scan task error: {e}")
+            raise
+    
+    current_scan_task = asyncio.create_task(run_scan_task())
+    
+    return {
+        "message": "Scan started",
+        "status": "running",
+        "scope": request.scope
+    }
+
+
+@api_router.get("/scan/runs")
+async def get_scan_runs(limit: int = 10):
+    """Get recent scan runs."""
+    runs = await db.scan_runs.find().sort('started_at', -1).limit(limit).to_list(limit)
+    return {"runs": runs}
+
+
+@api_router.get("/scan/status")
+async def get_scan_status():
+    """Get current scan status."""
+    global current_scan_task
+    
+    is_running = current_scan_task and not current_scan_task.done()
+    
+    # Get most recent run
+    recent_run = await db.scan_runs.find_one(sort=[('started_at', -1)])
+    
+    return {
+        "is_running": is_running,
+        "recent_run": recent_run
+    }
+
+
+# ==================== Recommendations Endpoints ====================
+
+@api_router.get("/recommendations/top5")
+async def get_top5_recommendations(run_id: Optional[str] = None):
+    """Get Top 5 recommendations.
+    
+    If run_id is not provided, returns from the most recent completed run.
+    """
+    if not run_id:
+        # Get most recent completed run
+        recent_run = await db.scan_runs.find_one(
+            {'status': 'completed'},
+            sort=[('completed_at', -1)]
+        )
+        
+        if not recent_run:
+            raise HTTPException(status_code=404, detail="No completed scans found")
+        
+        run_id = recent_run['id']
+    
+    # Fetch recommendations
+    recommendations = await db.recommendations.find({'run_id': run_id}).to_list(5)
+    
+    if not recommendations:
+        raise HTTPException(status_code=404, detail=f"No recommendations found for run {run_id}")
+    
+    # Get scan info
+    scan_run = await db.scan_runs.find_one({'id': run_id})
+    
+    return {
+        "run_id": run_id,
+        "scan_time": scan_run.get('completed_at') if scan_run else None,
+        "recommendations": recommendations
+    }
+
+
+@api_router.get("/recommendations/history")
+async def get_recommendations_history(limit: int = 50):
+    """Get historical recommendations."""
+    recommendations = await db.recommendations.find().sort('created_at', -1).limit(limit).to_list(limit)
+    return {"recommendations": recommendations}
+
+
+# ==================== Bots Status ====================
+
+@api_router.get("/bots/status")
+async def get_bots_status():
+    """Get status of all 20 bots."""
+    from bots.bot_strategies import get_all_bots
+    
+    bots = get_all_bots()
+    statuses = []
+    
+    for bot in bots:
+        # Check if bot has recent results
+        recent_result = await db.bot_results.find_one(
+            {'bot_name': bot.name},
+            sort=[('created_at', -1)]
+        )
+        
+        status = {
+            'bot_name': bot.name,
+            'status': 'idle',
+            'last_run': recent_result['created_at'].isoformat() if recent_result else None,
+            'latency_ms': None
+        }
+        
+        statuses.append(status)
+    
+    return {"bots": statuses, "total": len(statuses)}
+
+
+# ==================== Configuration Endpoints ====================
+
+@api_router.get("/config/integrations")
+async def get_integrations_config():
+    """Get current integrations configuration."""
+    config = await db.integrations_config.find_one({})
+    
+    if not config:
+        # Return default config
+        default_config = IntegrationsConfig()
+        return default_config.dict()
+    
+    # Mask sensitive data
+    if config.get('smtp_pass'):
+        config['smtp_pass'] = '***MASKED***'
+    
+    return config
+
+
+@api_router.put("/config/integrations")
+async def update_integrations_config(request: UpdateIntegrationsRequest):
+    """Update integrations configuration."""
+    config_dict = request.dict()
+    config_dict['updated_at'] = datetime.now(timezone.utc)
+    
+    # Upsert configuration
+    await db.integrations_config.update_one(
+        {},
+        {'$set': config_dict},
+        upsert=True
+    )
+    
+    logger.info("Integrations config updated")
+    return {"message": "Integrations configuration updated successfully"}
+
+
+@api_router.get("/config/schedule")
+async def get_schedule_config():
+    """Get current schedule configuration."""
+    config = await db.settings.find_one({})
+    
+    if not config:
+        default_config = Settings()
+        return default_config.dict()
+    
+    return config
+
+
+@api_router.put("/config/schedule")
+async def update_schedule_config(request: UpdateScheduleRequest):
+    """Update schedule configuration and restart scheduler."""
+    config_dict = request.dict()
+    config_dict['updated_at'] = datetime.now(timezone.utc)
+    
+    # Upsert configuration
+    await db.settings.update_one(
+        {},
+        {'$set': config_dict},
+        upsert=True
+    )
+    
+    # Restart scheduler with new config
+    await restart_scheduler(config_dict)
+    
+    logger.info(f"Schedule updated: {request.schedule_interval} intervals, enabled={request.schedule_enabled}")
+    return {"message": "Schedule configuration updated successfully"}
+
+
+# ==================== Coins Endpoint ====================
+
+@api_router.get("/coins")
+async def get_coins(scope: str = 'all'):
+    """Get list of coins based on filter scope."""
+    coins = await scan_orchestrator.coinalyze_client.get_coins()
+    
+    if scope == 'alt':
+        exclusions = ['BTC', 'ETH', 'USDT', 'USDC', 'DAI', 'TUSD', 'BUSD']
+        coins = [c for c in coins if c not in exclusions]
+    
+    return {"coins": coins, "total": len(coins), "scope": scope}
+
+
+# ==================== Scheduler Functions ====================
+
+async def scheduled_scan_job():
+    """Job function called by scheduler."""
+    logger.info("Starting scheduled scan")
+    
+    try:
+        # Get current settings
+        settings = await db.settings.find_one({})
+        filter_scope = settings.get('filter_scope', 'all') if settings else 'all'
+        
+        # Run scan
+        result = await scan_orchestrator.run_scan(filter_scope=filter_scope)
+        
+        # Send notifications
+        integrations = await db.integrations_config.find_one({})
+        if integrations:
+            await scan_orchestrator.notify_results(
+                run_id=result['run_id'],
+                email_config=integrations,
+                sheets_config=integrations
+            )
+        
+        logger.info(f"Scheduled scan completed: {result['run_id']}")
+    
+    except Exception as e:
+        logger.error(f"Scheduled scan error: {e}")
+
+
+async def restart_scheduler(config: dict):
+    """Restart scheduler with new configuration."""
+    global scheduler
+    
+    # Remove existing jobs
+    if scheduler.running:
+        scheduler.remove_all_jobs()
+    
+    # Add new job if enabled
+    if config.get('schedule_enabled'):
+        interval = config.get('schedule_interval', '12h')
+        
+        # Parse interval
+        hours_map = {'6h': 6, '12h': 12, '24h': 24}
+        hours = hours_map.get(interval, 12)
+        
+        # Add job
+        scheduler.add_job(
+            scheduled_scan_job,
+            trigger=IntervalTrigger(hours=hours),
+            id='crypto_scan_job',
+            replace_existing=True
+        )
+        
+        logger.info(f"Scheduler configured: {interval} intervals")
+
+
+# ==================== Startup & Shutdown ====================
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize scheduler on startup."""
+    logger.info("Starting CryptoTrendHunter API")
+    
+    # Start scheduler
+    scheduler.start()
+    logger.info("Scheduler started")
+    
+    # Load existing schedule config
+    settings = await db.settings.find_one({})
+    if settings and settings.get('schedule_enabled'):
+        await restart_scheduler(settings)
+    
+    logger.info("Application startup complete")
+
+
 @app.on_event("shutdown")
-async def shutdown_db_client():
+async def shutdown_event():
+    """Cleanup on shutdown."""
+    logger.info("Shutting down application")
+    
+    # Shutdown scheduler
+    if scheduler.running:
+        scheduler.shutdown()
+    
+    # Close MongoDB connection
     client.close()
+    
+    # Close Coinalyze client
+    await scan_orchestrator.coinalyze_client.close()
+    
+    logger.info("Application shutdown complete")
+
+
+# Include router
+app.include_router(api_router)
