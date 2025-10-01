@@ -54,6 +54,8 @@ app.add_middleware(
 
 # Global state
 scan_orchestrator = ScanOrchestrator(db)
+crypto_client = CryptoCompareClient()
+outcome_tracker = OutcomeTracker(db, crypto_client)
 scheduler = AsyncIOScheduler()
 current_scan_task: Optional[asyncio.Task] = None
 bot_statuses = {}
