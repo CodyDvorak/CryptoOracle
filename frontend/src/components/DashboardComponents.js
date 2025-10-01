@@ -195,8 +195,25 @@ export const CoinRecommendationCard = ({ recommendation, rank, runId }) => {
           >
             Copy Trade
           </button>
+          <button
+            className="flex items-center gap-2 px-3 py-2 bg-[var(--primary)] hover:bg-[var(--accent)] text-black rounded-md text-xs font-semibold transition-colors"
+            onClick={() => setShowBotDetails(true)}
+            data-testid="view-bot-details-button"
+          >
+            <Info className="w-4 h-4" />
+            Bot Details
+          </button>
         </div>
       </CardContent>
+      
+      {/* Bot Details Modal */}
+      <BotDetailsModal
+        open={showBotDetails}
+        onClose={() => setShowBotDetails(false)}
+        runId={runId}
+        coinSymbol={ticker}
+        coinName={coin}
+      />
     </Card>
   );
 };
