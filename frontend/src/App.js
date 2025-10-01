@@ -183,7 +183,7 @@ function App() {
       if (isCustomScan && customSymbols) {
         const symbolsArray = customSymbols
           .split(',')
-          .map(s => s.trim().toUpperCase())
+          .map(s.trim().toUpperCase())
           .filter(s => s.length > 0);
         
         if (symbolsArray.length === 0) {
@@ -198,29 +198,65 @@ function App() {
       await axios.post(`${API}/scan/run`, requestBody);
       toast.success('Scan started successfully!');
       
-      // Poll for updates
-      const pollInterval = setInterval(async () => {
+      // Start polling with a more robust approach
+      let pollCount = 0;
+      const maxPolls = 60; // 5 minutes max (60 * 5 seconds)
+      let pollIntervalId = null;
+      
+      const pollScanStatus = async () => {
         try {
-          const statusResponse = await axios.get(`${API}/scan/status`);
-          setScanStatus(statusResponse.data);
+          pollCount++;
+          console.log(`Polling scan status (attempt ${pollCount}/${maxPolls})...`);
           
-          // Check the fresh response data, not stale state
-          if (!statusResponse.data.is_running) {
-            clearInterval(pollInterval);
-            await fetchRecommendations();
+          const statusResponse = await axios.get(`${API}/scan/status`);
+          const statusData = statusResponse.data;
+          
+          // Update state with fresh status
+          setScanStatus(statusData);
+          
+          console.log(`Scan running: ${statusData.is_running}, Status: ${statusData.recent_run?.status}`);
+          
+          // Check if scan completed
+          if (!statusData.is_running && statusData.recent_run?.status === 'completed') {
+            // Scan completed successfully
+            console.log('Scan completed! Fetching fresh recommendations...');
+            clearInterval(pollIntervalId);
+            
+            // Fetch fresh recommendations
+            const recsResponse = await axios.get(`${API}/recommendations/top5`);
+            setTopConfidence(recsResponse.data.top_confidence || []);
+            setTopPercent(recsResponse.data.top_percent_movers || []);
+            setTopDollar(recsResponse.data.top_dollar_movers || []);
+            setCurrentRunId(recsResponse.data.run_id || null);
+            
             toast.success('Scan completed! Recommendations updated.');
             setLoading(false);
+            console.log('✅ Auto-refresh complete!');
+          } else if (!statusData.is_running) {
+            // Scan stopped but not completed successfully
+            console.log('Scan stopped but not completed successfully');
+            clearInterval(pollIntervalId);
+            setLoading(false);
+            toast.warning('Scan stopped. Results may be incomplete.');
+          } else if (pollCount >= maxPolls) {
+            // Timeout reached
+            console.log('Poll timeout reached');
+            clearInterval(pollIntervalId);
+            setLoading(false);
+            toast.warning('Scan is taking longer than expected. Please check back later.');
           }
         } catch (err) {
           console.error('Error polling scan status:', err);
+          if (pollCount >= maxPolls) {
+            clearInterval(pollIntervalId);
+            setLoading(false);
+          }
         }
-      }, 5000);
+      };
       
-      // Stop polling after 5 minutes
-      setTimeout(() => {
-        clearInterval(pollInterval);
-        setLoading(false);
-      }, 300000);
+      // Start polling immediately and then every 5 seconds
+      pollIntervalId = setInterval(pollScanStatus, 5000);
+      pollScanStatus(); // Call immediately once
       
     } catch (error) {
       console.error('Error running scan:', error);
