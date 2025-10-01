@@ -367,7 +367,8 @@ async def update_schedule_config(request: UpdateScheduleRequest):
 @api_router.get("/coins")
 async def get_coins(scope: str = 'all'):
     """Get list of coins based on filter scope."""
-    coins = await scan_orchestrator.coinalyze_client.get_coins()
+    coins_data = await scan_orchestrator.crypto_client.get_all_coins()
+    coins = [symbol for symbol, name, price in coins_data]
     
     if scope == 'alt':
         exclusions = ['BTC', 'ETH', 'USDT', 'USDC', 'DAI', 'TUSD', 'BUSD']
