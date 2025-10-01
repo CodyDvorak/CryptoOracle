@@ -82,7 +82,11 @@ function App() {
       setScanStatus(response.data);
       if (response.data.recent_run) {
         const lastScan = new Date(response.data.recent_run.started_at).toLocaleString();
-        setStats(prev => ({ ...prev, lastScan }));
+        setStats(prev => ({ 
+          ...prev, 
+          lastScan,
+          totalCoins: response.data.coins_analyzed || 0
+        }));
       }
     } catch (error) {
       console.error('Error fetching scan status:', error);
