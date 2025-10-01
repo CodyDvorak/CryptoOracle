@@ -5,11 +5,11 @@
   },
   {
     "content": "Install required frontend packages (framer-motion, lightweight-charts, recharts, react-gauge-component, lucide-react, sonner)",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "Update index.css with design tokens and load fonts in public/index.html",
-    "status": "pending"
+    "status": "in_progress"
   },
   {
     "content": "Create Shadcn UI components in /frontend/src/components/ui (Button, Card, Input, Select, Switch, Tabs, Toggle, Dialog, Tooltip)",
