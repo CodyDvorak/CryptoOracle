@@ -274,7 +274,7 @@ function App() {
                 <Activity className="w-16 h-16 mx-auto mb-4 text-[var(--muted)]" />
                 <h3 className="text-lg font-semibold mb-2">No Recommendations Yet</h3>
                 <p className="text-[var(--muted)] mb-4">
-                  Run your first scan to get AI-powered trading recommendations from 21 diverse bots.
+                  Run your first scan to get AI-powered price predictions from 21 diverse bots analyzing 1 year of data.
                 </p>
                 <Button onClick={runScan} className="gap-2">
                   <Play className="w-4 h-4" />
