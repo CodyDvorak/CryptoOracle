@@ -1,18 +1,18 @@
 [
   {
-    "content": "Fix Coinalyze API endpoints to get real data instead of mock data",
+    "content": "Integrate CoinGecko API for accurate real-time data",
+    "status": "completed"
+  },
+  {
+    "content": "Update to fetch 500 coins instead of 50",
+    "status": "completed"
+  },
+  {
+    "content": "Test scan with real CoinGecko data",
     "status": "in_progress"
   },
   {
-    "content": "Remove 50-coin limit and fetch ALL available coins from Coinalyze",
-    "status": "pending"
-  },
-  {
-    "content": "Verify accurate current prices and historical data",
-    "status": "pending"
-  },
-  {
-    "content": "Test with real API data and verify predictions are accurate",
+    "content": "Verify accurate current prices and predictions",
     "status": "pending"
   }
 ]
