@@ -108,11 +108,29 @@ class ScanOrchestrator:
                     logger.error(f"Error analyzing {symbol}: {e}")
                     continue
             
-            # 4. Get Top 5
-            top_5 = self.aggregation_engine.get_top_n(all_aggregated_results, n=5)
+            # 4. Get multiple Top 5 lists
+            top_5_confidence = self.aggregation_engine.get_top_n(all_aggregated_results, n=5)
+            top_5_percent = self.aggregation_engine.get_top_percent_movers(all_aggregated_results, n=5)
+            top_5_dollar = self.aggregation_engine.get_top_dollar_movers(all_aggregated_results, n=5)
             
-            # 5. Save recommendations to DB
-            for rec_data in top_5:
+            # Combine all unique recommendations
+            all_top_recommendations = []
+            seen_coins = set()
+            
+            for rec_list, category in [
+                (top_5_confidence, 'confidence'),
+                (top_5_percent, 'percent_mover'),
+                (top_5_dollar, 'dollar_mover')
+            ]:
+                for rec_data in rec_list:
+                    coin_name = rec_data.get('coin')
+                    if coin_name not in seen_coins:
+                        rec_data['category'] = category
+                        all_top_recommendations.append(rec_data)
+                        seen_coins.add(coin_name)
+            
+            # 5. Save all recommendations to DB
+            for rec_data in all_top_recommendations:
                 recommendation = Recommendation(
                     run_id=scan_run.id,
                     **rec_data
