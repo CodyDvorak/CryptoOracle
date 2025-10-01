@@ -190,6 +190,42 @@ async def get_current_user_info(current_user: dict = Depends(require_auth)):
     )
 
 
+# ==================== Outcome Tracking ====================
+
+@api_router.post("/outcomes/track")
+async def track_outcomes(current_user: Optional[dict] = Depends(get_current_user)):
+    """Manually trigger outcome tracking for all pending recommendations"""
+    try:
+        result = await outcome_tracker.track_all_pending_recommendations()
+        
+        if result:
+            return {
+                'status': 'success',
+                'message': 'Outcome tracking completed',
+                **result
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Outcome tracking failed")
+            
+    except Exception as e:
+        logger.error(f"Error in outcome tracking endpoint: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@api_router.get("/outcomes/bot-success-rates")
+async def get_bot_success_rates():
+    """Get success rates for each bot based on historical outcomes"""
+    try:
+        success_rates = await outcome_tracker.calculate_bot_success_rates()
+        return {
+            'bot_success_rates': success_rates,
+            'total_bots': len(success_rates)
+        }
+    except Exception as e:
+        logger.error(f"Error fetching bot success rates: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ==================== User History ====================
 
 @api_router.get("/user/history")
