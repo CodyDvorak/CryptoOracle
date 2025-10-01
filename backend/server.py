@@ -189,51 +189,34 @@ async def get_current_user_info(current_user: dict = Depends(require_auth)):
 # ==================== Scan Endpoints ====================
 
 @api_router.post("/scan/run")
-async def run_scan(request: ScanRunRequest, background_tasks: BackgroundTasks):
-    """Trigger a manual scan of all coins.
-    
-    This runs in the background and returns immediately.
-    """
+async def run_scan(request: ScanRunRequest, background_tasks: BackgroundTasks, current_user: Optional[dict] = Depends(get_current_user)):
+    """Trigger a crypto scan (user-specific if authenticated)."""
     global current_scan_task
     
-    # Check if a scan is already running
     if current_scan_task and not current_scan_task.done():
         raise HTTPException(status_code=409, detail="A scan is already running")
     
-    # Start scan in background
-    async def run_scan_task():
+    user_id = current_user['id'] if current_user else None
+    
+    # Create a background task for the scan
+    async def scan_task():
+        global current_scan_task
         try:
-            logger.info(f"Background scan task starting with scope={request.scope}, min_price={request.min_price}, max_price={request.max_price}")
-            result = await scan_orchestrator.run_scan(
-                filter_scope=request.scope, 
-                min_price=request.min_price, 
+            await scan_orchestrator.run_scan(
+                filter_scope=request.scope,
+                min_price=request.min_price,
                 max_price=request.max_price,
-                custom_symbols=request.custom_symbols if hasattr(request, 'custom_symbols') else None
+                custom_symbols=request.custom_symbols,
+                user_id=user_id
             )
-            logger.info(f"Scan completed: {result}")
-            
-            # Send notifications if configured
-            integrations = await db.integrations_config.find_one({})
-            if integrations:
-                logger.info("Sending notifications...")
-                await scan_orchestrator.notify_results(
-                    run_id=result['run_id'],
-                    email_config=integrations,
-                    sheets_config=integrations
-                )
-            
-            return result
         except Exception as e:
-            logger.error(f"CRITICAL: Scan task error: {e}", exc_info=True)
-            raise
+            logger.error(f"Scan error: {e}")
+        finally:
+            current_scan_task = None
     
-    current_scan_task = asyncio.create_task(run_scan_task())
+    current_scan_task = asyncio.create_task(scan_task())
     
-    return {
-        "message": "Scan started",
-        "status": "running",
-        "scope": request.scope
-    }
+    return {"status": "started", "message": "Scan initiated"}
 
 
 @api_router.get("/scan/runs")
