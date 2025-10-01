@@ -194,7 +194,7 @@ function App() {
       if (isCustomScan && customSymbols) {
         const symbolsArray = customSymbols
           .split(',')
-          .map(s.trim().toUpperCase())
+          .map(s => s.trim().toUpperCase())
           .filter(s => s.length > 0);
         
         if (symbolsArray.length === 0) {
