@@ -481,18 +481,6 @@ function App() {
                   Save Schedule
                 </Button>
               </CardContent>
-                      value={maxPrice}
-                      onChange={(e) => setMaxPrice(e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-                
-                <Button onClick={saveSchedule} className="w-full gap-2">
-                  <CheckCircle className="w-4 h-4" />
-                  Save Schedule
-                </Button>
-              </CardContent>
             </Card>
             
             {/* Email Integration */}
