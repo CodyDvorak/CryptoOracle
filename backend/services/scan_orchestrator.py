@@ -263,22 +263,25 @@ class ScanOrchestrator:
             Aggregated result dict or None if insufficient data
         """
         try:
-            # 1. Fetch comprehensive TokenMetrics data
+            # 1. Try to fetch TokenMetrics data (may fail with 401 for some tokens on free tier)
             candles = await self.token_client.get_historical_data(symbol, days=365)
             ai_signals = await self.token_client.get_ai_signals(symbol)
             support_resistance = await self.token_client.get_support_resistance(token_id)
             
-            if len(candles) < 50:
-                logger.warning(f"Insufficient TokenMetrics data for {symbol}: {len(candles)} candles")
-                return None
+            # 2. If no historical data, use AI grades only (simpler analysis)
+            if len(candles) < 20:
+                logger.info(f"Limited historical data for {symbol}, using AI-only analysis")
+                return await self._analyze_with_ai_only(
+                    symbol, display_name, current_price, trader_grade, investor_grade, run_id
+                )
             
-            # 2. Update most recent candle with current price
+            # 3. Update most recent candle with current price
             if candles and current_price > 0:
                 candles[-1]['close'] = current_price
                 candles[-1]['high'] = max(candles[-1]['high'], current_price)
                 candles[-1]['low'] = min(candles[-1]['low'], current_price)
             
-            # 3. Compute technical indicators
+            # 4. Compute technical indicators
             features = self.indicator_engine.compute_all_indicators(candles)
             
             if not features:
