@@ -101,3 +101,125 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: |
+  Implement 3 phases for Crypto Oracle:
+  Phase 1: Bot Details Popup - Show individual bot confidence scores when clicking a recommendation
+  Phase 2: Dynamic Confidence Score Validation - Ensure confidence scores are truly dynamic averages
+  Phase 3: Custom Scan UI - Allow users to scan specific coins via UI input
+
+backend:
+  - task: "Bot details API endpoint"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Created GET /api/recommendations/{run_id}/{coin_symbol}/bot_details endpoint to fetch individual bot results for a specific coin"
+
+  - task: "Custom scan backend support"
+    implemented: true
+    working: "NA"
+    file: "backend/services/scan_orchestrator.py, backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Backend already supports custom_symbols parameter in scan endpoint. Verified implementation in scan_orchestrator.py run_scan method"
+
+  - task: "Dynamic confidence calculation validation"
+    implemented: true
+    working: "NA"
+    file: "backend/services/aggregation_engine.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Verified that confidence calculation uses statistics.mean() on all bot confidences. Dynamic by design. AI-only fallback intentionally uses simplified single confidence value when no bot results available"
+
+frontend:
+  - task: "Bot details modal component"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/components/BotDetailsModal.js, frontend/src/components/ui/dialog.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Created BotDetailsModal component with dialog UI components. Added 'Bot Details' button to CoinRecommendationCard that opens modal and fetches individual bot scores via new API endpoint"
+
+  - task: "Pass runId to recommendation cards"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added currentRunId state to App.js, extracted from API response, and passed as prop to all CoinRecommendationCard instances"
+
+  - task: "Custom scan UI"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added Custom Scan section with input field for comma-separated symbols. Modified runScan to accept isCustomScan parameter and send custom_symbols array to backend"
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 0
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Bot details API endpoint"
+    - "Bot details modal component"
+    - "Custom scan UI"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: |
+      Implementation complete for all 3 phases:
+      
+      Phase 1 - Bot Details Popup:
+      - Created backend endpoint /api/recommendations/{run_id}/{coin_symbol}/bot_details
+      - Created BotDetailsModal and dialog UI components
+      - Added "Bot Details" button to CoinRecommendationCard
+      - Integrated runId state management in App.js
+      
+      Phase 2 - Dynamic Confidence Validation:
+      - Verified aggregation_engine.py uses statistics.mean() for dynamic calculation
+      - Confidence scores are properly averaged from all bot results
+      - AI-only fallback intentionally simplified (no individual bots)
+      
+      Phase 3 - Custom Scan UI:
+      - Added customSymbols state and input field
+      - Created dedicated Custom Scan section in UI
+      - Modified runScan function to handle custom symbol arrays
+      - Backend support already existed and works correctly
+      
+      Ready for backend testing. All endpoints need validation:
+      - Test bot details endpoint with valid run_id and coin_symbol
+      - Test custom scan with symbol array
+      - Verify dynamic confidence calculations
