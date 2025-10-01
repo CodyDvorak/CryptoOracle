@@ -49,20 +49,38 @@ class ScanOrchestrator:
         logger.info(f"Starting scan run {scan_run.id} with scope={filter_scope}")
         
         try:
-            # 1. Fetch coin list from CoinGecko (real-time accurate data)
-            logger.info("Fetching coins from CoinGecko...")
-            coin_data_list = await self.coingecko_client.get_top_coins(limit=500)  # Top 500 by market cap
+            # 1. Fetch coin list from both sources
+            logger.info("Fetching coins from Binance and CoinGecko...")
+            
+            # Get Binance trading pairs (300+ coins with real data)
+            binance_symbols = await self.binance_client.get_all_symbols()
+            binance_set = set(binance_symbols)
+            
+            # Get CoinGecko data for current prices
+            coingecko_data = await self.coingecko_client.get_top_coins(limit=500)
+            
+            # Create mapping: symbol -> current price
+            price_map = {}
+            for coin_data in coingecko_data:
+                symbol = coin_data.get('symbol', '').upper()
+                price = coin_data.get('current_price', 0)
+                if symbol and price > 0:
+                    price_map[symbol] = price
+            
+            # Prioritize coins available on Binance (real historical data)
+            coins = []
+            for symbol in binance_symbols:
+                current_price = price_map.get(symbol, 0)
+                if current_price > 0:
+                    coins.append((symbol, symbol, current_price, True))  # (symbol, display_symbol, price, has_binance_data)
             
             # 2. Apply filter
             if filter_scope == 'alt':
                 # Exclude major coins and stablecoins
-                exclusions = ['bitcoin', 'ethereum', 'tether', 'usd-coin', 'dai', 'true-usd', 'binance-usd']
-                coin_data_list = [c for c in coin_data_list if c.get('id') not in exclusions]
+                exclusions = ['BTC', 'ETH', 'USDT', 'USDC', 'DAI', 'TUSD', 'BUSD', 'USDD']
+                coins = [c for c in coins if c[0] not in exclusions]
             
-            coins = [(c.get('id'), c.get('symbol', '').upper(), c.get('current_price', 0)) 
-                     for c in coin_data_list if c.get('current_price', 0) > 0]
-            
-            logger.info(f"Analyzing {len(coins)} coins (all available from CoinGecko)")
+            logger.info(f"Analyzing {len(coins)} coins with REAL Binance historical data + CoinGecko prices")
             scan_run.total_coins = len(coins)
             
             # 3. Analyze each coin
