@@ -430,20 +430,65 @@ async def restart_scheduler(config: dict):
     # Add new job if enabled
     if config.get('schedule_enabled'):
         interval = config.get('schedule_interval', '12h')
+        start_time = config.get('schedule_start_time')  # HH:MM format
+        tz_str = config.get('timezone', 'UTC')
         
         # Parse interval
         hours_map = {'6h': 6, '12h': 12, '24h': 24}
         hours = hours_map.get(interval, 12)
         
-        # Add job
-        scheduler.add_job(
-            scheduled_scan_job,
-            trigger=IntervalTrigger(hours=hours),
-            id='crypto_scan_job',
-            replace_existing=True
-        )
+        # Create trigger
+        from datetime import datetime
+        import pytz
         
-        logger.info(f"Scheduler configured: {interval} intervals")
+        # Get timezone
+        try:
+            tz = pytz.timezone(tz_str)
+        except:
+            tz = pytz.UTC
+            logger.warning(f"Invalid timezone {tz_str}, using UTC")
+        
+        # If custom start time provided, calculate next run
+        if start_time:
+            try:
+                # Parse HH:MM
+                hour, minute = map(int, start_time.split(':'))
+                
+                # Calculate next occurrence
+                now = datetime.now(tz)
+                next_run = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+                
+                # If time has passed today, schedule for tomorrow
+                if next_run <= now:
+                    next_run = next_run + timedelta(days=1)
+                
+                # Add job with interval and start date
+                scheduler.add_job(
+                    scheduled_scan_job,
+                    trigger=IntervalTrigger(hours=hours, start_date=next_run, timezone=tz),
+                    id='crypto_scan_job',
+                    replace_existing=True
+                )
+                
+                logger.info(f"Scheduler configured: {interval} intervals starting at {start_time} {tz_str}, next run: {next_run}")
+            except Exception as e:
+                logger.error(f"Error parsing start time: {e}, falling back to immediate start")
+                scheduler.add_job(
+                    scheduled_scan_job,
+                    trigger=IntervalTrigger(hours=hours, timezone=tz),
+                    id='crypto_scan_job',
+                    replace_existing=True
+                )
+        else:
+            # No custom start time, start immediately
+            scheduler.add_job(
+                scheduled_scan_job,
+                trigger=IntervalTrigger(hours=hours, timezone=tz),
+                id='crypto_scan_job',
+                replace_existing=True
+            )
+            
+            logger.info(f"Scheduler configured: {interval} intervals (immediate start)")
 
 
 # ==================== Startup & Shutdown ====================
