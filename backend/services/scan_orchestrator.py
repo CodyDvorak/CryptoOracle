@@ -242,7 +242,7 @@ class ScanOrchestrator:
                             if support_resistance:
                                 features['resistance'] = support_resistance.get('resistance', current_price * 1.1)
                                 features['support'] = support_resistance.get('support', current_price * 0.9)
-                        except:
+                        except Exception:
                             pass  # AI signals are optional enhancement
                     
                     logger.info(f"Enhanced {symbol} with TokenMetrics AI: T:{trader_grade:.0f}/I:{investor_grade:.0f}")
