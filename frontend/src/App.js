@@ -40,7 +40,7 @@ function App() {
   const [stats, setStats] = useState({
     activeBots: 21,
     lastScan: 'Never',
-    totalCoins: 50
+    totalCoins: 0  // Will be updated dynamically after scan
   });
 
   // Fetch data on mount
