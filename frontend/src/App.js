@@ -221,7 +221,9 @@ function App() {
         requestBody.custom_symbols = symbolsArray;
       }
       
-      await axios.post(`${API}/scan/run`, requestBody);
+      await axios.post(`${API}/scan/run`, requestBody, {
+        headers: getAuthHeader()
+      });
       toast.success('Scan started successfully!');
       
       // Start polling with a more robust approach
