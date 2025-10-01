@@ -260,6 +260,66 @@ async def update_integrations_config(request: UpdateIntegrationsRequest):
     return {"message": "Integrations configuration updated successfully"}
 
 
+@api_router.post("/config/integrations/test-email")
+async def test_email():
+    """Test email configuration by sending a test email."""
+    import os
+    from services.email_service import EmailService
+    
+    try:
+        # Get config from DB or env
+        config = await db.integrations_config.find_one({})
+        
+        if config and config.get('email_to'):
+            email_to = config['email_to']
+            smtp_config = config
+        else:
+            # Use env variables
+            email_to = os.environ.get('SMTP_USER', '')
+            smtp_config = {
+                'smtp_host': os.environ.get('SMTP_HOST', 'smtp.gmail.com'),
+                'smtp_port': int(os.environ.get('SMTP_PORT', 587)),
+                'smtp_user': os.environ.get('SMTP_USER', ''),
+                'smtp_pass': os.environ.get('SMTP_PASS', '')
+            }
+        
+        if not email_to:
+            raise HTTPException(status_code=400, detail="No email address configured")
+        
+        # Create test email
+        email_service = EmailService(
+            smtp_host=smtp_config['smtp_host'],
+            smtp_port=smtp_config['smtp_port'],
+            smtp_user=smtp_config['smtp_user'],
+            smtp_pass=smtp_config['smtp_pass']
+        )
+        
+        # Send test email with mock recommendations
+        test_recommendations = [{
+            'coin': 'BTC',
+            'consensus_direction': 'long',
+            'avg_confidence': 8.5,
+            'avg_entry': 50000,
+            'avg_take_profit': 52000,
+            'avg_stop_loss': 49000
+        }]
+        
+        success = email_service.send_top5_notification(
+            recipient=email_to,
+            recommendations=test_recommendations,
+            run_id='test-email'
+        )
+        
+        if success:
+            return {"message": f"Test email sent successfully to {email_to}"}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to send test email")
+    
+    except Exception as e:
+        logger.error(f"Test email error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @api_router.get("/config/schedule")
 async def get_schedule_config():
     """Get current schedule configuration."""
