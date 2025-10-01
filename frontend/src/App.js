@@ -24,6 +24,7 @@ function App() {
   const [topConfidence, setTopConfidence] = useState([]);
   const [topPercent, setTopPercent] = useState([]);
   const [topDollar, setTopDollar] = useState([]);
+  const [currentRunId, setCurrentRunId] = useState(null);
   const [bots, setBots] = useState([]);
   const [scanStatus, setScanStatus] = useState({ is_running: false });
   const [filter, setFilter] = useState('all');
