@@ -105,7 +105,7 @@ export const CoinRecommendationCard = ({ recommendation, rank }) => {
             <span className="text-[var(--muted)]">24h</span>
             <span className={`font-mono font-bold ${change24h >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
               ${avg_predicted_24h?.toFixed(6)} 
-              <span className="text-xs ml-1">({change24h >= 0 ? '+' : ''}{change24h.toFixed(1)}%)</span>
+              <span className="text-xs ml-1">({change24h >= 0 ? '+' : ''}{change24h.toFixed(4)}%)</span>
             </span>
           </div>
           
@@ -113,7 +113,7 @@ export const CoinRecommendationCard = ({ recommendation, rank }) => {
             <span className="text-[var(--muted)]">48h</span>
             <span className={`font-mono font-bold ${change48h >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
               ${avg_predicted_48h?.toFixed(6)}
-              <span className="text-xs ml-1">({change48h >= 0 ? '+' : ''}{change48h.toFixed(1)}%)</span>
+              <span className="text-xs ml-1">({change48h >= 0 ? '+' : ''}{change48h.toFixed(4)}%)</span>
             </span>
           </div>
           
@@ -121,7 +121,7 @@ export const CoinRecommendationCard = ({ recommendation, rank }) => {
             <span className="text-[var(--muted)]">7d</span>
             <span className={`font-mono font-bold ${change7d >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
               ${avg_predicted_7d?.toFixed(6)}
-              <span className="text-xs ml-1">({change7d >= 0 ? '+' : ''}{change7d.toFixed(1)}%)</span>
+              <span className="text-xs ml-1">({change7d >= 0 ? '+' : ''}{change7d.toFixed(4)}%)</span>
             </span>
           </div>
         </div>
@@ -134,7 +134,7 @@ export const CoinRecommendationCard = ({ recommendation, rank }) => {
             <span className="text-xs text-[var(--success)]">Take Profit</span>
             <span className="font-mono font-bold text-[var(--success)]" data-testid="tp-value">
               ${avg_take_profit.toFixed(6)}
-              <span className="text-xs ml-1">({profitPct > 0 ? '+' : ''}{profitPct.toFixed(1)}%)</span>
+              <span className="text-xs ml-1">({profitPct > 0 ? '+' : ''}{profitPct.toFixed(4)}%)</span>
             </span>
           </div>
           
