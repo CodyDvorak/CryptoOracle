@@ -21,11 +21,11 @@
   },
   {
     "content": "Test frontend: Compile and check for errors",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "Restart services and verify the application loads",
-    "status": "pending"
+    "status": "in_progress"
   },
   {
     "content": "Test a complete scan flow",
