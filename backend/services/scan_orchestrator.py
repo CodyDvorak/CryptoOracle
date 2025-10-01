@@ -4,6 +4,7 @@ import logging
 from datetime import datetime, timezone
 
 from services.coinalyze_client import CoinalyzeClient
+from services.coingecko_client import CoinGeckoClient
 from services.indicator_engine import IndicatorEngine
 from services.llm_synthesis_service import LLMSynthesisService
 from services.aggregation_engine import AggregationEngine
@@ -20,6 +21,7 @@ class ScanOrchestrator:
     def __init__(self, db, coinalyze_api_key: str):
         self.db = db
         self.coinalyze_client = CoinalyzeClient(coinalyze_api_key)
+        self.coingecko_client = CoinGeckoClient()  # Free, accurate data
         self.indicator_engine = IndicatorEngine()
         self.llm_service = LLMSynthesisService()
         self.aggregation_engine = AggregationEngine()
