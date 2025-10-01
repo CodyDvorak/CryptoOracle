@@ -9,11 +9,14 @@ logger = logging.getLogger(__name__)
 class EmailService:
     """Email notification service via SMTP."""
     
-    def __init__(self, smtp_host: str, smtp_port: int, smtp_user: str, smtp_pass: str):
-        self.smtp_host = smtp_host
-        self.smtp_port = smtp_port
-        self.smtp_user = smtp_user
-        self.smtp_pass = smtp_pass
+    def __init__(self, smtp_host: str = None, smtp_port: int = None, smtp_user: str = None, smtp_pass: str = None):
+        # Use provided values or fall back to environment variables
+        import os
+        self.smtp_host = smtp_host or os.environ.get('SMTP_HOST', 'smtp.gmail.com')
+        self.smtp_port = smtp_port or int(os.environ.get('SMTP_PORT', 587))
+        self.smtp_user = smtp_user or os.environ.get('SMTP_USER', '')
+        self.smtp_pass = smtp_pass or os.environ.get('SMTP_PASS', '')
+        self.email_from = os.environ.get('EMAIL_FROM', self.smtp_user)
     
     def send_top5_notification(self, recipient: str, recommendations: List[Dict], run_id: str) -> bool:
         """Send Top 5 recommendations email.
