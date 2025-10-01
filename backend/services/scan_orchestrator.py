@@ -81,14 +81,15 @@ class ScanOrchestrator:
                 tokens = [t for t in tokens if t[2] <= max_price]
                 logger.info(f"Applied price filter: max_price=${max_price}")
             
-            # 3. Select tokens to analyze (limit to top 50 for performance)
+            # 3. Select tokens to analyze (try more to account for data availability)
             if custom_symbols:
                 # Custom scan: analyze all selected symbols
                 selected_tokens = tokens[:50]  # Limit even custom scans
                 logger.info(f"Custom scan: analyzing {len(selected_tokens)} tokens")
             else:
-                # Take top 50 by market cap (CryptoCompare returns them sorted)
-                selected_tokens = tokens[:50]
+                # Take top 80 by market cap to ensure we get enough valid results
+                # (many coins lack sufficient historical data)
+                selected_tokens = tokens[:80]
                 logger.info(f"Analyzing top {len(selected_tokens)} coins by market cap")
             
             scan_run.total_coins = len(selected_tokens)
