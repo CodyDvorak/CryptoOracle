@@ -211,18 +211,29 @@ function App() {
               <SelectOption value="alt">Alt Coins</SelectOption>
             </Select>
             
-            {/* Price Filter */}
+            {/* Price Filters */}
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-[var(--muted)]" />
               <Input 
                 type="number"
                 step="0.01"
                 min="0"
-                placeholder="Max price"
+                placeholder="Min $"
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value)}
+                className="w-20 h-9 text-sm"
+                data-testid="min-price-filter-input"
+              />
+              <span className="text-[var(--muted)] text-xs">-</span>
+              <Input 
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="Max $"
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(e.target.value)}
-                className="w-24 h-9 text-sm"
-                data-testid="price-filter-input"
+                className="w-20 h-9 text-sm"
+                data-testid="max-price-filter-input"
               />
             </div>
             
