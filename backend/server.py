@@ -91,7 +91,8 @@ async def run_scan(request: ScanRunRequest, background_tasks: BackgroundTasks):
             result = await scan_orchestrator.run_scan(
                 filter_scope=request.scope, 
                 min_price=request.min_price, 
-                max_price=request.max_price
+                max_price=request.max_price,
+                custom_symbols=request.custom_symbols if hasattr(request, 'custom_symbols') else None
             )
             logger.info(f"Scan completed: {result}")
             
