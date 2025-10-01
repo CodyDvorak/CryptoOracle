@@ -214,6 +214,79 @@ async def get_recommendations_history(limit: int = 50):
     return {"recommendations": recommendations}
 
 
+@api_router.get("/recommendations/{run_id}/{coin_symbol}/bot_details")
+async def get_bot_details(run_id: str, coin_symbol: str):
+    """Get individual bot confidence scores for a specific coin from a scan run.
+    
+    Args:
+        run_id: The scan run ID
+        coin_symbol: The coin symbol (e.g., 'BTC', 'ETH')
+    
+    Returns:
+        Dictionary with bot details including individual confidence scores
+    """
+    # Find the recommendation to get the coin display name
+    recommendation = await db.recommendations.find_one({
+        'run_id': run_id,
+        'ticker': coin_symbol
+    })
+    
+    if not recommendation:
+        # Try matching by coin name if ticker doesn't match
+        recommendation = await db.recommendations.find_one({
+            'run_id': run_id,
+            'coin': {'$regex': coin_symbol, '$options': 'i'}
+        })
+    
+    if not recommendation:
+        raise HTTPException(
+            status_code=404, 
+            detail=f"No recommendation found for coin {coin_symbol} in run {run_id}"
+        )
+    
+    coin_name = recommendation.get('coin')
+    
+    # Fetch all bot results for this coin in this run
+    bot_results = await db.bot_results.find({
+        'run_id': run_id,
+        'coin': coin_name
+    }).to_list(100)
+    
+    if not bot_results:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No bot results found for {coin_name} in run {run_id}"
+        )
+    
+    # Convert ObjectId to string and format response
+    bot_details = []
+    for result in bot_results:
+        if '_id' in result:
+            result['_id'] = str(result['_id'])
+        
+        bot_details.append({
+            'bot_name': result.get('bot_name'),
+            'confidence': result.get('confidence', 0),
+            'direction': result.get('direction'),
+            'entry_price': result.get('entry_price'),
+            'take_profit': result.get('take_profit'),
+            'stop_loss': result.get('stop_loss'),
+            'rationale': result.get('rationale', '')
+        })
+    
+    # Sort by confidence (highest first)
+    bot_details.sort(key=lambda x: x['confidence'], reverse=True)
+    
+    return {
+        'run_id': run_id,
+        'coin': coin_name,
+        'ticker': coin_symbol,
+        'total_bots': len(bot_details),
+        'avg_confidence': recommendation.get('avg_confidence', 0),
+        'bot_results': bot_details
+    }
+
+
 # ==================== Bots Status ====================
 
 @api_router.get("/bots/status")
