@@ -25,13 +25,14 @@ class ScanOrchestrator:
         self.aggregation_engine = AggregationEngine()
         self.bots = get_all_bots()
         
-    async def run_scan(self, filter_scope: str = 'all', min_price: Optional[float] = None, max_price: Optional[float] = None, run_id: Optional[str] = None) -> Dict:
+    async def run_scan(self, filter_scope: str = 'all', min_price: Optional[float] = None, max_price: Optional[float] = None, custom_symbols: Optional[List[str]] = None, run_id: Optional[str] = None) -> Dict:
         """Execute a full scan of all coins.
         
         Args:
-            filter_scope: 'all' or 'alt' (exclude major coins)
+            filter_scope: 'all' or 'alt' (exclude major coins) or 'custom'
             min_price: Optional minimum price filter
             max_price: Optional maximum price filter
+            custom_symbols: Optional list of specific symbols to scan
             run_id: Optional run ID (generated if not provided)
         
         Returns:
@@ -46,7 +47,7 @@ class ScanOrchestrator:
             status='running'
         )
         await self.db.scan_runs.insert_one(scan_run.dict())
-        logger.info(f"Starting scan run {scan_run.id} with scope={filter_scope}, min_price={min_price}, max_price={max_price}")
+        logger.info(f"Starting scan run {scan_run.id} with scope={filter_scope}, custom_symbols={custom_symbols}, min_price={min_price}, max_price={max_price}")
         
         try:
             # 1. Fetch tokens with AI grades from TokenMetrics
@@ -56,10 +57,14 @@ class ScanOrchestrator:
             # Store total available coins
             scan_run.total_available_coins = len(all_tokens)
             
-            # 2. Apply basic filters first
+            # 2. Apply filters
             tokens = all_tokens
             
-            if filter_scope == 'alt':
+            # Custom symbols filter (takes precedence)
+            if custom_symbols and len(custom_symbols) > 0:
+                tokens = [t for t in all_tokens if t[0] in custom_symbols]
+                logger.info(f"Custom scan: filtering to {len(custom_symbols)} specific symbols")
+            elif filter_scope == 'alt':
                 exclusions = ['BTC', 'ETH', 'USDT', 'USDC', 'DAI', 'TUSD', 'BUSD', 'USDD']
                 tokens = [t for t in tokens if t[0] not in exclusions]
             
@@ -72,7 +77,7 @@ class ScanOrchestrator:
                 tokens = [t for t in tokens if t[2] <= max_price]
                 logger.info(f"Applied price filter: max_price=${max_price}")
             
-            # 3. **SMART FILTERING: Sort by AI confidence and take top performers**
+            # 3. **SMART FILTERING: Sort by AI confidence and take top performers (skip for custom)**
             # Calculate combined AI score for each token
             tokens_with_scores = []
             for symbol, display_name, current_price, token_id, trader_grade, investor_grade in tokens:
