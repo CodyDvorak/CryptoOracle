@@ -56,7 +56,7 @@ class ScanOrchestrator:
             else:
                 coins = all_coins
             
-            logger.info(f"Analyzing {len(coins)} coins")
+            logger.info(f"Analyzing {len(coins)} coins (all available from Coinalyze)")
             scan_run.total_coins = len(coins)
             
             # 3. Analyze each coin
