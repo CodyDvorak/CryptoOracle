@@ -1,25 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from './ui/dialog';
 import { Activity, TrendingUp, TrendingDown } from 'lucide-react';
 
 const BotDetailsModal = ({ open, onClose, runId, coinSymbol, coinName }) => {
   const [botDetails, setBotDetails] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (open && runId && coinSymbol) {
-      // Reset state when opening
-      setBotDetails(null);
-      setError(null);
-      fetchBotDetails();
-    }
-  }, [open, runId, coinSymbol]);
-
-  const fetchBotDetails = async () => {
+  const fetchBotDetails = useCallback(async () => {
+    if (!runId || !coinSymbol) return;
+    
     try {
       setLoading(true);
       setError(null);
+      setBotDetails(null);
       
       const backendUrl = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
       const response = await fetch(
@@ -38,10 +32,13 @@ const BotDetailsModal = ({ open, onClose, runId, coinSymbol, coinName }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [runId, coinSymbol]);
 
-  // Don't render dialog until we've started loading
-  if (!open) return null;
+  useEffect(() => {
+    if (open) {
+      fetchBotDetails();
+    }
+  }, [open, fetchBotDetails]);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
