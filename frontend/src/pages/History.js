@@ -301,7 +301,7 @@ const History = () => {
                               )}
                             </div>
 
-                            <div className="mt-2 grid grid-cols-3 gap-4 text-sm">
+                            <div className="mt-2 grid grid-cols-4 gap-4 text-sm">
                               <div>
                                 <p className="text-[var(--muted)]">Entry Price</p>
                                 <p className="font-mono">${rec.avg_entry?.toFixed(8)}</p>
@@ -313,6 +313,19 @@ const History = () => {
                               <div>
                                 <p className="text-[var(--muted)]">Confidence</p>
                                 <p className="font-bold text-[var(--primary)]">{rec.avg_confidence?.toFixed(1)}/10</p>
+                              </div>
+                              <div>
+                                <p className="text-[var(--muted)]">Status</p>
+                                <p className={`font-bold ${
+                                  rec.outcome_7d === 'success' ? 'text-[var(--success)]' :
+                                  rec.outcome_7d === 'failed' ? 'text-[var(--danger)]' :
+                                  'text-[var(--muted)]'
+                                }`}>
+                                  {rec.outcome_7d === 'success' ? 'Success (TP Hit)' :
+                                   rec.outcome_7d === 'failed' ? 'Failed (SL Hit)' :
+                                   rec.outcome_7d === 'expired' ? 'Expired' :
+                                   'In Progress'}
+                                </p>
                               </div>
                             </div>
                           </div>
