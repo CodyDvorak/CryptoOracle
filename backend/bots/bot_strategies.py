@@ -82,13 +82,22 @@ class SMA_CrossBot(BotStrategy):
         strength = confidence / 10.0
         predictions = self._calculate_predicted_prices(price, direction, volatility * 10, strength)
         
+        
+        # Calculate predicted prices
+        strength = confidence / 10.0
+        volatility_factor = 0.02  # Default 2% volatility
+        predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
+        
         return {
+{
             'direction': direction,
             'entry': price,
             'take_profit': price * (1 + tp_pct) if direction == 'long' else price * (1 - tp_pct),
             'stop_loss': price * (1 - sl_pct) if direction == 'long' else price * (1 + sl_pct),
             'confidence': confidence,
-            'rationale': f"SMA20 {'above' if direction == 'long' else 'below'} SMA50, indicating {direction} trend",
+            'rationale': f"SMA20 {'above' if direction == 'long' else 'below',
+            **predictions
+        } SMA50, indicating {direction} trend",
             **predictions
         }
 
@@ -128,13 +137,22 @@ class RSI_Bot(BotStrategy):
             sl_pct = 0.015
             rationale = f"RSI at {rsi:.1f} shows neutral momentum"
         
+        
+        # Calculate predicted prices
+        strength = confidence / 10.0
+        volatility_factor = 0.02  # Default 2% volatility
+        predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
+        
         return {
+{
             'direction': direction,
             'entry': price,
             'take_profit': price * (1 + tp_pct) if direction == 'long' else price * (1 - tp_pct),
             'stop_loss': price * (1 - sl_pct) if direction == 'long' else price * (1 + sl_pct),
             'confidence': confidence,
             'rationale': rationale
+        ,
+            **predictions
         }
 
 
@@ -159,13 +177,22 @@ class MACD_Bot(BotStrategy):
             direction = 'short'
             confidence = min(10, int(5 + abs(macd - signal) * 10))
         
+        
+        # Calculate predicted prices
+        strength = confidence / 10.0
+        volatility_factor = 0.02  # Default 2% volatility
+        predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
+        
         return {
+{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.035 if direction == 'long' else price * 0.965,
             'stop_loss': price * 0.98 if direction == 'long' else price * 1.02,
             'confidence': confidence,
-            'rationale': f"MACD {'above' if direction == 'long' else 'below'} signal line"
+            'rationale': f"MACD {'above' if direction == 'long' else 'below',
+            **predictions
+        } signal line"
         }
 
 
@@ -203,13 +230,22 @@ class BollingerBandsBot(BotStrategy):
             confidence = 5
             rationale = "Price in middle BB zone"
         
+        
+        # Calculate predicted prices
+        strength = confidence / 10.0
+        volatility_factor = 0.02  # Default 2% volatility
+        predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
+        
         return {
+{
             'direction': direction,
             'entry': price,
             'take_profit': bb_middle if direction == 'long' else bb_lower,
             'stop_loss': bb_lower * 0.98 if direction == 'long' else bb_upper * 1.02,
             'confidence': confidence,
             'rationale': rationale
+        ,
+            **predictions
         }
 
 
@@ -240,13 +276,22 @@ class EMA_RibbonBot(BotStrategy):
             confidence = 5
             rationale = "Mixed EMA signals"
         
+        
+        # Calculate predicted prices
+        strength = confidence / 10.0
+        volatility_factor = 0.02  # Default 2% volatility
+        predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
+        
         return {
+{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.04 if direction == 'long' else price * 0.96,
             'stop_loss': price * 0.975 if direction == 'long' else price * 1.025,
             'confidence': confidence,
             'rationale': rationale
+        ,
+            **predictions
         }
 
 
@@ -280,13 +325,22 @@ class VolumeBreakoutBot(BotStrategy):
             confidence = 4
             rationale = "Normal volume conditions"
         
+        
+        # Calculate predicted prices
+        strength = confidence / 10.0
+        volatility_factor = 0.02  # Default 2% volatility
+        predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
+        
         return {
+{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.05 if direction == 'long' else price * 0.95,
             'stop_loss': price * 0.97 if direction == 'long' else price * 1.03,
             'confidence': confidence,
             'rationale': rationale
+        ,
+            **predictions
         }
 
 
@@ -321,13 +375,22 @@ class ATR_VolatilityBot(BotStrategy):
             tp_pct = 0.05
             sl_pct = 0.025
         
+        
+        # Calculate predicted prices
+        strength = confidence / 10.0
+        volatility_factor = 0.02  # Default 2% volatility
+        predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
+        
         return {
+{
             'direction': direction,
             'entry': price,
             'take_profit': price * (1 + tp_pct) if direction == 'long' else price * (1 - tp_pct),
             'stop_loss': price * (1 - sl_pct) if direction == 'long' else price * (1 + sl_pct),
             'confidence': confidence,
             'rationale': rationale
+        ,
+            **predictions
         }
 
 
@@ -362,13 +425,22 @@ class StochasticBot(BotStrategy):
             confidence = 6
             rationale = "Stochastic %K crossed below %D"
         
+        
+        # Calculate predicted prices
+        strength = confidence / 10.0
+        volatility_factor = 0.02  # Default 2% volatility
+        predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
+        
         return {
+{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.035 if direction == 'long' else price * 0.965,
             'stop_loss': price * 0.98 if direction == 'long' else price * 1.02,
             'confidence': confidence,
             'rationale': rationale
+        ,
+            **predictions
         }
 
 
@@ -400,13 +472,22 @@ class TrendStrengthBot(BotStrategy):
             confidence = 5
             rationale = "Mixed timeframe signals"
         
+        
+        # Calculate predicted prices
+        strength = confidence / 10.0
+        volatility_factor = 0.02  # Default 2% volatility
+        predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
+        
         return {
+{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.04 if direction == 'long' else price * 0.96,
             'stop_loss': price * 0.975 if direction == 'long' else price * 1.025,
             'confidence': confidence,
             'rationale': rationale
+        ,
+            **predictions
         }
 
 
@@ -448,13 +529,22 @@ class SupportResistanceBot(BotStrategy):
             tp = price * 1.03 if direction == 'long' else price * 0.97
             sl = price * 0.98 if direction == 'long' else price * 1.02
         
+        
+        # Calculate predicted prices
+        strength = confidence / 10.0
+        volatility_factor = 0.02  # Default 2% volatility
+        predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
+        
         return {
+{
             'direction': direction,
             'entry': price,
             'take_profit': tp,
             'stop_loss': sl,
             'confidence': confidence,
             'rationale': rationale
+        ,
+            **predictions
         }
 
 
@@ -485,13 +575,22 @@ class OBV_TrendBot(BotStrategy):
             confidence = 5
             rationale = "Neutral OBV signal"
         
+        
+        # Calculate predicted prices
+        strength = confidence / 10.0
+        volatility_factor = 0.02  # Default 2% volatility
+        predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
+        
         return {
+{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.035 if direction == 'long' else price * 0.965,
             'stop_loss': price * 0.98 if direction == 'long' else price * 1.02,
             'confidence': confidence,
             'rationale': rationale
+        ,
+            **predictions
         }
 
 
@@ -526,13 +625,22 @@ class VWAP_Bot(BotStrategy):
             confidence = 5
             rationale = "Price near VWAP"
         
+        
+        # Calculate predicted prices
+        strength = confidence / 10.0
+        volatility_factor = 0.02  # Default 2% volatility
+        predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
+        
         return {
+{
             'direction': direction,
             'entry': price,
             'take_profit': vwap,
             'stop_loss': price * 0.975 if direction == 'long' else price * 1.025,
             'confidence': confidence,
             'rationale': rationale
+        ,
+            **predictions
         }
 
 
@@ -566,13 +674,22 @@ class MomentumBot(BotStrategy):
             confidence = 6
             rationale = f"Negative momentum: {momentum:.1f}%"
         
+        
+        # Calculate predicted prices
+        strength = confidence / 10.0
+        volatility_factor = 0.02  # Default 2% volatility
+        predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
+        
         return {
+{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.04 if direction == 'long' else price * 0.96,
             'stop_loss': price * 0.97 if direction == 'long' else price * 1.03,
             'confidence': confidence,
             'rationale': rationale
+        ,
+            **predictions
         }
 
 
@@ -604,13 +721,22 @@ class BreakoutBot(BotStrategy):
             confidence = 4
             rationale = "No clear breakout signal"
         
+        
+        # Calculate predicted prices
+        strength = confidence / 10.0
+        volatility_factor = 0.02  # Default 2% volatility
+        predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
+        
         return {
+{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.05 if direction == 'long' else price * 0.95,
             'stop_loss': price * 0.97 if direction == 'long' else price * 1.03,
             'confidence': confidence,
             'rationale': rationale
+        ,
+            **predictions
         }
 
 
@@ -642,13 +768,22 @@ class ConsolidationBot(BotStrategy):
             confidence = 5
             rationale = "Normal consolidation range"
         
+        
+        # Calculate predicted prices
+        strength = confidence / 10.0
+        volatility_factor = 0.02  # Default 2% volatility
+        predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
+        
         return {
+{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.04 if direction == 'long' else price * 0.96,
             'stop_loss': price * 0.98 if direction == 'long' else price * 1.02,
             'confidence': confidence,
             'rationale': rationale
+        ,
+            **predictions
         }
 
 
@@ -681,13 +816,22 @@ class ScalpingBot(BotStrategy):
             rationale = "Neutral scalp setup"
         
         # Tight TP/SL for scalping
+        
+        # Calculate predicted prices
+        strength = confidence / 10.0
+        volatility_factor = 0.02  # Default 2% volatility
+        predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
+        
         return {
+{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.015 if direction == 'long' else price * 0.985,
             'stop_loss': price * 0.99 if direction == 'long' else price * 1.01,
             'confidence': confidence,
             'rationale': rationale
+        ,
+            **predictions
         }
 
 
@@ -720,13 +864,22 @@ class DivergenceBot(BotStrategy):
             confidence = 5
             rationale = "No clear divergence signal"
         
+        
+        # Calculate predicted prices
+        strength = confidence / 10.0
+        volatility_factor = 0.02  # Default 2% volatility
+        predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
+        
         return {
+{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.04 if direction == 'long' else price * 0.96,
             'stop_loss': price * 0.975 if direction == 'long' else price * 1.025,
             'confidence': confidence,
             'rationale': rationale
+        ,
+            **predictions
         }
 
 
@@ -759,13 +912,22 @@ class SwingBot(BotStrategy):
             confidence = 5
             rationale = "Neutral swing setup"
         
+        
+        # Calculate predicted prices
+        strength = confidence / 10.0
+        volatility_factor = 0.02  # Default 2% volatility
+        predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
+        
         return {
+{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.06 if direction == 'long' else price * 0.94,
             'stop_loss': price * 0.96 if direction == 'long' else price * 1.04,
             'confidence': confidence,
             'rationale': rationale
+        ,
+            **predictions
         }
 
 
@@ -798,13 +960,22 @@ class VolatilityBreakoutBot(BotStrategy):
             confidence = 5
             rationale = "Normal volatility conditions"
         
+        
+        # Calculate predicted prices
+        strength = confidence / 10.0
+        volatility_factor = 0.02  # Default 2% volatility
+        predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
+        
         return {
+{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.05 if direction == 'long' else price * 0.95,
             'stop_loss': price * 0.97 if direction == 'long' else price * 1.03,
             'confidence': confidence,
             'rationale': rationale
+        ,
+            **predictions
         }
 
 
@@ -848,13 +1019,22 @@ class MultiTimeframeBot(BotStrategy):
             confidence = 5
             rationale = "Mixed timeframe signals"
         
+        
+        # Calculate predicted prices
+        strength = confidence / 10.0
+        volatility_factor = 0.02  # Default 2% volatility
+        predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
+        
         return {
+{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.045 if direction == 'long' else price * 0.955,
             'stop_loss': price * 0.975 if direction == 'long' else price * 1.025,
             'confidence': confidence,
             'rationale': rationale
+        ,
+            **predictions
         }
 
 
@@ -888,13 +1068,22 @@ class ConservativeBot(BotStrategy):
             rationale = "No strong conservative signal, neutral"
         
         # Conservative TP/SL
+        
+        # Calculate predicted prices
+        strength = confidence / 10.0
+        volatility_factor = 0.02  # Default 2% volatility
+        predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
+        
         return {
+{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.025 if direction == 'long' else price * 0.975,
             'stop_loss': price * 0.985 if direction == 'long' else price * 1.015,
             'confidence': confidence,
             'rationale': rationale
+        ,
+            **predictions
         }
 
 
