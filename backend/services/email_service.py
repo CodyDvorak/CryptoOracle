@@ -28,7 +28,7 @@ class EmailService:
         """
         try:
             msg = MIMEMultipart('alternative')
-            msg['Subject'] = f"CryptoTrendHunter: Top 5 Coin Recommendations (Run {run_id[:8]})"
+            msg['Subject'] = f"Crypto Oracle: Top 5 Coin Predictions (Run {run_id[:8]})"
             msg['From'] = self.smtp_user
             msg['To'] = recipient
             
