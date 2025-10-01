@@ -989,16 +989,22 @@ class ScanOrchestrator:
         """
         import os
         
+        logger.info(f"📬 notify_results called for run_id: {run_id}")
+        
         # Fetch recommendations
         recommendations = await self.db.recommendations.find({'run_id': run_id}).to_list(5)
         
         if not recommendations:
-            logger.warning(f"No recommendations found for run {run_id}")
+            logger.warning(f"⚠️ No recommendations found for run {run_id}")
             return
+        
+        logger.info(f"📊 Found {len(recommendations)} recommendations to send")
         
         # Email notification
         email_enabled = email_config.get('email_enabled', False)
         email_to = email_config.get('email_to') or os.environ.get('SMTP_USER')
+        
+        logger.info(f"✉️ Email enabled: {email_enabled}, Email to: {email_to}")
         
         if email_enabled and email_to:
             try:
@@ -1008,20 +1014,30 @@ class ScanOrchestrator:
                 smtp_user = email_config.get('smtp_user') or os.environ.get('SMTP_USER', '')
                 smtp_pass = email_config.get('smtp_pass') or os.environ.get('SMTP_PASS', '')
                 
+                logger.info(f"🔧 SMTP Config - Host: {smtp_host}, Port: {smtp_port}, User: {smtp_user}")
+                
                 email_service = EmailService(
                     smtp_host=smtp_host,
                     smtp_port=smtp_port,
                     smtp_user=smtp_user,
                     smtp_pass=smtp_pass
                 )
-                email_service.send_top5_notification(
+                
+                logger.info(f"📤 Sending email to {email_to}...")
+                result = email_service.send_top5_notification(
                     recipient=email_to,
                     recommendations=recommendations,
                     run_id=run_id
                 )
-                logger.info(f"Email notification sent to {email_to}")
+                
+                if result:
+                    logger.info(f"✅ Email notification sent successfully to {email_to}")
+                else:
+                    logger.error(f"❌ Email notification failed (send_top5_notification returned False)")
             except Exception as e:
-                logger.error(f"Email notification failed: {e}")
+                logger.error(f"❌ Email notification failed with exception: {e}", exc_info=True)
+        else:
+            logger.info(f"ℹ️ Email notification skipped - enabled: {email_enabled}, email_to: {email_to}")
         
         # Google Sheets logging
         if sheets_config.get('sheets_enabled') and sheets_config.get('sheet_id'):
@@ -1033,6 +1049,6 @@ class ScanOrchestrator:
                     recommendations=recommendations,
                     run_id=run_id
                 )
-                logger.info("Recommendations logged to Google Sheets")
+                logger.info("✅ Recommendations logged to Google Sheets")
             except Exception as e:
-                logger.error(f"Google Sheets logging failed: {e}")
+                logger.error(f"❌ Google Sheets logging failed: {e}", exc_info=True)
