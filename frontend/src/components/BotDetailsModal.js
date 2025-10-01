@@ -87,26 +87,26 @@ const BotDetailsModal = ({ open, onClose, runId, coinSymbol, coinName }) => {
             {/* Bot Results Table */}
             <div className="space-y-2">
               <h3 className="text-sm font-semibold text-[var(--muted)] mb-3">
-                Individual Bot Confidence Scores
+                Individual Bot Confidence Scores (21 Bots)
               </h3>
               
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {botDetails.bot_results && botDetails.bot_results.map((bot, index) => (
                   <div
                     key={index}
                     className="flex items-center justify-between p-3 bg-[var(--surface)] rounded-lg border border-[var(--card-border)]"
                   >
-                    <div className="flex items-center gap-3 flex-1">
-                      <Activity className="w-4 h-4 text-[var(--primary)]" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-[var(--text)]">{bot.bot_name}</p>
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <Activity className="w-4 h-4 text-[var(--primary)] flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-[var(--text)] truncate">{bot.bot_name}</p>
                         {bot.rationale && (
                           <p className="text-xs text-[var(--muted)] mt-1 truncate">{bot.rationale}</p>
                         )}
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3 flex-shrink-0 ml-2">
                       {/* Direction Badge */}
                       <span
                         className={`px-2 py-1 rounded text-xs font-bold ${
@@ -119,8 +119,8 @@ const BotDetailsModal = ({ open, onClose, runId, coinSymbol, coinName }) => {
                       </span>
                       
                       {/* Confidence Score */}
-                      <div className="text-right min-w-[60px]">
-                        <p className="text-lg font-bold font-mono text-[var(--primary)]">
+                      <div className="text-right min-w-[50px]">
+                        <p className="text-base font-bold font-mono text-[var(--primary)]">
                           {bot.confidence?.toFixed(1)}
                         </p>
                         <p className="text-xs text-[var(--muted)]">/ 10</p>
