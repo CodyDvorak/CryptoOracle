@@ -470,6 +470,61 @@ function App() {
           )}
         </section>
 
+        {/* Custom Scan Section */}
+        <section className="mt-8">
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            <Filter className="w-6 h-6 text-[var(--primary)]" />
+            Custom Scan
+          </h2>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Scan Specific Coins</CardTitle>
+              <CardDescription>
+                Enter comma-separated ticker symbols to analyze only specific coins (e.g., BTC, ETH, SOL)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="custom-symbols">Coin Symbols</Label>
+                  <Input
+                    id="custom-symbols"
+                    type="text"
+                    placeholder="BTC, ETH, SOL, ADA, DOT"
+                    value={customSymbols}
+                    onChange={(e) => setCustomSymbols(e.target.value)}
+                    className="mt-2"
+                    data-testid="custom-symbols-input"
+                  />
+                  <p className="text-xs text-[var(--muted)] mt-2">
+                    Separate multiple symbols with commas. The scan will analyze only these coins.
+                  </p>
+                </div>
+                
+                <Button 
+                  onClick={() => runScan(true)}
+                  disabled={loading || scanStatus.is_running || !customSymbols.trim()}
+                  className="w-full gap-2"
+                  data-testid="run-custom-scan-button"
+                >
+                  {loading || scanStatus.is_running ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Scanning...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-4 h-4" />
+                      Run Custom Scan
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
         {/* Saved Schedules Section */}
         <section className="mt-8">
           <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
