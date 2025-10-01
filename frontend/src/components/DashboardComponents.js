@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
-import { Activity, TrendingUp, TrendingDown, Clock } from 'lucide-react';
+import { Activity, TrendingUp, TrendingDown, Clock, Info } from 'lucide-react';
 import GaugeComponent from 'react-gauge-component';
+import BotDetailsModal from './BotDetailsModal';
 
-export const CoinRecommendationCard = ({ recommendation, rank }) => {
+export const CoinRecommendationCard = ({ recommendation, rank, runId }) => {
   const { 
     coin, 
     ticker = '',
