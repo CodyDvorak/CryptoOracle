@@ -387,6 +387,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "PASS - Auto-refresh flow working perfectly. Scan status polling works correctly, scan completed in ~55 seconds, fresh recommendations returned with matching run_id (999d83ec-50b1-40d6-9d59-13cc90d036c2). Frontend would auto-refresh when is_running changes from true to false."
+      - working: true
+        agent: "testing"
+        comment: "COMPREHENSIVE AUTO-REFRESH TESTING COMPLETE - All polling mechanisms verified working perfectly. Scan-specific polling (5s intervals) detected completion in 33s after 4 polls. Backend completion signals confirmed in logs. Fresh recommendations returned with matching run_id (c8586805-55c3-4ea3-a87d-5648f5eeb673). Global polling detection verified. Edge cases tested: concurrent scan blocking works (HTTP 409), recommendation counts valid (5 max per category). Success rate: 87.5% (7/8 tests passed, 1 skipped). Both scan-specific and global polling mechanisms operational for frontend auto-refresh functionality."
 
   - task: "Schedule configuration endpoints ObjectId fix"
     implemented: true
