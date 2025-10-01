@@ -122,7 +122,40 @@ class BinanceClient:
             logger.error(f"Exception fetching Binance klines for {symbol}: {e}")
             return []
     
-    def _parse_klines(self, klines: List) -> List[Dict]:
+    async def get_ticker_prices(self) -> Dict[str, float]:
+        """Get current prices for all USDT pairs from Binance ticker.
+        
+        Returns dict mapping symbol -> current price
+        """
+        try:
+            session = await self._get_session()
+            
+            url = f'{self.base_url}/ticker/price'
+            
+            async with session.get(url, timeout=30) as response:
+                if response.status == 200:
+                    tickers = await response.json()
+                    prices = {}
+                    
+                    for ticker in tickers:
+                        symbol_pair = ticker.get('symbol', '')
+                        if symbol_pair.endswith('USDT'):
+                            # Extract base symbol (e.g., BTCUSDT -> BTC)
+                            base_symbol = symbol_pair.replace('USDT', '')
+                            price = float(ticker.get('price', 0))
+                            if price > 0:
+                                prices[base_symbol] = price
+                    
+                    logger.info(f"Fetched {len(prices)} current prices from Binance")
+                    return prices
+                else:
+                    logger.error(f"Binance ticker API error: {response.status}")
+                    return {}
+                    
+        except Exception as e:
+            logger.error(f"Exception fetching Binance ticker prices: {e}")
+            return {}
+
         """Parse Binance kline data to our format.
         
         Binance kline format:
