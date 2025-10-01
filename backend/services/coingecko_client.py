@@ -36,7 +36,7 @@ class CoinGeckoClient:
                 'order': 'market_cap_desc',
                 'per_page': min(limit, 250),  # CoinGecko max per page
                 'page': 1,
-                'sparkline': False,
+                'sparkline': 'false',  # String instead of boolean
                 'locale': 'en'
             }
             
