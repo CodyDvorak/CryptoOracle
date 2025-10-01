@@ -66,13 +66,13 @@ class ScanOrchestrator:
             # 3. Analyze each coin
             all_aggregated_results = []
             
-            for coin in coins:
+            for coin_id, symbol, current_price in coins:
                 try:
-                    coin_result = await self._analyze_coin(coin, scan_run.id)
+                    coin_result = await self._analyze_coin_with_coingecko(coin_id, symbol, current_price, scan_run.id)
                     if coin_result:
                         all_aggregated_results.append(coin_result)
                 except Exception as e:
-                    logger.error(f"Error analyzing {coin}: {e}")
+                    logger.error(f"Error analyzing {symbol}: {e}")
                     continue
             
             # 4. Get Top 5
