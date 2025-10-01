@@ -74,13 +74,20 @@ function App() {
 
   const fetchRecommendations = async () => {
     try {
+      console.log('[FETCH] Calling /api/recommendations/top5...');
       const response = await axios.get(`${API}/recommendations/top5`);
+      console.log('[FETCH] Recommendations received:', {
+        confidence: response.data.top_confidence?.length || 0,
+        percent: response.data.top_percent_movers?.length || 0,
+        dollar: response.data.top_dollar_movers?.length || 0,
+        run_id: response.data.run_id
+      });
       setTopConfidence(response.data.top_confidence || []);
       setTopPercent(response.data.top_percent_movers || []);
       setTopDollar(response.data.top_dollar_movers || []);
       setCurrentRunId(response.data.run_id || null);
     } catch (error) {
-      console.error('Error fetching recommendations:', error);
+      console.error('[FETCH] Error fetching recommendations:', error);
       setTopConfidence([]);
       setTopPercent([]);
       setTopDollar([]);
