@@ -1,18 +1,18 @@
 [
   {
-    "content": "Integrate CoinGecko API for accurate real-time data",
-    "status": "completed"
-  },
-  {
-    "content": "Update to fetch 500 coins instead of 50",
-    "status": "completed"
-  },
-  {
-    "content": "Test scan with real CoinGecko data",
+    "content": "Integrate Binance API for real historical OHLCV data",
     "status": "in_progress"
   },
   {
-    "content": "Verify accurate current prices and predictions",
+    "content": "Combine CoinGecko prices with Binance historical data",
+    "status": "pending"
+  },
+  {
+    "content": "Test with real data from 300+ coins",
+    "status": "pending"
+  },
+  {
+    "content": "Verify accurate predictions with real market data",
     "status": "pending"
   }
 ]
