@@ -3,9 +3,7 @@ from typing import List, Dict, Optional
 import logging
 from datetime import datetime, timezone
 
-from services.coinalyze_client import CoinalyzeClient
-from services.coingecko_client import CoinGeckoClient
-from services.binance_client import BinanceClient
+from services.cryptocompare_client import CryptoCompareClient
 from services.indicator_engine import IndicatorEngine
 from services.llm_synthesis_service import LLMSynthesisService
 from services.aggregation_engine import AggregationEngine
@@ -21,9 +19,7 @@ class ScanOrchestrator:
     
     def __init__(self, db, coinalyze_api_key: str):
         self.db = db
-        self.coinalyze_client = CoinalyzeClient(coinalyze_api_key)
-        self.coingecko_client = CoinGeckoClient()  # Free, accurate current prices
-        self.binance_client = BinanceClient()  # Free, real historical data
+        self.crypto_client = CryptoCompareClient()  # Free, reliable, generous limits
         self.indicator_engine = IndicatorEngine()
         self.llm_service = LLMSynthesisService()
         self.aggregation_engine = AggregationEngine()
@@ -49,32 +45,24 @@ class ScanOrchestrator:
         logger.info(f"Starting scan run {scan_run.id} with scope={filter_scope}")
         
         try:
-            # 1. Fetch coin list AND current prices from Binance (all in one!)
-            logger.info("Fetching trading pairs and prices from Binance...")
-            binance_symbols = await self.binance_client.get_all_symbols()
-            current_prices = await self.binance_client.get_ticker_prices()
-            
-            # Match symbols with prices
-            coins = []
-            for symbol in binance_symbols:
-                price = current_prices.get(symbol)
-                if price and price > 0:
-                    coins.append((symbol, symbol, price))
+            # 1. Fetch coin list with current prices from CryptoCompare
+            logger.info("Fetching coins and prices from CryptoCompare...")
+            coins = await self.crypto_client.get_all_coins()
             
             # 2. Apply filter
             if filter_scope == 'alt':
                 exclusions = ['BTC', 'ETH', 'USDT', 'USDC', 'DAI', 'TUSD', 'BUSD', 'USDD']
                 coins = [c for c in coins if c[0] not in exclusions]
             
-            logger.info(f"Analyzing {len(coins)} coins with 100% REAL Binance data (prices + history)")
+            logger.info(f"Analyzing {len(coins)} coins with CryptoCompare data")
             scan_run.total_coins = len(coins)
             
             # 3. Analyze each coin
             all_aggregated_results = []
             
-            for symbol, display_symbol, current_price in coins:
+            for symbol, display_name, current_price in coins:
                 try:
-                    coin_result = await self._analyze_coin_with_binance(symbol, display_symbol, current_price, scan_run.id)
+                    coin_result = await self._analyze_coin_with_cryptocompare(symbol, display_name, current_price, scan_run.id)
                     if coin_result:
                         all_aggregated_results.append(coin_result)
                 except Exception as e:
