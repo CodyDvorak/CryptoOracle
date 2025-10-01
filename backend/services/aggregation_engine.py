@@ -8,12 +8,13 @@ class AggregationEngine:
     """Aggregate bot results and compute Top 5 recommendations."""
     
     @staticmethod
-    def aggregate_coin_results(coin: str, bot_results: List[Dict]) -> Dict:
+    def aggregate_coin_results(coin: str, bot_results: List[Dict], current_price: float) -> Dict:
         """Aggregate results from all bots for a single coin.
         
         Args:
             coin: Coin symbol
             bot_results: List of bot analysis results
+            current_price: Current price of the coin
         
         Returns:
             Aggregated recommendation dict
@@ -46,15 +47,28 @@ class AggregationEngine:
         
         avg_tp = statistics.median(consensus_tps) if consensus_tps else 0
         avg_sl = statistics.median(consensus_sls) if consensus_sls else 0
-        avg_entry = statistics.median(consensus_entries) if consensus_entries else 0
+        avg_entry = statistics.median(consensus_entries) if consensus_entries else current_price
+        
+        # Calculate average predicted prices from ALL bots
+        pred_24h_values = [r.get('predicted_24h', current_price) for r in bot_results if r.get('predicted_24h')]
+        pred_48h_values = [r.get('predicted_48h', current_price) for r in bot_results if r.get('predicted_48h')]
+        pred_7d_values = [r.get('predicted_7d', current_price) for r in bot_results if r.get('predicted_7d')]
+        
+        avg_pred_24h = statistics.mean(pred_24h_values) if pred_24h_values else current_price
+        avg_pred_48h = statistics.mean(pred_48h_values) if pred_48h_values else current_price
+        avg_pred_7d = statistics.mean(pred_7d_values) if pred_7d_values else current_price
         
         return {
             'coin': coin,
+            'current_price': current_price,
             'consensus_direction': consensus_direction,
             'avg_confidence': avg_confidence,
             'avg_take_profit': avg_tp,
             'avg_stop_loss': avg_sl,
             'avg_entry': avg_entry,
+            'avg_predicted_24h': avg_pred_24h,
+            'avg_predicted_48h': avg_pred_48h,
+            'avg_predicted_7d': avg_pred_7d,
             'bot_count': len(bot_results),
             'long_count': len(long_results),
             'short_count': len(short_results)
