@@ -25,7 +25,7 @@ class ScanOrchestrator:
         self.aggregation_engine = AggregationEngine()
         self.bots = get_all_bots()
         
-    async def run_scan(self, filter_scope: str = 'all', min_price: Optional[float] = None, max_price: Optional[float] = None, custom_symbols: Optional[List[str]] = None, run_id: Optional[str] = None) -> Dict:
+    async def run_scan(self, filter_scope: str = 'all', min_price: Optional[float] = None, max_price: Optional[float] = None, custom_symbols: Optional[List[str]] = None, run_id: Optional[str] = None, user_id: Optional[str] = None) -> Dict:
         """Execute a full scan of all coins.
         
         Args:
