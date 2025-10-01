@@ -792,6 +792,22 @@ async def scheduled_scan_job():
         logger.error(f"Scheduled scan error: {e}")
 
 
+async def track_outcomes_job():
+    """Job function to track outcomes for pending recommendations."""
+    logger.info("Starting scheduled outcome tracking")
+    
+    try:
+        result = await outcome_tracker.track_all_pending_recommendations()
+        
+        if result:
+            logger.info(f"Outcome tracking completed: {result.get('tracked_count', 0)} recommendations tracked")
+        else:
+            logger.warning("Outcome tracking returned no results")
+    
+    except Exception as e:
+        logger.error(f"Scheduled outcome tracking error: {e}")
+
+
 async def restart_scheduler(config: dict):
     """Restart scheduler with new configuration."""
     global scheduler
