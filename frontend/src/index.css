@@ -66,9 +66,10 @@ code, .mono {
 
 @layer base {
     * {
-        @apply border-border;
+        border-color: var(--card-border);
     }
     body {
-        @apply bg-background text-foreground;
+        background-color: var(--bg);
+        color: var(--text);
     }
 }
