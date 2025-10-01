@@ -6,6 +6,7 @@ import GaugeComponent from 'react-gauge-component';
 export const CoinRecommendationCard = ({ recommendation, rank }) => {
   const { 
     coin, 
+    ticker = '',
     consensus_direction, 
     avg_confidence, 
     current_price,
@@ -27,6 +28,9 @@ export const CoinRecommendationCard = ({ recommendation, rank }) => {
   const change48h = ((avg_predicted_48h - current_price) / current_price * 100);
   const change7d = ((avg_predicted_7d - current_price) / current_price * 100);
   
+  // Format display name
+  const displayName = ticker ? `${coin}/${ticker}` : coin;
+  
   const copyToClipboard = (text, label) => {
     navigator.clipboard.writeText(text);
   };
@@ -42,7 +46,7 @@ export const CoinRecommendationCard = ({ recommendation, rank }) => {
             <span className="text-[var(--primary)]">
               #{rank}
             </span>
-            <span data-testid="coin-symbol">{coin}</span>
+            <span data-testid="coin-symbol">{displayName}</span>
           </CardTitle>
           <span 
             className={`px-3 py-1 rounded-md text-xs font-bold ${
