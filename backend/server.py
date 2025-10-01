@@ -25,7 +25,7 @@ load_dotenv(ROOT_DIR / '.env')
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ.get('DB_NAME', 'crypto_trend_hunter')]
+db = client[os.environ.get('DB_NAME', 'crypto_oracle')]
 
 # Configure logging
 logging.basicConfig(
@@ -35,7 +35,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Create FastAPI app
-app = FastAPI(title="CryptoTrendHunter API")
+app = FastAPI(title="Crypto Oracle API")
 api_router = APIRouter(prefix="/api")
 
 # CORS middleware
@@ -354,7 +354,7 @@ async def restart_scheduler(config: dict):
 @app.on_event("startup")
 async def startup_event():
     """Initialize scheduler on startup."""
-    logger.info("Starting CryptoTrendHunter API")
+    logger.info("Starting Crypto Oracle API")
     
     # Start scheduler
     scheduler.start()
