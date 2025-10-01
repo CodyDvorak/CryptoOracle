@@ -84,6 +84,7 @@ class BotStatus(BaseModel):
 # API Request/Response models
 class ScanRunRequest(BaseModel):
     scope: str = 'all'  # 'all' or 'alt'
+    min_price: Optional[float] = None  # Optional: filter for coins above this price
     max_price: Optional[float] = None  # Optional: filter for coins under this price
 
 class Top5Response(BaseModel):
