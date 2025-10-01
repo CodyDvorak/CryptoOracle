@@ -181,15 +181,13 @@ class MACD_Bot(BotStrategy):
         predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
         
         return {
-{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.035 if direction == 'long' else price * 0.965,
             'stop_loss': price * 0.98 if direction == 'long' else price * 1.02,
             'confidence': confidence,
-            'rationale': f"MACD {'above' if direction == 'long' else 'below',
+            'rationale': f"MACD {'above' if direction == 'long' else 'below'} signal line",
             **predictions
-        } signal line"
         }
 
 
