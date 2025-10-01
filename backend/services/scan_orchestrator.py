@@ -201,6 +201,8 @@ class ScanOrchestrator:
             email_config: Email configuration dict
             sheets_config: Google Sheets configuration dict
         """
+        import os
+        
         # Fetch recommendations
         recommendations = await self.db.recommendations.find({'run_id': run_id}).to_list(5)
         
@@ -209,19 +211,29 @@ class ScanOrchestrator:
             return
         
         # Email notification
-        if email_config.get('email_enabled') and email_config.get('email_to'):
+        email_enabled = email_config.get('email_enabled', False)
+        email_to = email_config.get('email_to') or os.environ.get('SMTP_USER')
+        
+        if email_enabled and email_to:
             try:
+                # Use config or env variables
+                smtp_host = email_config.get('smtp_host') or os.environ.get('SMTP_HOST', 'smtp.gmail.com')
+                smtp_port = email_config.get('smtp_port') or int(os.environ.get('SMTP_PORT', 587))
+                smtp_user = email_config.get('smtp_user') or os.environ.get('SMTP_USER', '')
+                smtp_pass = email_config.get('smtp_pass') or os.environ.get('SMTP_PASS', '')
+                
                 email_service = EmailService(
-                    smtp_host=email_config['smtp_host'],
-                    smtp_port=email_config['smtp_port'],
-                    smtp_user=email_config['smtp_user'],
-                    smtp_pass=email_config['smtp_pass']
+                    smtp_host=smtp_host,
+                    smtp_port=smtp_port,
+                    smtp_user=smtp_user,
+                    smtp_pass=smtp_pass
                 )
                 email_service.send_top5_notification(
-                    recipient=email_config['email_to'],
+                    recipient=email_to,
                     recommendations=recommendations,
                     run_id=run_id
                 )
+                logger.info(f"Email notification sent to {email_to}")
             except Exception as e:
                 logger.error(f"Email notification failed: {e}")
         
@@ -235,5 +247,6 @@ class ScanOrchestrator:
                     recommendations=recommendations,
                     run_id=run_id
                 )
+                logger.info(f"Recommendations logged to Google Sheets")
             except Exception as e:
                 logger.error(f"Google Sheets logging failed: {e}")
