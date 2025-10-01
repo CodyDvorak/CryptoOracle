@@ -186,6 +186,85 @@ async def get_current_user_info(current_user: dict = Depends(require_auth)):
     )
 
 
+# ==================== User History ====================
+
+@api_router.get("/user/history")
+async def get_user_history(current_user: dict = Depends(require_auth), limit: int = 50):
+    """Get user's scan history with success rate metrics"""
+    user_id = current_user['id']
+    
+    # Get all user's scan runs
+    scan_runs = await db.scan_runs.find(
+        {'user_id': user_id, 'status': 'completed'}
+    ).sort('completed_at', -1).limit(limit).to_list(limit)
+    
+    history = []
+    total_predictions = 0
+    successful_predictions = 0
+    
+    for scan_run in scan_runs:
+        run_id = scan_run['id']
+        
+        # Get recommendations count for this run
+        recommendations = await db.recommendations.find({'run_id': run_id}).to_list(100)
+        
+        # Calculate success rate for this run
+        run_successes = sum(1 for r in recommendations if r.get('outcome_7d') == 'success')
+        run_total = sum(1 for r in recommendations if r.get('outcome_7d') in ['success', 'failed'])
+        
+        total_predictions += run_total
+        successful_predictions += run_successes
+        
+        run_success_rate = (run_successes / run_total * 100) if run_total > 0 else 0
+        
+        # Clean up ObjectId
+        if '_id' in scan_run:
+            del scan_run['_id']
+        
+        history.append({
+            **scan_run,
+            'recommendations_count': len(recommendations),
+            'success_rate': round(run_success_rate, 2)
+        })
+    
+    overall_success_rate = (successful_predictions / total_predictions * 100) if total_predictions > 0 else 0
+    
+    return {
+        'history': history,
+        'total_scans': len(history),
+        'total_predictions': total_predictions,
+        'successful_predictions': successful_predictions,
+        'overall_success_rate': round(overall_success_rate, 2)
+    }
+
+
+@api_router.get("/user/recommendations/{run_id}")
+async def get_user_run_recommendations(run_id: str, current_user: dict = Depends(require_auth)):
+    """Get all recommendations for a specific user's scan run"""
+    user_id = current_user['id']
+    
+    # Verify run belongs to user
+    scan_run = await db.scan_runs.find_one({'id': run_id, 'user_id': user_id})
+    if not scan_run:
+        raise HTTPException(status_code=404, detail="Scan run not found")
+    
+    # Get recommendations
+    recommendations = await db.recommendations.find({'run_id': run_id}).to_list(100)
+    
+    # Clean up ObjectIds
+    for rec in recommendations:
+        if '_id' in rec:
+            del rec['_id']
+    
+    if '_id' in scan_run:
+        del scan_run['_id']
+    
+    return {
+        'run': scan_run,
+        'recommendations': recommendations
+    }
+
+
 # ==================== Scan Endpoints ====================
 
 @api_router.post("/scan/run")
