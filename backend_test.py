@@ -72,6 +72,190 @@ class CryptoOracleTestSuite:
         except Exception as e:
             self.log_test("Health Check", "FAIL", f"Connection error: {str(e)}")
             return False
+
+    async def test_user_registration(self) -> Optional[str]:
+        """Test user registration endpoint"""
+        try:
+            # Use realistic test data
+            test_user = {
+                "username": "cryptotrader2024",
+                "email": "cryptotrader2024@example.com", 
+                "password": "SecurePass123!"
+            }
+            
+            async with self.session.post(f"{API_BASE}/auth/register", json=test_user) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    # Validate response structure
+                    required_fields = ['access_token', 'user']
+                    missing_fields = [field for field in required_fields if field not in data]
+                    
+                    if missing_fields:
+                        self.log_test("User Registration", "FAIL", f"Missing fields: {missing_fields}")
+                        return None
+                    
+                    # Validate user object
+                    user = data.get('user', {})
+                    user_fields = ['id', 'username', 'email', 'created_at', 'is_active']
+                    missing_user_fields = [field for field in user_fields if field not in user]
+                    
+                    if missing_user_fields:
+                        self.log_test("User Registration", "FAIL", f"Missing user fields: {missing_user_fields}")
+                        return None
+                    
+                    # Validate data matches
+                    if user.get('username') != test_user['username'] or user.get('email') != test_user['email']:
+                        self.log_test("User Registration", "FAIL", "User data doesn't match registration data")
+                        return None
+                    
+                    access_token = data.get('access_token')
+                    self.log_test("User Registration", "PASS", f"User registered successfully: {user.get('username')}")
+                    return access_token
+                    
+                elif response.status == 400:
+                    # User might already exist, try with different username
+                    import random
+                    test_user['username'] = f"cryptotrader{random.randint(1000, 9999)}"
+                    test_user['email'] = f"cryptotrader{random.randint(1000, 9999)}@example.com"
+                    
+                    async with self.session.post(f"{API_BASE}/auth/register", json=test_user) as retry_response:
+                        if retry_response.status == 200:
+                            data = await retry_response.json()
+                            access_token = data.get('access_token')
+                            self.log_test("User Registration", "PASS", f"User registered successfully (retry): {test_user['username']}")
+                            return access_token
+                        else:
+                            error_text = await retry_response.text()
+                            self.log_test("User Registration", "FAIL", f"HTTP {retry_response.status}: {error_text}")
+                            return None
+                else:
+                    error_text = await response.text()
+                    self.log_test("User Registration", "FAIL", f"HTTP {response.status}: {error_text}")
+                    return None
+                    
+        except Exception as e:
+            self.log_test("User Registration", "FAIL", f"Error: {str(e)}")
+            return None
+
+    async def test_user_login(self, username: str = None, password: str = None) -> Optional[str]:
+        """Test user login endpoint"""
+        try:
+            # Use provided credentials or default test credentials
+            if not username:
+                username = "cryptotrader2024"
+                password = "SecurePass123!"
+            
+            login_data = {
+                "username": username,
+                "password": password
+            }
+            
+            async with self.session.post(f"{API_BASE}/auth/login", json=login_data) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    # Validate response structure
+                    required_fields = ['access_token', 'user']
+                    missing_fields = [field for field in required_fields if field not in data]
+                    
+                    if missing_fields:
+                        self.log_test("User Login", "FAIL", f"Missing fields: {missing_fields}")
+                        return None
+                    
+                    access_token = data.get('access_token')
+                    user = data.get('user', {})
+                    
+                    self.log_test("User Login", "PASS", f"User logged in successfully: {user.get('username')}")
+                    return access_token
+                    
+                elif response.status == 401:
+                    error_text = await response.text()
+                    self.log_test("User Login", "FAIL", f"Invalid credentials: {error_text}")
+                    return None
+                else:
+                    error_text = await response.text()
+                    self.log_test("User Login", "FAIL", f"HTTP {response.status}: {error_text}")
+                    return None
+                    
+        except Exception as e:
+            self.log_test("User Login", "FAIL", f"Error: {str(e)}")
+            return None
+
+    async def test_protected_endpoint(self, access_token: str) -> bool:
+        """Test protected endpoint with authentication"""
+        try:
+            headers = {"Authorization": f"Bearer {access_token}"}
+            
+            async with self.session.get(f"{API_BASE}/auth/me", headers=headers) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    # Validate user information
+                    user_fields = ['id', 'username', 'email', 'created_at', 'is_active']
+                    missing_fields = [field for field in user_fields if field not in data]
+                    
+                    if missing_fields:
+                        self.log_test("Protected Endpoint", "FAIL", f"Missing user fields: {missing_fields}")
+                        return False
+                    
+                    self.log_test("Protected Endpoint", "PASS", f"User info retrieved: {data.get('username')}")
+                    return True
+                    
+                elif response.status == 401:
+                    error_text = await response.text()
+                    self.log_test("Protected Endpoint", "FAIL", f"Unauthorized: {error_text}")
+                    return False
+                else:
+                    error_text = await response.text()
+                    self.log_test("Protected Endpoint", "FAIL", f"HTTP {response.status}: {error_text}")
+                    return False
+                    
+        except Exception as e:
+            self.log_test("Protected Endpoint", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def test_invalid_login(self) -> bool:
+        """Test login with invalid credentials"""
+        try:
+            invalid_login = {
+                "username": "cryptotrader2024",
+                "password": "wrongpassword"
+            }
+            
+            async with self.session.post(f"{API_BASE}/auth/login", json=invalid_login) as response:
+                if response.status == 401:
+                    error_data = await response.json()
+                    self.log_test("Invalid Login", "PASS", f"Correctly rejected invalid credentials: {error_data.get('detail')}")
+                    return True
+                else:
+                    self.log_test("Invalid Login", "FAIL", f"Expected 401, got {response.status}")
+                    return False
+                    
+        except Exception as e:
+            self.log_test("Invalid Login", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def test_database_user_creation(self, username: str) -> bool:
+        """Test if user was created in database (indirect test via login)"""
+        try:
+            # Try to login with the registered user to verify database persistence
+            login_data = {
+                "username": username,
+                "password": "SecurePass123!"
+            }
+            
+            async with self.session.post(f"{API_BASE}/auth/login", json=login_data) as response:
+                if response.status == 200:
+                    self.log_test("Database User Creation", "PASS", f"User {username} persisted in database")
+                    return True
+                else:
+                    self.log_test("Database User Creation", "FAIL", f"User {username} not found in database")
+                    return False
+                    
+        except Exception as e:
+            self.log_test("Database User Creation", "FAIL", f"Error: {str(e)}")
+            return False
     
     async def run_scan_and_wait(self, scan_request: Dict) -> Optional[str]:
         """Run a scan and wait for completion, return run_id"""
