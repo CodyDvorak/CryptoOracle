@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """
 Backend Testing Script for Crypto Oracle
-Tests the 3 new features:
-1. Bot Details API Endpoint
-2. Custom Scan Backend Support  
-3. Dynamic Confidence Calculation
+Tests authentication system and other features:
+1. User Registration
+2. User Login
+3. Protected Endpoints
+4. Bot Details API Endpoint
+5. Custom Scan Backend Support  
+6. Dynamic Confidence Calculation
 """
 
 import asyncio
