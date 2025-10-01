@@ -444,6 +444,9 @@ class ScanOrchestrator:
                 'avg_predicted_48h': predicted_48h,
                 'avg_predicted_7d': predicted_7d,
                 'bot_count': 1,  # AI-only analysis
+                'trader_grade': trader_grade,  # Add AI grades
+                'investor_grade': investor_grade,
+                'ai_trend': 'bullish' if direction == 'long' else 'bearish',
                 'rationale': f"AI-only analysis: Trader Grade {trader_grade:.0f}/100, Investor Grade {investor_grade:.0f}/100"
             }
             
