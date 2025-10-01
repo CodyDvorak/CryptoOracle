@@ -3,7 +3,7 @@ from typing import List, Dict, Optional
 import logging
 from datetime import datetime, timezone
 
-from services.cryptocompare_client import CryptoCompareClient
+from services.tokenmetrics_client import TokenMetricsClient
 from services.indicator_engine import IndicatorEngine
 from services.llm_synthesis_service import LLMSynthesisService
 from services.aggregation_engine import AggregationEngine
