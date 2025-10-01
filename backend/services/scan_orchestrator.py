@@ -95,19 +95,18 @@ class ScanOrchestrator:
             
             scan_run.total_coins = len(selected_tokens)
             
-            # 4. Analyze each high-confidence token
+            # 4. Analyze each token with bots + TokenMetrics AI enhancement
             all_aggregated_results = []
             
-            for combined_score, symbol, display_name, current_price, token_id, trader_grade, investor_grade in top_tokens:
+            for symbol, display_name, current_price in selected_tokens:
                 try:
-                    coin_result = await self._analyze_coin_with_tokenmetrics(
-                        symbol, display_name, current_price, token_id, 
-                        trader_grade, investor_grade, scan_run.id
+                    # Analyze with CryptoCompare data + TokenMetrics AI enhancement
+                    coin_result = await self._analyze_coin_with_dual_source(
+                        symbol, display_name, current_price, scan_run.id
                     )
                     if coin_result:
-                        # Add ticker symbol and AI score to result
+                        # Add ticker symbol to result
                         coin_result['ticker'] = symbol
-                        coin_result['ai_combined_score'] = combined_score
                         all_aggregated_results.append(coin_result)
                 except Exception as e:
                     logger.error(f"Error analyzing {symbol}: {e}")
