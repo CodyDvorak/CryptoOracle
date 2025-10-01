@@ -761,6 +761,15 @@ function App() {
           </div>
         </section>
         
+        {/* Bot Status Grid */}
+        <section>
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            <Activity className="w-6 h-6 text-[var(--primary)]" />
+            Bot Status ({bots.length})
+          </h2>
+          <BotStatusGrid bots={bots} />
+        </section>
+        
         {/* Footer */}
         <footer className="text-center text-sm text-[var(--muted)] py-8 border-t border-[var(--card-border)] mt-12">
           <p>
