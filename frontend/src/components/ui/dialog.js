@@ -27,7 +27,7 @@ export const Dialog = ({ open, onOpenChange, children }) => {
         }
       `}</style>
       <div 
-        className="relative bg-[var(--surface)] border border-[var(--card-border)] rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden"
+        className="relative bg-[var(--surface)] border border-[var(--card-border)] rounded-lg shadow-xl max-w-7xl w-[95vw] mx-4 max-h-[90vh] overflow-hidden"
         style={{ animation: 'slideIn 0.15s ease-out' }}
         onClick={(e) => e.stopPropagation()}
       >
