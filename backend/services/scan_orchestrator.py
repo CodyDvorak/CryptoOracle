@@ -51,12 +51,12 @@ class ScanOrchestrator:
         try:
             # 1. Fetch tokens with AI grades from TokenMetrics
             logger.info("Fetching tokens, prices and AI grades from TokenMetrics...")
-            all_tokens = await self.token_client.get_all_tokens(limit=500)
+            all_tokens = await self.token_client.get_all_tokens(limit=100)
             
             # Store total available coins
             scan_run.total_available_coins = len(all_tokens)
             
-            # 2. Apply filters
+            # 2. Apply basic filters first
             tokens = all_tokens
             
             if filter_scope == 'alt':
@@ -72,21 +72,37 @@ class ScanOrchestrator:
                 tokens = [t for t in tokens if t[2] <= max_price]
                 logger.info(f"Applied price filter: max_price=${max_price}")
             
-            logger.info(f"Analyzing {len(tokens)}/{scan_run.total_available_coins} tokens with TokenMetrics AI data")
-            scan_run.total_coins = len(tokens)
+            # 3. **SMART FILTERING: Sort by AI confidence and take top performers**
+            # Calculate combined AI score for each token
+            tokens_with_scores = []
+            for symbol, display_name, current_price, token_id, trader_grade, investor_grade in tokens:
+                # Combined score: 60% trader grade + 40% investor grade
+                # Trader grade is more important for short-term signals
+                combined_score = (trader_grade * 0.6) + (investor_grade * 0.4)
+                tokens_with_scores.append((combined_score, symbol, display_name, current_price, token_id, trader_grade, investor_grade))
             
-            # 3. Analyze each token with AI signals
+            # Sort by combined score (highest first) and take top 30
+            tokens_with_scores.sort(reverse=True, key=lambda x: x[0])
+            top_tokens = tokens_with_scores[:30]  # Only analyze top 30 most promising tokens
+            
+            logger.info(f"Pre-filtered to top 30 tokens by AI confidence (from {len(tokens)} after filters)")
+            logger.info(f"Top 5 AI scores: {[f'{t[1]}:{t[0]:.1f}' for t in top_tokens[:5]]}")
+            
+            scan_run.total_coins = len(top_tokens)
+            
+            # 4. Analyze each high-confidence token
             all_aggregated_results = []
             
-            for symbol, display_name, current_price, token_id, trader_grade, investor_grade in tokens:
+            for combined_score, symbol, display_name, current_price, token_id, trader_grade, investor_grade in top_tokens:
                 try:
                     coin_result = await self._analyze_coin_with_tokenmetrics(
                         symbol, display_name, current_price, token_id, 
                         trader_grade, investor_grade, scan_run.id
                     )
                     if coin_result:
-                        # Add ticker symbol to result
+                        # Add ticker symbol and AI score to result
                         coin_result['ticker'] = symbol
+                        coin_result['ai_combined_score'] = combined_score
                         all_aggregated_results.append(coin_result)
                 except Exception as e:
                     logger.error(f"Error analyzing {symbol}: {e}")
