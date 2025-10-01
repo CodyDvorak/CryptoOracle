@@ -47,18 +47,20 @@ class ScanOrchestrator:
         logger.info(f"Starting scan run {scan_run.id} with scope={filter_scope}")
         
         try:
-            # 1. Fetch coin list
-            all_coins = await self.coinalyze_client.get_coins()
+            # 1. Fetch coin list from CoinGecko (real-time accurate data)
+            logger.info("Fetching coins from CoinGecko...")
+            coin_data_list = await self.coingecko_client.get_top_coins(limit=500)  # Top 500 by market cap
             
             # 2. Apply filter
             if filter_scope == 'alt':
                 # Exclude major coins and stablecoins
-                exclusions = ['BTC', 'ETH', 'USDT', 'USDC', 'DAI', 'TUSD', 'BUSD', 'USDC', 'USDD']
-                coins = [c for c in all_coins if c not in exclusions]
-            else:
-                coins = all_coins
+                exclusions = ['bitcoin', 'ethereum', 'tether', 'usd-coin', 'dai', 'true-usd', 'binance-usd']
+                coin_data_list = [c for c in coin_data_list if c.get('id') not in exclusions]
             
-            logger.info(f"Analyzing {len(coins)} coins (all available from Coinalyze)")
+            coins = [(c.get('id'), c.get('symbol', '').upper(), c.get('current_price', 0)) 
+                     for c in coin_data_list if c.get('current_price', 0) > 0]
+            
+            logger.info(f"Analyzing {len(coins)} coins (all available from CoinGecko)")
             scan_run.total_coins = len(coins)
             
             # 3. Analyze each coin
