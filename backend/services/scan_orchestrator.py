@@ -145,13 +145,14 @@ class ScanOrchestrator:
                 {'$set': scan_run.dict()}
             )
             
-            logger.info(f"Scan run {scan_run.id} completed. Top 5: {[r['coin'] for r in top_5]}")
+            logger.info(f"Scan run {scan_run.id} completed. Total recommendations: {len(all_top_recommendations)}")
+            logger.info(f"Top 5 confidence: {[r['coin'] for r in top_5_confidence[:5]]}")
             
             return {
                 'run_id': scan_run.id,
                 'status': 'completed',
                 'total_coins': len(tokens),
-                'recommendations': top_5
+                'recommendations': all_top_recommendations
             }
             
         except Exception as e:
