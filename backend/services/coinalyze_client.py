@@ -28,25 +28,28 @@ class CoinalyzeClient:
             session = await self._get_session()
             headers = {'api_key': self.api_key}
             
-            # Coinalyze endpoint for symbols - using futures data
-            url = f'{self.base_url}/futures-symbols'
+            # Coinalyze endpoint for exchanges/symbols
+            url = f'{self.base_url}/exchanges'
             
             async with session.get(url, headers=headers, timeout=30) as response:
                 if response.status == 200:
                     data = await response.json()
-                    # Extract unique base symbols
-                    symbols = []
-                    if isinstance(data, list):
-                        for item in data:
-                            symbol = item.get('symbol', '').split('-')[0].split('/')[0]
-                            if symbol and symbol not in symbols:
-                                symbols.append(symbol)
+                    # Extract unique base symbols from all exchanges
+                    symbols = set()
+                    for exchange_data in data:
+                        if isinstance(exchange_data, dict) and 'symbols' in exchange_data:
+                            for symbol_obj in exchange_data['symbols']:
+                                # Extract base symbol (e.g., BTCUSDT_PERP.A -> BTC)
+                                symbol_str = symbol_obj.get('symbol', '')
+                                base = symbol_str.split('USDT')[0].split('USD')[0].split('_')[0].split('.')[0]
+                                if base and len(base) <= 10:  # Valid ticker length
+                                    symbols.add(base)
                     
-                    logger.info(f"Fetched {len(symbols)} coins from Coinalyze")
-                    return symbols  # Return ALL coins
+                    symbols_list = sorted(list(symbols))
+                    logger.info(f"Fetched {len(symbols_list)} coins from Coinalyze")
+                    return symbols_list  # Return ALL coins
                 else:
                     logger.error(f"Error fetching coins: {response.status}")
-                    # Fallback to popular coins
                     return self._get_fallback_coins()
         except Exception as e:
             logger.error(f"Exception fetching coins: {e}")
