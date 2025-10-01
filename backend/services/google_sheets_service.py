@@ -76,7 +76,7 @@ class GoogleSheetsService:
             # Try to get worksheet, create if doesn't exist
             try:
                 worksheet = spreadsheet.worksheet(worksheet_name)
-            except:
+            except gspread.exceptions.WorksheetNotFound:
                 worksheet = spreadsheet.add_worksheet(title=worksheet_name, rows="1000", cols="10")
                 # Add header row
                 headers = ['Run ID', 'Timestamp', 'Coin', 'Direction', 'Confidence', 'Entry', 'Take Profit', 'Stop Loss', 'Bot Count']
