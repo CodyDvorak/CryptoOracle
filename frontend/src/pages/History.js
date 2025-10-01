@@ -242,7 +242,7 @@ const History = () => {
                             <div className="text-right">
                               <p className="text-sm text-[var(--muted)]">Success Rate</p>
                               <p className={`font-bold ${scan.success_rate > 0 ? 'text-[var(--success)]' : 'text-[var(--muted)]'}`}>
-                                {scan.success_rate > 0 ? `${scan.success_rate.toFixed(1)}%` : 'Pending'}
+                                {scan.success_rate > 0 ? `${scan.success_rate.toFixed(1)}%` : 'In Progress'}
                               </p>
                             </div>
 
