@@ -3,7 +3,6 @@ from typing import List, Dict, Optional
 import logging
 from datetime import datetime, timezone
 
-from services.tokenmetrics_client import TokenMetricsClient
 from services.cryptocompare_client import CryptoCompareClient
 from services.indicator_engine import IndicatorEngine
 from services.llm_synthesis_service import LLMSynthesisService
@@ -18,10 +17,9 @@ logger = logging.getLogger(__name__)
 class ScanOrchestrator:
     """Orchestrates the entire scanning process: data fetch -> bot analysis -> aggregation."""
     
-    def __init__(self, db, tokenmetrics_api_key: str):
+    def __init__(self, db):
         self.db = db
-        self.crypto_client = CryptoCompareClient()  # Primary data source for coins
-        self.token_client = TokenMetricsClient(tokenmetrics_api_key)  # AI analytics enhancement
+        self.crypto_client = CryptoCompareClient()  # Data source for coins and historical data
         self.indicator_engine = IndicatorEngine()
         self.llm_service = LLMSynthesisService()
         self.aggregation_engine = AggregationEngine()
