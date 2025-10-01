@@ -398,6 +398,51 @@ function App() {
               ))}
             </div>
             
+            {/* User Menu */}
+            {isAuthenticated ? (
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => navigate('/history')}
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <HistoryIcon className="w-4 h-4" />
+                  <span className="hidden sm:inline">History</span>
+                </Button>
+                
+                <div className="relative group">
+                  <Button variant="outline" className="gap-2">
+                    <User className="w-4 h-4" />
+                    <span className="hidden sm:inline">{user?.username}</span>
+                  </Button>
+                  
+                  <div className="absolute right-0 mt-2 w-48 bg-[var(--surface)] border border-[var(--card-border)] rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                    <div className="p-2">
+                      <div className="px-3 py-2 text-sm text-[var(--muted)] border-b border-[var(--card-border)]">
+                        {user?.email}
+                      </div>
+                      <button
+                        onClick={logout}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-[var(--panel)] rounded mt-1"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Button
+                onClick={() => navigate('/login')}
+                variant="outline"
+                className="gap-2"
+              >
+                <LogIn className="w-4 h-4" />
+                <span className="hidden sm:inline">Login</span>
+              </Button>
+            )}
+            
             {/* Run Scan Button */}
             <Button 
               onClick={runScan}
