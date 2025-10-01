@@ -222,11 +222,18 @@ async def get_bots_status():
 @api_router.get("/config/integrations")
 async def get_integrations_config():
     """Get current integrations configuration."""
+    import os
+    
     config = await db.integrations_config.find_one({})
     
     if not config:
-        # Return default config
-        default_config = IntegrationsConfig()
+        # Return default config with env variables if available
+        default_config = IntegrationsConfig(
+            smtp_host=os.environ.get('SMTP_HOST', 'smtp.gmail.com'),
+            smtp_port=int(os.environ.get('SMTP_PORT', 587)),
+            smtp_user=os.environ.get('SMTP_USER', ''),
+            email_to=os.environ.get('SMTP_USER', '')  # Default to same email
+        )
         return default_config.dict()
     
     # Mask sensitive data
