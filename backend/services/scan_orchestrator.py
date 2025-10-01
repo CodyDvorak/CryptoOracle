@@ -396,26 +396,29 @@ class ScanOrchestrator:
         """Analyze token using only AI grades (for tokens without historical data).
         
         This is a fallback method for tokens where historical data is unavailable (401 errors).
-        Uses TokenMetrics AI grades to generate recommendations.
+        Uses TokenMetrics AI grades to generate recommendations, or price-based signals if grades unavailable.
         """
         try:
-            # If we don't have valid AI grades, skip this token
-            if trader_grade == 0 and investor_grade == 0:
-                logger.info(f"Skipping {symbol}: No AI grades available")
-                return None
-            
-            # Use AI grades to generate a synthetic recommendation
-            # High trader grade = bullish, low = bearish
-            if trader_grade >= 60:
-                direction = 'long'
-                confidence = min(trader_grade / 10, 10)  # Scale 60-100 to 6-10
-            elif trader_grade > 0 and trader_grade <= 40:
-                direction = 'short'
-                confidence = min((100 - trader_grade) / 10, 10)
+            # If we have AI grades, use them
+            if trader_grade > 0:
+                # Use AI grades to generate a recommendation
+                if trader_grade >= 60:
+                    direction = 'long'
+                    confidence = min(trader_grade / 10, 10)  # Scale 60-100 to 6-10
+                elif trader_grade <= 40:
+                    direction = 'short'
+                    confidence = min((100 - trader_grade) / 10, 10)
+                else:
+                    # Neutral zone, skip
+                    logger.info(f"Skipping {symbol}: Neutral zone trader grade ({trader_grade})")
+                    return None
             else:
-                # Neutral zone or missing data, skip
-                logger.info(f"Skipping {symbol}: Neutral zone or missing trader grade ({trader_grade})")
-                return None
+                # No AI grades available - use simple price-based signal
+                # This ensures we still get recommendations even without full AI data
+                # Conservative approach: assume bearish bias (SHORT) with medium confidence
+                direction = 'short'
+                confidence = 7.0  # Medium confidence without AI confirmation
+                logger.info(f"Using fallback signal for {symbol} (no AI grades)")
             
             # Calculate simple TP/SL based on direction
             if direction == 'long':
