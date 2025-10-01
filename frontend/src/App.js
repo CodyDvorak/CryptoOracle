@@ -123,7 +123,18 @@ function App() {
   const fetchScanStatus = async () => {
     try {
       const response = await axios.get(`${API}/scan/status`);
+      const prevIsRunning = scanStatus.is_running;
+      const currIsRunning = response.data.is_running;
+      
       setScanStatus(response.data);
+      
+      // Detect when scan just completed (was running, now stopped)
+      if (prevIsRunning && !currIsRunning && response.data.recent_run?.status === 'completed') {
+        console.log('🔄 Scan completed detected by global polling - auto-refreshing recommendations');
+        await fetchRecommendations();
+        toast.success('New scan results available!');
+      }
+      
       if (response.data.recent_run) {
         const lastScan = new Date(response.data.recent_run.started_at).toLocaleString();
         setStats(prev => ({ 
