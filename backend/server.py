@@ -204,9 +204,6 @@ async def get_top5_recommendations(run_id: Optional[str] = None):
         "top_dollar_movers": top_dollar,
         "recommendations": all_recs  # All unique recommendations
     }
-        "scan_time": scan_run.get('completed_at') if scan_run else None,
-        "recommendations": recommendations
-    }
 
 
 @api_router.get("/recommendations/history")
