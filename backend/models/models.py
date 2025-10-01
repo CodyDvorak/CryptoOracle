@@ -108,3 +108,5 @@ class UpdateScheduleRequest(BaseModel):
     schedule_interval: str  # '6h', '12h', '24h'
     schedule_start_time: Optional[str] = None
     filter_scope: str = 'all'
+    min_price: Optional[float] = None
+    max_price: Optional[float] = None
