@@ -13,10 +13,42 @@ class BotStrategy:
         """Analyze features and return recommendation.
         
         Returns:
-            Dict with keys: direction, entry, take_profit, stop_loss, confidence, rationale
+            Dict with keys: direction, entry, take_profit, stop_loss, confidence, rationale,
+                          predicted_24h, predicted_48h, predicted_7d
             or None if no signal
         """
         raise NotImplementedError
+    
+    def _calculate_predicted_prices(self, current_price: float, direction: str, 
+                                    volatility: float = 0.02, strength: float = 1.0) -> Dict:
+        """Calculate predicted prices for 24h, 48h, and 7d based on strategy.
+        
+        Args:
+            current_price: Current price of the coin
+            direction: 'long' or 'short'
+            volatility: Expected volatility (default 2%)
+            strength: Signal strength multiplier (0.5 to 1.5)
+        
+        Returns:
+            Dict with predicted_24h, predicted_48h, predicted_7d
+        """
+        # Base predictions on direction and strength
+        if direction == 'long':
+            # Bullish predictions
+            pred_24h = current_price * (1 + volatility * strength * 0.5)
+            pred_48h = current_price * (1 + volatility * strength * 1.0)
+            pred_7d = current_price * (1 + volatility * strength * 2.0)
+        else:
+            # Bearish predictions
+            pred_24h = current_price * (1 - volatility * strength * 0.5)
+            pred_48h = current_price * (1 - volatility * strength * 1.0)
+            pred_7d = current_price * (1 - volatility * strength * 2.0)
+        
+        return {
+            'predicted_24h': pred_24h,
+            'predicted_48h': pred_48h,
+            'predicted_7d': pred_7d
+        }
 
 
 class SMA_CrossBot(BotStrategy):
