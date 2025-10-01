@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
-import { History as HistoryIcon, TrendingUp, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Button } from '../components/ui/button';
+import { History as HistoryIcon, TrendingUp, CheckCircle, XCircle, Clock, Home, ArrowLeft, User, LogOut, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 
 const API = `${process.env.REACT_APP_BACKEND_URL || ''}/api`;
