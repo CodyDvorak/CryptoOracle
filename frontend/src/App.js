@@ -32,6 +32,7 @@ function App() {
   const [maxPrice, setMaxPrice] = useState('');  // Maximum price filter
   const [scheduleInterval, setScheduleInterval] = useState('12h');
   const [loading, setLoading] = useState(false);
+  const [customSymbols, setCustomSymbols] = useState('');  // Comma-separated custom symbols
   
   // Saved schedules state
   const [savedSchedules, setSavedSchedules] = useState([]);
