@@ -87,11 +87,14 @@ async def run_scan(request: ScanRunRequest, background_tasks: BackgroundTasks):
     # Start scan in background
     async def run_scan_task():
         try:
+            logger.info(f"Background scan task starting with scope={request.scope}")
             result = await scan_orchestrator.run_scan(filter_scope=request.scope)
+            logger.info(f"Scan completed: {result}")
             
             # Send notifications if configured
             integrations = await db.integrations_config.find_one({})
             if integrations:
+                logger.info("Sending notifications...")
                 await scan_orchestrator.notify_results(
                     run_id=result['run_id'],
                     email_config=integrations,
@@ -100,7 +103,7 @@ async def run_scan(request: ScanRunRequest, background_tasks: BackgroundTasks):
             
             return result
         except Exception as e:
-            logger.error(f"Scan task error: {e}")
+            logger.error(f"CRITICAL: Scan task error: {e}", exc_info=True)
             raise
     
     current_scan_task = asyncio.create_task(run_scan_task())
