@@ -334,6 +334,10 @@ async def get_integrations_config():
         )
         return default_config.dict()
     
+    # Remove MongoDB _id field
+    if '_id' in config:
+        del config['_id']
+    
     # Mask sensitive data
     if config.get('smtp_pass'):
         config['smtp_pass'] = '***MASKED***'
