@@ -25,12 +25,13 @@ class ScanOrchestrator:
         self.aggregation_engine = AggregationEngine()
         self.bots = get_all_bots()
         
-    async def run_scan(self, filter_scope: str = 'all', max_price: Optional[float] = None, run_id: Optional[str] = None) -> Dict:
+    async def run_scan(self, filter_scope: str = 'all', min_price: Optional[float] = None, max_price: Optional[float] = None, run_id: Optional[str] = None) -> Dict:
         """Execute a full scan of all coins.
         
         Args:
             filter_scope: 'all' or 'alt' (exclude major coins)
-            max_price: Optional price filter (e.g., 1.0 for coins under $1)
+            min_price: Optional minimum price filter
+            max_price: Optional maximum price filter
             run_id: Optional run ID (generated if not provided)
         
         Returns:
@@ -40,28 +41,38 @@ class ScanOrchestrator:
         scan_run = ScanRun(
             id=run_id or ScanRun().id,
             filter_scope=filter_scope,
+            min_price=min_price,
             max_price=max_price,
             status='running'
         )
         await self.db.scan_runs.insert_one(scan_run.dict())
-        logger.info(f"Starting scan run {scan_run.id} with scope={filter_scope}, max_price={max_price}")
+        logger.info(f"Starting scan run {scan_run.id} with scope={filter_scope}, min_price={min_price}, max_price={max_price}")
         
         try:
             # 1. Fetch coin list with current prices from CryptoCompare
             logger.info("Fetching coins and prices from CryptoCompare...")
-            coins = await self.crypto_client.get_all_coins()
+            all_coins = await self.crypto_client.get_all_coins()
+            
+            # Store total available coins
+            scan_run.total_available_coins = len(all_coins)
             
             # 2. Apply filters
+            coins = all_coins
+            
             if filter_scope == 'alt':
                 exclusions = ['BTC', 'ETH', 'USDT', 'USDC', 'DAI', 'TUSD', 'BUSD', 'USDD']
                 coins = [c for c in coins if c[0] not in exclusions]
             
-            # Apply price filter if specified
+            # Apply price filters if specified
+            if min_price is not None and min_price > 0:
+                coins = [c for c in coins if c[2] >= min_price]
+                logger.info(f"Applied price filter: min_price=${min_price}")
+            
             if max_price is not None and max_price > 0:
                 coins = [c for c in coins if c[2] <= max_price]
                 logger.info(f"Applied price filter: max_price=${max_price}")
             
-            logger.info(f"Analyzing {len(coins)} coins with CryptoCompare data")
+            logger.info(f"Analyzing {len(coins)}/{scan_run.total_available_coins} coins with CryptoCompare data")
             scan_run.total_coins = len(coins)
             
             # 3. Analyze each coin
