@@ -285,20 +285,29 @@ const History = () => {
                                 {rec.consensus_direction?.toUpperCase()}
                               </span>
 
-                              {rec.outcome_7d && (
-                                <span className="flex items-center gap-1 text-sm">
-                                  {rec.outcome_7d === 'success' ? (
+                              <span className="flex items-center gap-1 text-sm">
+                                {rec.outcome_7d === 'success' ? (
+                                  <>
                                     <CheckCircle className="w-4 h-4 text-[var(--success)]" />
-                                  ) : rec.outcome_7d === 'failed' ? (
+                                    <span className="text-[var(--success)] font-semibold">TP Hit ✓</span>
+                                  </>
+                                ) : rec.outcome_7d === 'failed' ? (
+                                  <>
                                     <XCircle className="w-4 h-4 text-[var(--danger)]" />
-                                  ) : (
+                                    <span className="text-[var(--danger)] font-semibold">SL Hit ✗</span>
+                                  </>
+                                ) : rec.outcome_7d === 'expired' ? (
+                                  <>
                                     <Clock className="w-4 h-4 text-[var(--muted)]" />
-                                  )}
-                                  <span className="text-[var(--muted)]">
-                                    {rec.outcome_7d === 'pending' ? 'Pending' : rec.outcome_7d}
-                                  </span>
-                                </span>
-                              )}
+                                    <span className="text-[var(--muted)]">Expired</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Clock className="w-4 h-4 text-[var(--primary)]" />
+                                    <span className="text-[var(--primary)] font-semibold">In Progress</span>
+                                  </>
+                                )}
+                              </span>
                             </div>
 
                             <div className="mt-2 grid grid-cols-4 gap-4 text-sm">
