@@ -127,7 +127,7 @@ class OutcomeTracker:
                 )
                 
                 if outcome:
-                    # Update recommendation with outcome
+                    # TP or SL was hit - update with final outcome
                     latest_price = historical_data[-1].get('close', entry_price)
                     
                     await self.db.recommendations.update_one(
@@ -143,7 +143,20 @@ class OutcomeTracker:
                     logger.info(f"Updated {ticker} outcome: {outcome}")
                     return outcome
                 else:
-                    # Still pending - neither TP nor SL hit
+                    # Still pending - neither TP nor SL hit yet
+                    # Update last checked timestamp but keep status as pending
+                    latest_price = historical_data[-1].get('close', entry_price)
+                    
+                    await self.db.recommendations.update_one(
+                        {'id': rec['id']},
+                        {'$set': {
+                            'outcome_7d': 'pending',
+                            'actual_price_7d': latest_price,
+                            'outcome_checked_at': now,
+                            'updated_at': now
+                        }}
+                    )
+                    
                     return 'pending'
                     
             except Exception as e:
