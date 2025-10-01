@@ -69,6 +69,7 @@ class BotResult(BaseModel):
 class Recommendation(BaseModel):
     id: str = Field(default_factory=uuid_str)
     run_id: str
+    user_id: Optional[str] = None  # User who owns this recommendation
     coin: str  # Full name (e.g., "Bitcoin")
     ticker: str = ""  # Ticker symbol (e.g., "BTC")
     current_price: float
@@ -78,6 +79,12 @@ class Recommendation(BaseModel):
     avg_stop_loss: float
     avg_entry: float
     avg_predicted_24h: float
+    # Fields for tracking actual outcomes (for success rate)
+    actual_price_24h: Optional[float] = None
+    actual_price_48h: Optional[float] = None
+    actual_price_7d: Optional[float] = None
+    outcome_24h: Optional[str] = None  # 'success', 'failed', 'pending'
+    outcome_7d: Optional[str] = None
     avg_predicted_48h: float
     avg_predicted_7d: float
     bot_count: int = 20
