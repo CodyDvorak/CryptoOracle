@@ -13,10 +13,22 @@
   },
   {
     "content": "Create Shadcn UI components and all MVP files in bulk",
+    "status": "completed"
+  },
+  {
+    "content": "Test backend: Check for import errors and fix linting issues",
     "status": "in_progress"
   },
   {
-    "content": "Test the complete flow: run scan -> view recommendations -> email notification -> sheets logging",
+    "content": "Test frontend: Compile and check for errors",
+    "status": "pending"
+  },
+  {
+    "content": "Restart services and verify the application loads",
+    "status": "pending"
+  },
+  {
+    "content": "Test a complete scan flow",
     "status": "pending"
   }
 ]
