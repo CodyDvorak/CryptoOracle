@@ -24,7 +24,8 @@ function App() {
   const [bots, setBots] = useState([]);
   const [scanStatus, setScanStatus] = useState({ is_running: false });
   const [filter, setFilter] = useState('all');
-  const [maxPrice, setMaxPrice] = useState('');  // Price filter (empty = no limit)
+  const [minPrice, setMinPrice] = useState('');  // Minimum price filter
+  const [maxPrice, setMaxPrice] = useState('');  // Maximum price filter
   const [scheduleInterval, setScheduleInterval] = useState('12h');
   const [loading, setLoading] = useState(false);
   
@@ -41,7 +42,8 @@ function App() {
   const [stats, setStats] = useState({
     activeBots: 21,
     lastScan: 'Never',
-    totalCoins: 0  // Will be updated dynamically after scan
+    totalCoins: 0,
+    totalAvailable: 0  // Total available coins from CryptoCompare
   });
 
   // Fetch data on mount
@@ -86,7 +88,8 @@ function App() {
         setStats(prev => ({ 
           ...prev, 
           lastScan,
-          totalCoins: response.data.coins_analyzed || 0
+          totalCoins: response.data.coins_analyzed || 0,
+          totalAvailable: response.data.total_available_coins || 0
         }));
       }
     } catch (error) {
@@ -125,7 +128,8 @@ function App() {
     try {
       const requestBody = { 
         scope: filter,
-        max_price: maxPrice ? parseFloat(maxPrice) : null  // Only send if not empty
+        min_price: minPrice ? parseFloat(minPrice) : null,
+        max_price: maxPrice ? parseFloat(maxPrice) : null
       };
       await axios.post(`${API}/scan/run`, requestBody);
       toast.success('Scan started successfully!');
