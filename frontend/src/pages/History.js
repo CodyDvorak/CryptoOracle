@@ -73,8 +73,66 @@ const History = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--background)] p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-[var(--background)]">
+      {/* Top Navigation */}
+      <nav className="sticky top-0 z-40 backdrop-blur-sm bg-black/40 border-b border-[var(--card-border)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            {/* Logo - clickable to go home */}
+            <button 
+              onClick={() => navigate('/')}
+              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+            >
+              <Zap className="w-6 h-6 text-[var(--primary)]" />
+              <h1 className="text-xl font-bold">Crypto Oracle</h1>
+            </button>
+            
+            <div className="hidden sm:flex items-center gap-2 text-sm text-[var(--muted)]">
+              <span>/</span>
+              <HistoryIcon className="w-4 h-4" />
+              <span>History</span>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            {/* Back to Scanner */}
+            <Button
+              onClick={() => navigate('/')}
+              variant="outline"
+              className="gap-2"
+            >
+              <Home className="w-4 h-4" />
+              <span className="hidden sm:inline">Scanner</span>
+            </Button>
+            
+            {/* User Menu */}
+            <div className="relative group">
+              <Button variant="outline" className="gap-2">
+                <User className="w-4 h-4" />
+                <span className="hidden sm:inline">{user?.username}</span>
+              </Button>
+              
+              <div className="absolute right-0 mt-2 w-48 bg-[var(--surface)] border border-[var(--card-border)] rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                <div className="p-2">
+                  <div className="px-3 py-2 text-sm text-[var(--muted)] border-b border-[var(--card-border)]">
+                    {user?.email}
+                  </div>
+                  <button
+                    onClick={logout}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-[var(--panel)] rounded mt-1"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-[var(--text)] flex items-center gap-2">
@@ -82,7 +140,7 @@ const History = () => {
             Scan History
           </h1>
           <p className="text-[var(--muted)] mt-2">
-            Welcome back, {user?.username}! Track your scans and bot prediction success rates.
+            Track your scans and bot prediction success rates.
           </p>
         </div>
 
