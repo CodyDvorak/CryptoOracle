@@ -258,15 +258,22 @@ async def get_scan_status():
 # ==================== Recommendations Endpoints ====================
 
 @api_router.get("/recommendations/top5")
-async def get_top5_recommendations(run_id: Optional[str] = None):
+async def get_top5_recommendations(run_id: Optional[str] = None, current_user: Optional[dict] = Depends(get_current_user)):
     """Get Top 5 recommendations categorized by confidence, % movers, and $ movers.
     
-    If run_id is not provided, returns from the most recent completed run.
+    If run_id is not provided, returns from the most recent completed run for the user (or global if not authenticated).
     """
+    user_id = current_user['id'] if current_user else None
+    
     if not run_id:
-        # Get most recent completed run
+        # Build query filter
+        query_filter = {'status': 'completed'}
+        if user_id:
+            query_filter['user_id'] = user_id
+        
+        # Get most recent completed run for this user
         recent_run = await db.scan_runs.find_one(
-            {'status': 'completed'},
+            query_filter,
             sort=[('completed_at', -1)]
         )
         
@@ -275,7 +282,7 @@ async def get_top5_recommendations(run_id: Optional[str] = None):
         
         run_id = recent_run['id']
     
-    # Fetch all recommendations
+    # Fetch all recommendations for this run
     all_recs = await db.recommendations.find({'run_id': run_id}).to_list(100)
     
     if not all_recs:
