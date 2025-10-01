@@ -77,11 +77,13 @@ function App() {
       setTopConfidence(response.data.top_confidence || []);
       setTopPercent(response.data.top_percent_movers || []);
       setTopDollar(response.data.top_dollar_movers || []);
+      setCurrentRunId(response.data.run_id || null);
     } catch (error) {
       console.error('Error fetching recommendations:', error);
       setTopConfidence([]);
       setTopPercent([]);
       setTopDollar([]);
+      setCurrentRunId(null);
     }
   };
 
