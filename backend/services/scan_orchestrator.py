@@ -17,9 +17,9 @@ logger = logging.getLogger(__name__)
 class ScanOrchestrator:
     """Orchestrates the entire scanning process: data fetch -> bot analysis -> aggregation."""
     
-    def __init__(self, db, coinalyze_api_key: str):
+    def __init__(self, db, tokenmetrics_api_key: str):
         self.db = db
-        self.crypto_client = CryptoCompareClient()  # Free, reliable, generous limits
+        self.token_client = TokenMetricsClient(tokenmetrics_api_key)  # AI-powered crypto data
         self.indicator_engine = IndicatorEngine()
         self.llm_service = LLMSynthesisService()
         self.aggregation_engine = AggregationEngine()
