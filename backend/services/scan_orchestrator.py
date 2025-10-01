@@ -399,16 +399,22 @@ class ScanOrchestrator:
         Uses TokenMetrics AI grades to generate recommendations.
         """
         try:
+            # If we don't have valid AI grades, skip this token
+            if trader_grade == 0 and investor_grade == 0:
+                logger.info(f"Skipping {symbol}: No AI grades available")
+                return None
+            
             # Use AI grades to generate a synthetic recommendation
             # High trader grade = bullish, low = bearish
             if trader_grade >= 60:
                 direction = 'long'
                 confidence = min(trader_grade / 10, 10)  # Scale 60-100 to 6-10
-            elif trader_grade <= 40:
+            elif trader_grade > 0 and trader_grade <= 40:
                 direction = 'short'
                 confidence = min((100 - trader_grade) / 10, 10)
             else:
-                # Neutral zone, skip
+                # Neutral zone or missing data, skip
+                logger.info(f"Skipping {symbol}: Neutral zone or missing trader grade ({trader_grade})")
                 return None
             
             # Calculate simple TP/SL based on direction
