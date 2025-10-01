@@ -896,6 +896,16 @@ async def startup_event():
     if settings and settings.get('schedule_enabled'):
         await restart_scheduler(settings)
     
+    # Schedule outcome tracking to run every hour
+    scheduler.add_job(
+        track_outcomes_job,
+        'interval',
+        hours=1,
+        id='outcome_tracker',
+        replace_existing=True
+    )
+    logger.info("Outcome tracking scheduled to run every hour")
+    
     logger.info("Application startup complete")
 
 
