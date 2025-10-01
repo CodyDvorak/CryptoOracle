@@ -116,7 +116,7 @@ class ScanOrchestrator:
             return {
                 'run_id': scan_run.id,
                 'status': 'completed',
-                'total_coins': len(coins),
+                'total_coins': len(tokens),
                 'recommendations': top_5
             }
             
