@@ -9,10 +9,11 @@ import { Input } from './components/ui/input';
 import { Label } from './components/ui/label';
 import { Switch } from './components/ui/switch';
 import { Select, SelectOption } from './components/ui/select';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './components/ui/tabs';
 import { CoinRecommendationCard, BotStatusGrid, StatCard } from './components/DashboardComponents';
 import { 
   TrendingUp, Activity, Clock, Settings, Mail, FileSpreadsheet, 
-  RefreshCw, Filter, Zap, Play, CheckCircle
+  RefreshCw, Filter, Zap, Play, CheckCircle, Trash2, Edit, Calendar
 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -20,7 +21,9 @@ const API = `${BACKEND_URL}/api`;
 
 function App() {
   // State
-  const [recommendations, setRecommendations] = useState([]);
+  const [topConfidence, setTopConfidence] = useState([]);
+  const [topPercent, setTopPercent] = useState([]);
+  const [topDollar, setTopDollar] = useState([]);
   const [bots, setBots] = useState([]);
   const [scanStatus, setScanStatus] = useState({ is_running: false });
   const [filter, setFilter] = useState('all');
@@ -28,6 +31,9 @@ function App() {
   const [maxPrice, setMaxPrice] = useState('');  // Maximum price filter
   const [scheduleInterval, setScheduleInterval] = useState('12h');
   const [loading, setLoading] = useState(false);
+  
+  // Saved schedules state
+  const [savedSchedules, setSavedSchedules] = useState([]);
   
   // Integrations state
   const [emailEnabled, setEmailEnabled] = useState(false);
