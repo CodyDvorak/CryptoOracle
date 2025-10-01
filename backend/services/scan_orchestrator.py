@@ -174,7 +174,8 @@ class ScanOrchestrator:
         try:
             enhanced_rationale = await self.llm_service.synthesize_recommendations(coin, bot_results, features)
             aggregated['rationale'] = enhanced_rationale
-        except:
+        except Exception as e:
+            logger.warning(f"LLM synthesis skipped for {coin}: {e}")
             aggregated['rationale'] = f"{len(bot_results)} bots analyzed"
         
         return aggregated
