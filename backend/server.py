@@ -431,6 +431,10 @@ async def get_schedule_config():
         default_config = Settings()
         return default_config.dict()
     
+    # Remove MongoDB _id field
+    if '_id' in config:
+        del config['_id']
+    
     # Add next run time if scheduler is active
     next_run = None
     if scheduler.running:
