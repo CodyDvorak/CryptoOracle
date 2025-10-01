@@ -21,10 +21,10 @@
   },
   {
     "content": "Update UI to show current price + predicted prices + average TP/SL",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "Test the updated application",
-    "status": "pending"
+    "status": "in_progress"
   }
 ]
