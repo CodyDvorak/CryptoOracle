@@ -81,7 +81,9 @@ function App() {
   const fetchRecommendations = async () => {
     try {
       console.log('[FETCH] Calling /api/recommendations/top5...');
-      const response = await axios.get(`${API}/recommendations/top5`);
+      const response = await axios.get(`${API}/recommendations/top5`, {
+        headers: getAuthHeader()
+      });
       console.log('[FETCH] Recommendations received:', {
         confidence: response.data.top_confidence?.length || 0,
         percent: response.data.top_percent_movers?.length || 0,
@@ -94,10 +96,14 @@ function App() {
       setCurrentRunId(response.data.run_id || null);
     } catch (error) {
       console.error('[FETCH] Error fetching recommendations:', error);
-      setTopConfidence([]);
-      setTopPercent([]);
-      setTopDollar([]);
-      setCurrentRunId(null);
+      // Don't clear recommendations on error if user is not authenticated
+      // This prevents clearing data when there's simply no scan yet
+      if (error.response && error.response.status !== 404) {
+        setTopConfidence([]);
+        setTopPercent([]);
+        setTopDollar([]);
+        setCurrentRunId(null);
+      }
     }
   };
 
