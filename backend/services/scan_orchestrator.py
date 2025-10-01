@@ -113,21 +113,21 @@ class ScanOrchestrator:
                 'error': str(e)
             }
     
-    async def _analyze_coin_with_binance(self, symbol: str, display_symbol: str, current_price: float, run_id: str) -> Optional[Dict]:
-        """Analyze a single coin with real Binance historical data + CoinGecko current price.
+    async def _analyze_coin_with_cryptocompare(self, symbol: str, display_name: str, current_price: float, run_id: str) -> Optional[Dict]:
+        """Analyze a single coin with CryptoCompare historical data.
         
         Args:
-            symbol: Binance symbol (e.g., 'BTC')
-            display_symbol: Display symbol for results
-            current_price: Real-time current price from CoinGecko
+            symbol: Coin symbol (e.g., 'BTC')
+            display_name: Display name for results
+            current_price: Real-time current price
             run_id: Scan run ID
         
         Returns:
             Aggregated result dict or None if insufficient data
         """
         try:
-            # 1. Fetch REAL historical data from Binance (1 year, 4h candles)
-            candles = await self.binance_client.get_historical_klines(symbol, days=365)
+            # 1. Fetch historical data from CryptoCompare (1 year, daily candles)
+            candles = await self.crypto_client.get_historical_data(symbol, days=365)
             
             if len(candles) < 50:
                 logger.warning(f"Insufficient Binance data for {symbol}: {len(candles)} candles")
