@@ -236,15 +236,18 @@ function App() {
             clearInterval(pollIntervalId);
             
             // Fetch fresh recommendations
+            console.log('[AUTO-REFRESH] Fetching recommendations inline...');
             const recsResponse = await axios.get(`${API}/recommendations/top5`);
+            console.log(`[AUTO-REFRESH] Received ${recsResponse.data.top_confidence?.length || 0} confidence, ${recsResponse.data.top_percent_movers?.length || 0} percent, ${recsResponse.data.top_dollar_movers?.length || 0} dollar recommendations`);
+            
             setTopConfidence(recsResponse.data.top_confidence || []);
             setTopPercent(recsResponse.data.top_percent_movers || []);
             setTopDollar(recsResponse.data.top_dollar_movers || []);
             setCurrentRunId(recsResponse.data.run_id || null);
             
-            toast.success('Scan completed! Recommendations updated.');
+            toast.success('✨ Scan completed! Recommendations loaded automatically!');
             setLoading(false);
-            console.log('✅ Auto-refresh complete!');
+            console.log('✅ AUTO-REFRESH COMPLETE! Check the recommendations above.');
           } else if (!statusData.is_running) {
             // Scan stopped but not completed successfully
             console.log('Scan stopped but not completed successfully');
