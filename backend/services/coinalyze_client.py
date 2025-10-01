@@ -187,3 +187,70 @@ class CoinalyzeClient:
             current_time += timedelta(hours=4)
         
         return candles
+    async def _get_current_price(self, symbol: str) -> Optional[float]:
+        """Try to get current price for a symbol."""
+        try:
+            session = await self._get_session()
+            headers = {'api_key': self.api_key}
+            
+            # Try to get current price from exchanges endpoint
+            url = f'{self.base_url}/exchanges'
+            
+            async with session.get(url, headers=headers, timeout=30) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    # Look for the symbol in exchange data
+                    for exchange_data in data:
+                        if isinstance(exchange_data, dict) and 'symbols' in exchange_data:
+                            for symbol_obj in exchange_data['symbols']:
+                                symbol_str = symbol_obj.get('symbol', '')
+                                if symbol.upper() in symbol_str.upper():
+                                    # Try to extract price if available
+                                    price = symbol_obj.get('price') or symbol_obj.get('last_price')
+                                    if price:
+                                        return float(price)
+            return None
+        except Exception as e:
+            logger.debug(f"Could not fetch current price for {symbol}: {e}")
+            return None
+
+    def _generate_mock_ohlcv_from_price(self, symbol: str, days: int, current_price: float) -> List[Dict]:
+        """Generate mock OHLCV data based on a known current price."""
+        import random
+        
+        candles = []
+        num_candles = (days * 24) // 4
+        current_time = datetime.now(timezone.utc) - timedelta(days=days)
+        
+        # Start from a price that will trend toward current_price
+        start_price = current_price * random.uniform(0.8, 1.2)
+        price = start_price
+        
+        for i in range(num_candles):
+            # Trend toward current price with some randomness
+            progress = i / num_candles
+            target_price = start_price + (current_price - start_price) * progress
+            
+            # Add some random walk around the trend
+            change = random.uniform(-0.02, 0.02)
+            price = target_price * (1 + change)
+            
+            # Generate OHLC from price
+            high = price * random.uniform(1.0, 1.015)
+            low = price * random.uniform(0.985, 1.0)
+            open_price = price * random.uniform(0.995, 1.005)
+            close_price = price
+            volume = random.uniform(1000000, 10000000)
+            
+            candles.append({
+                'timestamp': int(current_time.timestamp()),
+                'open': round(open_price, 6),
+                'high': round(high, 6),
+                'low': round(low, 6),
+                'close': round(close_price, 6),
+                'volume': round(volume, 2)
+            })
+            
+            current_time += timedelta(hours=4)
+        
+        return candles
