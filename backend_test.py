@@ -23,7 +23,7 @@ from pathlib import Path
 
 # Load frontend .env to get backend URL
 frontend_env_path = Path(__file__).parent / "frontend" / ".env"
-backend_url = "https://crypto-oracle-24.preview.emergentagent.com"
+backend_url = "https://coin-oracle-3.preview.emergentagent.com"
 
 if frontend_env_path.exists():
     with open(frontend_env_path, 'r') as f:
