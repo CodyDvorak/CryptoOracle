@@ -62,11 +62,13 @@ function App() {
     fetchScanStatus();
     fetchIntegrations();
     fetchSchedule();
+    fetchSavedSchedules();
     
     // Poll scan status every 10 seconds
     const interval = setInterval(fetchScanStatus, 10000);
     return () => clearInterval(interval);
   }, []);
+
 
   const fetchRecommendations = async () => {
     try {
