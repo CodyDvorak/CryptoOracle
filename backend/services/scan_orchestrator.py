@@ -194,7 +194,7 @@ class ScanOrchestrator:
             # 1. Fetch historical data from CryptoCompare
             candles = await self.crypto_client.get_historical_data(symbol, days=365)
             
-            if len(candles) < 50:
+            if len(candles) < 30:
                 logger.warning(f"Insufficient CryptoCompare data for {symbol}: {len(candles)} candles")
                 return None
             
@@ -337,7 +337,7 @@ class ScanOrchestrator:
             # 1. Fetch historical data from CryptoCompare (1 year, daily candles)
             candles = await self.crypto_client.get_historical_data(symbol, days=365)
             
-            if len(candles) < 50:
+            if len(candles) < 30:
                 logger.warning(f"Insufficient CryptoCompare data for {symbol}: {len(candles)} candles")
                 return None
             
@@ -651,7 +651,7 @@ class ScanOrchestrator:
             # 1. Fetch historical data from CryptoCompare (1 year, daily candles)
             candles = await self.crypto_client.get_historical_data(symbol, days=365)
             
-            if len(candles) < 50:
+            if len(candles) < 30:
                 logger.warning(f"Insufficient CryptoCompare data for {symbol}: {len(candles)} candles")
                 return None
             
