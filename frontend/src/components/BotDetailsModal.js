@@ -45,7 +45,7 @@ const BotDetailsModal = ({ open, onClose, runId, coinSymbol, coinName }) => {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogClose onClick={onClose} />
         <DialogHeader>
           <DialogTitle>
@@ -54,8 +54,11 @@ const BotDetailsModal = ({ open, onClose, runId, coinSymbol, coinName }) => {
         </DialogHeader>
 
         {loading && (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--primary)]"></div>
+          <div className="flex items-center justify-center py-16">
+            <div className="flex flex-col items-center gap-3">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--primary)]"></div>
+              <p className="text-sm text-[var(--muted)]">Loading bot details...</p>
+            </div>
           </div>
         )}
 
