@@ -159,7 +159,7 @@ async def get_scan_status():
 
 @api_router.get("/recommendations/top5")
 async def get_top5_recommendations(run_id: Optional[str] = None):
-    """Get Top 5 recommendations.
+    """Get Top 5 recommendations categorized by confidence, % movers, and $ movers.
     
     If run_id is not provided, returns from the most recent completed run.
     """
@@ -175,16 +175,21 @@ async def get_top5_recommendations(run_id: Optional[str] = None):
         
         run_id = recent_run['id']
     
-    # Fetch recommendations
-    recommendations = await db.recommendations.find({'run_id': run_id}).to_list(5)
+    # Fetch all recommendations
+    all_recs = await db.recommendations.find({'run_id': run_id}).to_list(100)
     
-    if not recommendations:
+    if not all_recs:
         raise HTTPException(status_code=404, detail=f"No recommendations found for run {run_id}")
     
-    # Convert ObjectId to string for all recommendations
-    for rec in recommendations:
+    # Convert ObjectId to string
+    for rec in all_recs:
         if '_id' in rec:
             rec['_id'] = str(rec['_id'])
+    
+    # Categorize recommendations
+    top_confidence = [r for r in all_recs if r.get('category') == 'confidence'][:5]
+    top_percent = [r for r in all_recs if r.get('category') == 'percent_mover'][:5]
+    top_dollar = [r for r in all_recs if r.get('category') == 'dollar_mover'][:5]
     
     # Get scan info
     scan_run = await db.scan_runs.find_one({'id': run_id})
@@ -193,6 +198,12 @@ async def get_top5_recommendations(run_id: Optional[str] = None):
     
     return {
         "run_id": run_id,
+        "scan_time": scan_run.get('started_at') if scan_run else None,
+        "top_confidence": top_confidence,
+        "top_percent_movers": top_percent,
+        "top_dollar_movers": top_dollar,
+        "recommendations": all_recs  # All unique recommendations
+    }
         "scan_time": scan_run.get('completed_at') if scan_run else None,
         "recommendations": recommendations
     }
