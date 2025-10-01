@@ -25,7 +25,7 @@ class TokenMetricsClient:
         if self.session and not self.session.closed:
             await self.session.close()
     
-    async def get_all_tokens(self, limit: int = 500) -> List[tuple]:
+    async def get_all_tokens(self, limit: int = 100) -> List[tuple]:
         """Fetch top tokens by market cap from TokenMetrics.
         
         Returns list of tuples: (symbol, name, current_price_usd, token_id, trader_grade, investor_grade)
@@ -34,8 +34,10 @@ class TokenMetricsClient:
             session = await self._get_session()
             
             # Fetch token list with metadata (includes current price!)
+            # Note: TokenMetrics API limit is max 100
+            actual_limit = min(limit, 100)
             url = f'{self.base_url}/tokens'
-            params = {'limit': limit}
+            params = {'limit': actual_limit}
             
             async with session.get(url, params=params, timeout=30) as response:
                 if response.status == 200:
