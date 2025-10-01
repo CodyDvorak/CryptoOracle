@@ -37,6 +37,9 @@ function App() {
   
   // Schedule state
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [scheduleStartTime, setScheduleStartTime] = useState('');  // HH:MM format
+  const [scheduleTimezone, setScheduleTimezone] = useState('UTC');
+  const [nextRunTime, setNextRunTime] = useState(null);
   
   // Stats
   const [stats, setStats] = useState({
