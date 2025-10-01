@@ -139,6 +139,99 @@ class ScanOrchestrator:
                 'error': str(e)
             }
     
+    async def _analyze_coin_with_binance(self, symbol: str, display_symbol: str, current_price: float, run_id: str) -> Optional[Dict]:
+        """Analyze a single coin with real Binance historical data + CoinGecko current price.
+        
+        Args:
+            symbol: Binance symbol (e.g., 'BTC')
+            display_symbol: Display symbol for results
+            current_price: Real-time current price from CoinGecko
+            run_id: Scan run ID
+        
+        Returns:
+            Aggregated result dict or None if insufficient data
+        """
+        try:
+            # 1. Fetch REAL historical data from Binance (1 year, 4h candles)
+            candles = await self.binance_client.get_historical_klines(symbol, days=365)
+            
+            if len(candles) < 50:
+                logger.warning(f"Insufficient Binance data for {symbol}: {len(candles)} candles")
+                return None
+            
+            # 2. Update most recent candle with current price from CoinGecko
+            if candles and current_price > 0:
+                candles[-1]['close'] = current_price
+                candles[-1]['high'] = max(candles[-1]['high'], current_price)
+                candles[-1]['low'] = min(candles[-1]['low'], current_price)
+            
+            # 3. Compute indicators using REAL data
+            features = self.indicator_engine.compute_all_indicators(candles)
+            
+            if not features:
+                logger.warning(f"Failed to compute indicators for {symbol}")
+                return None
+            
+            # Ensure current price is accurate
+            features['current_price'] = current_price
+            
+            # 4. Run all bots
+            bot_results = []
+            
+            for bot in self.bots:
+                try:
+                    result = bot.analyze(features)
+                    if result:
+                        # Ensure predicted prices exist
+                        if 'predicted_24h' not in result:
+                            result['predicted_24h'] = current_price
+                        if 'predicted_48h' not in result:
+                            result['predicted_48h'] = current_price
+                        if 'predicted_7d' not in result:
+                            result['predicted_7d'] = current_price
+                        
+                        # Save bot result to DB
+                        bot_result = BotResult(
+                            run_id=run_id,
+                            coin=display_symbol,
+                            bot_name=bot.name,
+                            direction=result['direction'],
+                            entry_price=result['entry'],
+                            take_profit=result['take_profit'],
+                            stop_loss=result['stop_loss'],
+                            confidence=result['confidence'],
+                            rationale=result['rationale'],
+                            predicted_24h=result.get('predicted_24h'),
+                            predicted_48h=result.get('predicted_48h'),
+                            predicted_7d=result.get('predicted_7d')
+                        )
+                        await self.db.bot_results.insert_one(bot_result.dict())
+                        bot_results.append(result)
+                except Exception as e:
+                    logger.error(f"Bot {bot.name} failed for {symbol}: {e}", exc_info=True)
+            
+            if not bot_results:
+                logger.warning(f"No bot results for {symbol}")
+                return None
+            
+            # 5. Aggregate results
+            aggregated = self.aggregation_engine.aggregate_coin_results(display_symbol, bot_results, current_price)
+            
+            # 6. Optional: LLM synthesis
+            try:
+                enhanced_rationale = await self.llm_service.synthesize_recommendations(display_symbol, bot_results, features)
+                aggregated['rationale'] = enhanced_rationale
+            except Exception as e:
+                logger.warning(f"LLM synthesis skipped for {symbol}: {e}")
+                aggregated['rationale'] = f"{len(bot_results)} bots analyzed"
+            
+            logger.info(f"✓ {symbol}: {len(bot_results)} bots, confidence={aggregated.get('avg_confidence', 0):.1f}, price=${current_price:.4f} (REAL Binance data)")
+            return aggregated
+            
+        except Exception as e:
+            logger.error(f"Critical error analyzing {symbol}: {e}", exc_info=True)
+            return None
+    
     async def _analyze_coin_with_coingecko(self, coin_id: str, symbol: str, current_price: float, run_id: str) -> Optional[Dict]:
         """Analyze a single coin with real CoinGecko data.
         
