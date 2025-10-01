@@ -71,10 +71,36 @@ function App() {
   const fetchRecommendations = async () => {
     try {
       const response = await axios.get(`${API}/recommendations/top5`);
-      setRecommendations(response.data.recommendations || []);
+      setTopConfidence(response.data.top_confidence || []);
+      setTopPercent(response.data.top_percent_movers || []);
+      setTopDollar(response.data.top_dollar_movers || []);
     } catch (error) {
       console.error('Error fetching recommendations:', error);
-      setRecommendations([]);
+      setTopConfidence([]);
+      setTopPercent([]);
+      setTopDollar([]);
+    }
+  };
+
+  const fetchSavedSchedules = async () => {
+    try {
+      const response = await axios.get(`${API}/config/schedules/all`);
+      setSavedSchedules(response.data.schedules || []);
+    } catch (error) {
+      console.error('Error fetching schedules:', error);
+      setSavedSchedules([]);
+    }
+  };
+
+  const deleteSchedule = async (scheduleId) => {
+    try {
+      await axios.delete(`${API}/config/schedule/${scheduleId}`);
+      toast.success('Schedule deleted successfully!');
+      await fetchSavedSchedules();
+      await fetchSchedule();
+    } catch (error) {
+      console.error('Error deleting schedule:', error);
+      toast.error('Failed to delete schedule');
     }
   };
 
