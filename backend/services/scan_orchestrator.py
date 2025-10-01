@@ -156,10 +156,11 @@ class ScanOrchestrator:
             # Auto-send email notification if user is logged in
             if user_id:
                 try:
+                    logger.info(f"🔔 Auto-email notification: Looking up user {user_id}")
                     user = await self.db.users.find_one({'id': user_id})
                     if user and user.get('email'):
                         user_email = user['email']
-                        logger.info(f"Sending scan results to user email: {user_email}")
+                        logger.info(f"✉️ Sending scan results to user email: {user_email}")
                         
                         # Get email config from env or database
                         integrations = await self.db.integrations_config.find_one({})
@@ -168,8 +169,13 @@ class ScanOrchestrator:
                             email_config={'email_enabled': True, 'email_to': user_email},
                             sheets_config=integrations or {}
                         )
+                        logger.info(f"✅ Email notification completed for {user_email}")
+                    else:
+                        logger.warning(f"⚠️ User {user_id} not found or has no email address")
                 except Exception as e:
-                    logger.error(f"Failed to send email notification: {e}")
+                    logger.error(f"❌ Failed to send email notification: {e}", exc_info=True)
+            else:
+                logger.info("ℹ️ No user_id provided - skipping email notification")
             
             return {
                 'run_id': scan_run.id,
