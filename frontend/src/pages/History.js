@@ -317,9 +317,7 @@ const History = () => {
                           )}
                         </div>
                         
-                        <div className="flex-1">
-
-                            <div className="mt-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-sm">
+                        <div className="mt-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-sm">
                               <div>
                                 <p className="text-[var(--muted)] text-xs">Entry Price</p>
                                 <p className="font-mono font-semibold">${rec.avg_entry?.toFixed(8)}</p>
