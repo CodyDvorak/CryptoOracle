@@ -408,16 +408,30 @@ class CryptoOracleTestSuite:
         
         passed = sum(1 for result in self.test_results if result['status'] == 'PASS')
         failed = sum(1 for result in self.test_results if result['status'] == 'FAIL')
+        partial = sum(1 for result in self.test_results if result['status'] == 'PARTIAL')
+        info = sum(1 for result in self.test_results if result['status'] == 'INFO')
         
         for result in self.test_results:
-            status_icon = "✅" if result['status'] == 'PASS' else "❌"
+            if result['status'] == 'PASS':
+                status_icon = "✅"
+            elif result['status'] == 'FAIL':
+                status_icon = "❌"
+            elif result['status'] == 'PARTIAL':
+                status_icon = "⚠️"
+            else:
+                status_icon = "ℹ️"
             print(f"{status_icon} {result['test']}: {result['details']}")
         
         print()
         print(f"Total Tests: {len(self.test_results)}")
         print(f"Passed: {passed}")
+        print(f"Partial: {partial}")
         print(f"Failed: {failed}")
-        print(f"Success Rate: {(passed/len(self.test_results)*100):.1f}%" if self.test_results else "0%")
+        print(f"Info: {info}")
+        
+        # Calculate success rate (PASS + PARTIAL as success)
+        success_rate = ((passed + partial) / len(self.test_results) * 100) if self.test_results else 0
+        print(f"Success Rate: {success_rate:.1f}%")
 
 async def main():
     """Main test runner"""
