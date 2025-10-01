@@ -132,6 +132,43 @@ class TokenMetricsClient:
             logger.warning(f"Error fetching grades for {symbol}: {e}")
             return None
     
+    async def get_token_by_symbol(self, symbol: str) -> Optional[Dict]:
+        """Get token data including AI grades for a specific symbol.
+        
+        Args:
+            symbol: Token symbol (e.g., 'BTC')
+        
+        Returns:
+            Dict with trader_grade, investor_grade, token_id, or None if not found
+        """
+        try:
+            # Get AI grades (most important data)
+            grades = await self.get_latest_grades(symbol)
+            
+            if grades:
+                # Try to get token_id from tokens list
+                session = await self._get_session()
+                url = f'{self.base_url}/tokens'
+                params = {'symbol': symbol, 'limit': 1}
+                
+                try:
+                    async with session.get(url, params=params, timeout=10) as response:
+                        if response.status == 200:
+                            data = await response.json()
+                            if data.get('data') and len(data['data']) > 0:
+                                token_id = data['data'][0].get('TOKEN_ID')
+                                grades['token_id'] = token_id
+                except:
+                    pass  # token_id is optional
+                
+                return grades
+            
+            return None
+                    
+        except Exception as e:
+            logger.warning(f"Error fetching token data for {symbol}: {e}")
+            return None
+    
     async def get_historical_data(self, symbol: str, days: int = 365) -> List[Dict]:
         """Get historical daily OHLCV data.
         
