@@ -103,7 +103,7 @@ class AggregationEngine:
             n: Number of top coins to return
         
         Returns:
-            Top N coins by predicted % change (min confidence 6.5)
+            Top N coins by predicted % change (min confidence 5.0)
         """
         results_with_percent = []
         for result in aggregated_results:
@@ -111,8 +111,8 @@ class AggregationEngine:
             predicted_7d = result.get('avg_predicted_7d', current)
             confidence = result.get('avg_confidence', 0)
             
-            # Only include if confidence >= 6.5
-            if current > 0 and confidence >= 6.5:
+            # Only include if confidence >= 5.0 (lowered threshold)
+            if current > 0 and confidence >= 5.0:
                 percent_change = abs((predicted_7d - current) / current * 100)
                 result['predicted_percent_change'] = percent_change
                 results_with_percent.append(result)
