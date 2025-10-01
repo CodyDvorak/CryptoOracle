@@ -84,29 +84,48 @@ class CoinalyzeClient:
             end_time = datetime.now(timezone.utc)
             start_time = end_time - timedelta(days=days)
             
-            # Use 4-hour candles for good granularity without too much data
-            interval = '4h'
+            # Use 4-hour candles for good granularity
+            interval = '4hour'
             
-            # Coinalyze historical OHLCV endpoint
-            url = f'{self.base_url}/open-interest-aggregated-history'
-            params = {
-                'symbols': f'{symbol}USDT',
-                'from': int(start_time.timestamp()),
-                'to': int(end_time.timestamp()),
-                'interval': interval
-            }
+            # Try common symbol formats for perpetual futures (most liquid)
+            symbol_formats = [
+                f'{symbol}USDT_PERP.A',  # Binance perpetual
+                f'{symbol}USD_PERP.A',   # Alternative format
+                f'{symbol}USDT.A',       # Spot-like
+            ]
             
-            async with session.get(url, headers=headers, params=params, timeout=60) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    # Parse and return OHLCV data
-                    candles = self._parse_ohlcv(data, symbol)
-                    logger.info(f"Fetched {len(candles)} candles for {symbol}")
-                    return candles
-                else:
-                    logger.warning(f"Error fetching OHLCV for {symbol}: {response.status}")
-                    # Generate mock data for MVP demo
-                    return self._generate_mock_ohlcv(symbol, days)
+            # Coinalyze OHLCV endpoint
+            url = f'{self.base_url}/ohlcv'
+            
+            for symbol_format in symbol_formats:
+                params = {
+                    'symbols': symbol_format,
+                    'interval': interval,
+                    'from': int(start_time.timestamp()),
+                    'to': int(end_time.timestamp())
+                }
+                
+                try:
+                    async with session.get(url, headers=headers, params=params, timeout=60) as response:
+                        if response.status == 200:
+                            data = await response.json()
+                            candles = self._parse_ohlcv(data, symbol_format)
+                            if candles and len(candles) > 0:
+                                logger.info(f"Fetched {len(candles)} real candles for {symbol} using {symbol_format}")
+                                return candles
+                except Exception as e:
+                    logger.debug(f"Failed to fetch {symbol_format}: {e}")
+                    continue
+            
+            # If all formats fail, try to get current price at least
+            logger.warning(f"Could not fetch historical data for {symbol}, trying current price")
+            current_price = await self._get_current_price(symbol)
+            if current_price:
+                return self._generate_mock_ohlcv_from_price(symbol, days, current_price)
+            
+            logger.warning(f"Falling back to mock data for {symbol}")
+            return self._generate_mock_ohlcv(symbol, days)
+            
         except Exception as e:
             logger.error(f"Exception fetching OHLCV for {symbol}: {e}")
             return self._generate_mock_ohlcv(symbol, days)
