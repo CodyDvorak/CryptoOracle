@@ -17,11 +17,11 @@
   },
   {
     "content": "Test backend: Check for import errors and fix linting issues",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "Test frontend: Compile and check for errors",
-    "status": "pending"
+    "status": "in_progress"
   },
   {
     "content": "Restart services and verify the application loads",
