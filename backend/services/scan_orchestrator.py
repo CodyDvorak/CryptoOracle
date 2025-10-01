@@ -365,8 +365,8 @@ class ScanOrchestrator:
             Aggregated result dict or None if insufficient data
         """
         try:
-            # 1. Fetch OHLCV data (2 years)
-            candles = await self.coinalyze_client.get_ohlcv(coin, days=730)
+            # 1. Fetch historical data from CryptoCompare (2 years)
+            candles = await self.crypto_client.get_historical_data(coin, days=730)
             
             if len(candles) < 50:
                 logger.warning(f"Insufficient data for {coin}: {len(candles)} candles")
