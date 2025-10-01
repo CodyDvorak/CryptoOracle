@@ -134,14 +134,37 @@ const History = () => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-[var(--text)] flex items-center gap-2">
-            <HistoryIcon className="w-8 h-8 text-[var(--primary)]" />
-            Scan History
-          </h1>
-          <p className="text-[var(--muted)] mt-2">
-            Track your scans and bot prediction success rates.
-          </p>
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-[var(--text)] flex items-center gap-2">
+              <HistoryIcon className="w-8 h-8 text-[var(--primary)]" />
+              Scan History
+            </h1>
+            <p className="text-[var(--muted)] mt-2">
+              Track your scans and bot prediction success rates.
+            </p>
+          </div>
+          
+          <Button
+            onClick={async () => {
+              try {
+                toast.info('Updating recommendation statuses...');
+                const backendUrl = process.env.REACT_APP_BACKEND_URL || import.meta.env?.REACT_APP_BACKEND_URL || '';
+                await axios.post(`${backendUrl}/api/outcomes/track`, {}, {
+                  headers: getAuthHeader()
+                });
+                toast.success('Statuses updated! Refreshing history...');
+                await fetchHistory();
+              } catch (error) {
+                console.error('Error tracking outcomes:', error);
+                toast.error('Failed to update statuses');
+              }
+            }}
+            className="gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Update Status
+          </Button>
         </div>
 
         {/* Stats Cards */}
