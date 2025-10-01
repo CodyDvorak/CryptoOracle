@@ -48,8 +48,7 @@ app.add_middleware(
 )
 
 # Global state
-tokenmetrics_api_key = os.environ.get('TOKENMETRICS_API_KEY', 'tm-8575b687-030b-4832-abbe-14d88f4c19c0')
-scan_orchestrator = ScanOrchestrator(db, tokenmetrics_api_key)
+scan_orchestrator = ScanOrchestrator(db)
 scheduler = AsyncIOScheduler()
 current_scan_task: Optional[asyncio.Task] = None
 bot_statuses = {}
