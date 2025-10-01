@@ -9,6 +9,9 @@ const BotDetailsModal = ({ open, onClose, runId, coinSymbol, coinName }) => {
 
   useEffect(() => {
     if (open && runId && coinSymbol) {
+      // Reset state when opening
+      setBotDetails(null);
+      setError(null);
       fetchBotDetails();
     }
   }, [open, runId, coinSymbol]);
@@ -36,6 +39,9 @@ const BotDetailsModal = ({ open, onClose, runId, coinSymbol, coinName }) => {
       setLoading(false);
     }
   };
+
+  // Don't render dialog until we've started loading
+  if (!open) return null;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
