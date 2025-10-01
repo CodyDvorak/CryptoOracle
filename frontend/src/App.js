@@ -382,6 +382,45 @@ function App() {
                   </Select>
                 </div>
                 
+                <div>
+                  <Label>Filter Scope</Label>
+                  <Select 
+                    value={filter}
+                    onValueChange={setFilter}
+                    className="mt-1"
+                  >
+                    <SelectOption value="all">All Coins</SelectOption>
+                    <SelectOption value="alt">Alt Coins Only</SelectOption>
+                  </Select>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label>Min Price ($)</Label>
+                    <Input 
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="No minimum"
+                      value={minPrice}
+                      onChange={(e) => setMinPrice(e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label>Max Price ($)</Label>
+                    <Input 
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="No maximum"
+                      value={maxPrice}
+                      onChange={(e) => setMaxPrice(e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+                
                 <Button onClick={saveSchedule} className="w-full gap-2">
                   <CheckCircle className="w-4 h-4" />
                   Save Schedule
