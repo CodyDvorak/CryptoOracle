@@ -25,10 +25,10 @@
   },
   {
     "content": "Restart services and verify the application loads",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "Test a complete scan flow",
-    "status": "pending"
+    "status": "in_progress"
   }
 ]
