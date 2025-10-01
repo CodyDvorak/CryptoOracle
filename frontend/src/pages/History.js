@@ -5,7 +5,7 @@ import axios from 'axios';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
 import { Button } from '../components/ui/button';
-import { History as HistoryIcon, TrendingUp, CheckCircle, XCircle, Clock, Home, ArrowLeft, User, LogOut, Zap } from 'lucide-react';
+import { History as HistoryIcon, TrendingUp, CheckCircle, XCircle, Clock, Home, ArrowLeft, User, LogOut, Zap, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 const API = `${process.env.REACT_APP_BACKEND_URL || ''}/api`;
