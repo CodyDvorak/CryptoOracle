@@ -153,6 +153,24 @@ class ScanOrchestrator:
             logger.info(f"Scan run {scan_run.id} completed. Total recommendations: {len(all_top_recommendations)}")
             logger.info(f"Top 5 confidence: {[r['coin'] for r in top_5_confidence[:5]]}")
             
+            # Auto-send email notification if user is logged in
+            if user_id:
+                try:
+                    user = await self.db.users.find_one({'id': user_id})
+                    if user and user.get('email'):
+                        user_email = user['email']
+                        logger.info(f"Sending scan results to user email: {user_email}")
+                        
+                        # Get email config from env or database
+                        integrations = await self.db.integrations_config.find_one({})
+                        await self.notify_results(
+                            run_id=scan_run.id,
+                            email_config={'email_enabled': True, 'email_to': user_email},
+                            sheets_config=integrations or {}
+                        )
+                except Exception as e:
+                    logger.error(f"Failed to send email notification: {e}")
+            
             return {
                 'run_id': scan_run.id,
                 'status': 'completed',
