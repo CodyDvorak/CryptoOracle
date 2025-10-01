@@ -1,27 +1,27 @@
 [
   {
     "content": "Update app branding from CryptoTrendHunter to Crypto Oracle",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "Change lookback period from 2 years to 1 year",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Remove 50 coin limit - fetch ALL coins from Coinalyze",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Update bot strategies to return predicted prices (24h, 48h, 7d)",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Update aggregation to compute average predicted prices",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Update UI to show current price + predicted prices + average TP/SL",
-    "status": "pending"
+    "status": "in_progress"
   },
   {
     "content": "Test the updated application",
