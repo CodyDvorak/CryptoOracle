@@ -133,16 +133,35 @@ class CoinalyzeClient:
     def _parse_ohlcv(self, data: Dict, symbol: str) -> List[Dict]:
         """Parse Coinalyze API response to OHLCV format."""
         candles = []
-        if isinstance(data, dict) and 'history' in data:
-            for item in data['history']:
-                candles.append({
-                    'timestamp': item.get('t', 0),
-                    'open': float(item.get('o', 0)),
-                    'high': float(item.get('h', 0)),
-                    'low': float(item.get('l', 0)),
-                    'close': float(item.get('c', 0)),
-                    'volume': float(item.get('v', 0))
-                })
+        try:
+            # Coinalyze returns array of candles directly or nested in data
+            candle_data = data if isinstance(data, list) else data.get('data', data.get('history', []))
+            
+            if isinstance(candle_data, list):
+                for item in candle_data:
+                    # Handle different response formats
+                    if isinstance(item, dict):
+                        candles.append({
+                            'timestamp': item.get('t', item.get('time', item.get('timestamp', 0))),
+                            'open': float(item.get('o', item.get('open', 0))),
+                            'high': float(item.get('h', item.get('high', 0))),
+                            'low': float(item.get('l', item.get('low', 0))),
+                            'close': float(item.get('c', item.get('close', 0))),
+                            'volume': float(item.get('v', item.get('volume', item.get('bv', 0))))
+                        })
+                    elif isinstance(item, list) and len(item) >= 6:
+                        # Array format: [timestamp, open, high, low, close, volume]
+                        candles.append({
+                            'timestamp': item[0],
+                            'open': float(item[1]),
+                            'high': float(item[2]),
+                            'low': float(item[3]),
+                            'close': float(item[4]),
+                            'volume': float(item[5])
+                        })
+        except Exception as e:
+            logger.error(f"Error parsing OHLCV data: {e}")
+        
         return candles
 
     def _generate_mock_ohlcv(self, symbol: str, days: int) -> List[Dict]:
