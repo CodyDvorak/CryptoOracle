@@ -52,20 +52,24 @@ class ScanOrchestrator:
         logger.info(f"Starting scan run {scan_run.id} with scope={filter_scope}, custom_symbols={custom_symbols}, min_price={min_price}, max_price={max_price}")
         
         try:
-            # 1. Fetch tokens with AI grades from TokenMetrics
-            logger.info("Fetching tokens, prices and AI grades from TokenMetrics...")
-            all_tokens = await self.token_client.get_all_tokens(limit=100)
+            # 1. Fetch coins from CryptoCompare (primary data source)
+            logger.info("Fetching coins and prices from CryptoCompare...")
+            all_coins = await self.crypto_client.get_all_coins()
+            
+            if not all_coins:
+                raise Exception("No coins fetched from CryptoCompare")
             
             # Store total available coins
-            scan_run.total_available_coins = len(all_tokens)
+            scan_run.total_available_coins = len(all_coins)
+            logger.info(f"Fetched {len(all_coins)} coins from CryptoCompare")
             
             # 2. Apply filters
-            tokens = all_tokens
+            tokens = all_coins
             
             # Custom symbols filter (takes precedence)
             if custom_symbols and len(custom_symbols) > 0:
-                tokens = [t for t in all_tokens if t[0] in custom_symbols]
-                logger.info(f"Custom scan: filtering to {len(custom_symbols)} specific symbols")
+                tokens = [t for t in all_coins if t[0] in custom_symbols]
+                logger.info(f"Custom scan: filtering to {len(tokens)} specific symbols found")
             elif filter_scope == 'alt':
                 exclusions = ['BTC', 'ETH', 'USDT', 'USDC', 'DAI', 'TUSD', 'BUSD', 'USDD']
                 tokens = [t for t in tokens if t[0] not in exclusions]
@@ -79,29 +83,17 @@ class ScanOrchestrator:
                 tokens = [t for t in tokens if t[2] <= max_price]
                 logger.info(f"Applied price filter: max_price=${max_price}")
             
-            # 3. **SMART FILTERING: Sort by AI confidence and take top performers (skip for custom)**
+            # 3. Select tokens to analyze (limit to top 50 for performance)
             if custom_symbols:
                 # Custom scan: analyze all selected symbols
-                top_tokens = [(0, symbol, display_name, current_price, token_id, trader_grade, investor_grade) 
-                             for symbol, display_name, current_price, token_id, trader_grade, investor_grade in tokens]
-                logger.info(f"Custom scan: analyzing {len(top_tokens)} selected tokens")
+                selected_tokens = tokens[:50]  # Limit even custom scans
+                logger.info(f"Custom scan: analyzing {len(selected_tokens)} tokens")
             else:
-                # Calculate combined AI score for each token
-                tokens_with_scores = []
-                for symbol, display_name, current_price, token_id, trader_grade, investor_grade in tokens:
-                    # Combined score: 60% trader grade + 40% investor grade
-                    # Trader grade is more important for short-term signals
-                    combined_score = (trader_grade * 0.6) + (investor_grade * 0.4)
-                    tokens_with_scores.append((combined_score, symbol, display_name, current_price, token_id, trader_grade, investor_grade))
-                
-                # Sort by combined score (highest first) and take top 30
-                tokens_with_scores.sort(reverse=True, key=lambda x: x[0])
-                top_tokens = tokens_with_scores[:30]  # Only analyze top 30 most promising tokens
-                
-                logger.info(f"Pre-filtered to top 30 tokens by AI confidence (from {len(tokens)} after filters)")
-                logger.info(f"Top 5 AI scores: {[f'{t[1]}:{t[0]:.1f}' for t in top_tokens[:5]]}")
+                # Take top 50 by market cap (CryptoCompare returns them sorted)
+                selected_tokens = tokens[:50]
+                logger.info(f"Analyzing top {len(selected_tokens)} coins by market cap")
             
-            scan_run.total_coins = len(top_tokens)
+            scan_run.total_coins = len(selected_tokens)
             
             # 4. Analyze each high-confidence token
             all_aggregated_results = []
