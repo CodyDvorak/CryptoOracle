@@ -296,7 +296,7 @@ function App() {
           <StatCard 
             icon={TrendingUp} 
             label="Coins Analyzed" 
-            value={stats.totalCoins}
+            value={stats.totalAvailable > 0 ? `${stats.totalCoins}/${stats.totalAvailable}` : stats.totalCoins}
           />
         </div>
         
