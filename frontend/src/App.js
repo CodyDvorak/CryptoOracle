@@ -348,20 +348,20 @@ function App() {
           />
         </div>
         
-        {/* Top 5 Recommendations */}
+        {/* Recommendations with Tabs */}
         <section>
           <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
             <TrendingUp className="w-6 h-6 text-[var(--primary)]" />
-            Top 5 Recommendations
+            Top Recommendations
           </h2>
           
-          {recommendations.length === 0 ? (
+          {topConfidence.length === 0 && topPercent.length === 0 && topDollar.length === 0 ? (
             <Card className="p-12 text-center">
               <div className="max-w-md mx-auto">
                 <Activity className="w-16 h-16 mx-auto mb-4 text-[var(--muted)]" />
                 <h3 className="text-lg font-semibold mb-2">No Recommendations Yet</h3>
                 <p className="text-[var(--muted)] mb-4">
-                  Run your first scan to get AI-powered price predictions from 21 diverse bots analyzing 1 year of data.
+                  Run your first scan to get AI-powered price predictions from 21 diverse bots analyzing TokenMetrics data.
                 </p>
                 <Button onClick={runScan} className="gap-2">
                   <Play className="w-4 h-4" />
@@ -370,14 +370,192 @@ function App() {
               </div>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
-              {recommendations.map((rec, index) => (
-                <CoinRecommendationCard 
-                  key={rec.id || index}
-                  recommendation={rec}
-                  rank={index + 1}
-                />
+            <Tabs defaultValue="confidence">
+              <TabsList className="mb-4">
+                <TabsTrigger value="confidence">
+                  Top Confidence
+                  {topConfidence.length > 0 && (
+                    <span className="ml-2 px-2 py-0.5 rounded-full bg-[var(--accent)] text-xs">
+                      {topConfidence.length}
+                    </span>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="percent">
+                  % Movers
+                  {topPercent.length > 0 && (
+                    <span className="ml-2 px-2 py-0.5 rounded-full bg-[var(--accent)] text-xs">
+                      {topPercent.length}
+                    </span>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="dollar">
+                  $ Movers
+                  {topDollar.length > 0 && (
+                    <span className="ml-2 px-2 py-0.5 rounded-full bg-[var(--accent)] text-xs">
+                      {topDollar.length}
+                    </span>
+                  )}
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="confidence">
+                <div className="mb-2 text-sm text-[var(--muted)]">
+                  Highest AI confidence scores - Best overall signal quality
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+                  {topConfidence.map((rec, index) => (
+                    <CoinRecommendationCard 
+                      key={rec.id || index}
+                      recommendation={rec}
+                      rank={index + 1}
+                    />
+                  ))}
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="percent">
+                <div className="mb-2 text-sm text-[var(--muted)]">
+                  Biggest predicted percentage moves (7-day) - Best % gainers
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+                  {topPercent.map((rec, index) => (
+                    <CoinRecommendationCard 
+                      key={rec.id || index}
+                      recommendation={rec}
+                      rank={index + 1}
+                    />
+                  ))}
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="dollar">
+                <div className="mb-2 text-sm text-[var(--muted)]">
+                  Biggest predicted dollar moves - Highest absolute value changes
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+                  {topDollar.map((rec, index) => (
+                    <CoinRecommendationCard 
+                      key={rec.id || index}
+                      recommendation={rec}
+                      rank={index + 1}
+                    />
+                  ))}
+                </div>
+              </TabsContent>
+            </Tabs>
+          )}
+        </section>
+
+        {/* Saved Schedules Section */}
+        <section className="mt-8">
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            <Calendar className="w-6 h-6 text-[var(--primary)]" />
+            Saved Schedules
+          </h2>
+          
+          {savedSchedules.length === 0 ? (
+            <Card className="p-8 text-center">
+              <Clock className="w-12 h-12 mx-auto mb-3 text-[var(--muted)]" />
+              <p className="text-[var(--muted)]">
+                No active schedules. Configure one in the settings below.
+              </p>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {savedSchedules.map((schedule) => (
+                <Card key={schedule.schedule_id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span className="text-lg">
+                        {schedule.schedule_enabled ? (
+                          <span className="text-[var(--success)]">● Active</span>
+                        ) : (
+                          <span className="text-[var(--muted)]">○ Disabled</span>
+                        )}
+                      </span>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setScheduleInterval(schedule.schedule_interval);
+                            setScheduleStartTime(schedule.schedule_start_time || '');
+                            setScheduleTimezone(schedule.timezone || 'UTC');
+                            setFilter(schedule.filter_scope || 'all');
+                            setMinPrice(schedule.min_price ? schedule.min_price.toString() : '');
+                            setMaxPrice(schedule.max_price ? schedule.max_price.toString() : '');
+                            toast.info('Schedule loaded for editing');
+                          }}
+                          className="gap-1"
+                        >
+                          <Edit className="w-3 h-3" />
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => deleteSchedule(schedule.schedule_id)}
+                          className="gap-1 text-[var(--danger)] hover:text-[var(--danger)]"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          Delete
+                        </Button>
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-[var(--muted)]">Interval:</span>
+                        <span className="ml-2 font-mono font-bold text-[var(--primary)]">
+                          {schedule.schedule_interval}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[var(--muted)]">Timezone:</span>
+                        <span className="ml-2 font-mono">{schedule.timezone}</span>
+                      </div>
+                      {schedule.schedule_start_time && (
+                        <div>
+                          <span className="text-[var(--muted)]">Start Time:</span>
+                          <span className="ml-2 font-mono">{schedule.schedule_start_time}</span>
+                        </div>
+                      )}
+                      <div>
+                        <span className="text-[var(--muted)]">Scope:</span>
+                        <span className="ml-2 capitalize">{schedule.filter_scope}</span>
+                      </div>
+                      {(schedule.min_price || schedule.max_price) && (
+                        <div className="col-span-2">
+                          <span className="text-[var(--muted)]">Price Range:</span>
+                          <span className="ml-2 font-mono">
+                            ${schedule.min_price || '0'} - ${schedule.max_price || '∞'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {schedule.next_run_time && (
+                      <div className="pt-2 mt-2 border-t border-[var(--accent)]/30">
+                        <div className="text-xs text-[var(--muted)]">Next Run</div>
+                        <div className="text-sm font-mono text-[var(--accent)]">
+                          {new Date(schedule.next_run_time).toLocaleString()}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               ))}
+            </div>
+          )}
+        </section>
+
+        {/* Configuration */}
+        <section className="mt-8" id="configuration">
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            <Settings className="w-6 h-6 text-[var(--primary)]" />
+            Configuration
+          </h2>
             </div>
           )}
         </section>
