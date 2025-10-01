@@ -248,7 +248,7 @@ const History = () => {
                         key={rec.id || index}
                         className="p-4 border border-[var(--card-border)] rounded-lg bg-[var(--surface)]"
                       >
-                        <div className="flex items-center justify-between mb-3">
+                        <div className="mb-3">
                           <div className="flex items-center gap-3">
                             <span className="text-lg font-bold">{rec.coin} ({rec.ticker})</span>
                             <span className={`px-2 py-1 rounded text-xs font-bold ${
@@ -258,38 +258,7 @@ const History = () => {
                             }`}>
                               {rec.consensus_direction?.toUpperCase()}
                             </span>
-
-                            <span className="flex items-center gap-1 text-sm">
-                              {rec.outcome_7d === 'success' ? (
-                                <>
-                                  <CheckCircle className="w-4 h-4 text-[var(--success)]" />
-                                  <span className="text-[var(--success)] font-semibold">TP Hit ✓</span>
-                                </>
-                              ) : rec.outcome_7d === 'failed' ? (
-                                <>
-                                  <XCircle className="w-4 h-4 text-[var(--danger)]" />
-                                  <span className="text-[var(--danger)] font-semibold">SL Hit ✗</span>
-                                </>
-                              ) : rec.outcome_7d === 'expired' ? (
-                                <>
-                                  <Clock className="w-4 h-4 text-[var(--muted)]" />
-                                  <span className="text-[var(--muted)]">Expired</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Clock className="w-4 h-4 text-[var(--primary)]" />
-                                  <span className="text-[var(--primary)] font-semibold">In Progress</span>
-                                </>
-                              )}
-                            </span>
                           </div>
-                          
-                          {rec.actual_price_7d && (
-                            <div className="text-right">
-                              <p className="text-xs text-[var(--muted)]">Current/Last Price</p>
-                              <p className="font-mono font-bold text-[var(--primary)]">${rec.actual_price_7d?.toFixed(8)}</p>
-                            </div>
-                          )}
                         </div>
                         
                         <div className="mt-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-sm">
