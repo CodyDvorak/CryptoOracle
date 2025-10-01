@@ -178,7 +178,9 @@ function App() {
       await axios.put(`${API}/config/schedule`, {
         schedule_enabled: scheduleEnabled,
         schedule_interval: scheduleInterval,
-        filter_scope: filter
+        filter_scope: filter,
+        min_price: minPrice ? parseFloat(minPrice) : null,
+        max_price: maxPrice ? parseFloat(maxPrice) : null
       });
       toast.success('Schedule saved successfully!');
     } catch (error) {
