@@ -114,6 +114,9 @@ function App() {
       const response = await axios.get(`${API}/config/schedule`);
       setScheduleEnabled(response.data.schedule_enabled || false);
       setScheduleInterval(response.data.schedule_interval || '12h');
+      if (response.data.min_price) setMinPrice(response.data.min_price.toString());
+      if (response.data.max_price) setMaxPrice(response.data.max_price.toString());
+      if (response.data.filter_scope) setFilter(response.data.filter_scope);
     } catch (error) {
       console.error('Error fetching schedule:', error);
     }
