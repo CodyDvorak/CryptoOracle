@@ -130,16 +130,16 @@ class ScanOrchestrator:
             candles = await self.crypto_client.get_historical_data(symbol, days=365)
             
             if len(candles) < 50:
-                logger.warning(f"Insufficient Binance data for {symbol}: {len(candles)} candles")
+                logger.warning(f"Insufficient CryptoCompare data for {symbol}: {len(candles)} candles")
                 return None
             
-            # 2. Update most recent candle with current price from CoinGecko
+            # 2. Update most recent candle with current price
             if candles and current_price > 0:
                 candles[-1]['close'] = current_price
                 candles[-1]['high'] = max(candles[-1]['high'], current_price)
                 candles[-1]['low'] = min(candles[-1]['low'], current_price)
             
-            # 3. Compute indicators using REAL data
+            # 3. Compute indicators
             features = self.indicator_engine.compute_all_indicators(candles)
             
             if not features:
@@ -167,7 +167,7 @@ class ScanOrchestrator:
                         # Save bot result to DB
                         bot_result = BotResult(
                             run_id=run_id,
-                            coin=display_symbol,
+                            coin=display_name,
                             bot_name=bot.name,
                             direction=result['direction'],
                             entry_price=result['entry'],
@@ -189,11 +189,11 @@ class ScanOrchestrator:
                 return None
             
             # 5. Aggregate results
-            aggregated = self.aggregation_engine.aggregate_coin_results(display_symbol, bot_results, current_price)
+            aggregated = self.aggregation_engine.aggregate_coin_results(display_name, bot_results, current_price)
             
             # 6. Optional: LLM synthesis
             try:
-                enhanced_rationale = await self.llm_service.synthesize_recommendations(display_symbol, bot_results, features)
+                enhanced_rationale = await self.llm_service.synthesize_recommendations(display_name, bot_results, features)
                 aggregated['rationale'] = enhanced_rationale
             except Exception as e:
                 logger.warning(f"LLM synthesis skipped for {symbol}: {e}")
