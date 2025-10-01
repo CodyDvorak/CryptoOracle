@@ -49,38 +49,41 @@ class ScanOrchestrator:
         logger.info(f"Starting scan run {scan_run.id} with scope={filter_scope}, min_price={min_price}, max_price={max_price}")
         
         try:
-            # 1. Fetch coin list with current prices from CryptoCompare
-            logger.info("Fetching coins and prices from CryptoCompare...")
-            all_coins = await self.crypto_client.get_all_coins()
+            # 1. Fetch tokens with AI grades from TokenMetrics
+            logger.info("Fetching tokens, prices and AI grades from TokenMetrics...")
+            all_tokens = await self.token_client.get_all_tokens(limit=500)
             
             # Store total available coins
-            scan_run.total_available_coins = len(all_coins)
+            scan_run.total_available_coins = len(all_tokens)
             
             # 2. Apply filters
-            coins = all_coins
+            tokens = all_tokens
             
             if filter_scope == 'alt':
                 exclusions = ['BTC', 'ETH', 'USDT', 'USDC', 'DAI', 'TUSD', 'BUSD', 'USDD']
-                coins = [c for c in coins if c[0] not in exclusions]
+                tokens = [t for t in tokens if t[0] not in exclusions]
             
             # Apply price filters if specified
             if min_price is not None and min_price > 0:
-                coins = [c for c in coins if c[2] >= min_price]
+                tokens = [t for t in tokens if t[2] >= min_price]
                 logger.info(f"Applied price filter: min_price=${min_price}")
             
             if max_price is not None and max_price > 0:
-                coins = [c for c in coins if c[2] <= max_price]
+                tokens = [t for t in tokens if t[2] <= max_price]
                 logger.info(f"Applied price filter: max_price=${max_price}")
             
-            logger.info(f"Analyzing {len(coins)}/{scan_run.total_available_coins} coins with CryptoCompare data")
-            scan_run.total_coins = len(coins)
+            logger.info(f"Analyzing {len(tokens)}/{scan_run.total_available_coins} tokens with TokenMetrics AI data")
+            scan_run.total_coins = len(tokens)
             
-            # 3. Analyze each coin
+            # 3. Analyze each token with AI signals
             all_aggregated_results = []
             
-            for symbol, display_name, current_price in coins:
+            for symbol, display_name, current_price, token_id, trader_grade, investor_grade in tokens:
                 try:
-                    coin_result = await self._analyze_coin_with_cryptocompare(symbol, display_name, current_price, scan_run.id)
+                    coin_result = await self._analyze_coin_with_tokenmetrics(
+                        symbol, display_name, current_price, token_id, 
+                        trader_grade, investor_grade, scan_run.id
+                    )
                     if coin_result:
                         # Add ticker symbol to result
                         coin_result['ticker'] = symbol
