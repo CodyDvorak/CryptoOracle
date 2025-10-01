@@ -200,12 +200,19 @@ function App() {
       
       // Poll for updates
       const pollInterval = setInterval(async () => {
-        await fetchScanStatus();
-        if (!scanStatus.is_running) {
-          clearInterval(pollInterval);
-          await fetchRecommendations();
-          toast.success('Scan completed! Recommendations updated.');
-          setLoading(false);
+        try {
+          const statusResponse = await axios.get(`${API}/scan/status`);
+          setScanStatus(statusResponse.data);
+          
+          // Check the fresh response data, not stale state
+          if (!statusResponse.data.is_running) {
+            clearInterval(pollInterval);
+            await fetchRecommendations();
+            toast.success('Scan completed! Recommendations updated.');
+            setLoading(false);
+          }
+        } catch (err) {
+          console.error('Error polling scan status:', err);
         }
       }, 5000);
       
