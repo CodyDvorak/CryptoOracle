@@ -131,8 +131,10 @@ function App() {
       // Detect when scan just completed (was running, now stopped)
       if (prevIsRunning && !currIsRunning && response.data.recent_run?.status === 'completed') {
         console.log('🔄 Scan completed detected by global polling - auto-refreshing recommendations');
+        console.log('[AUTO-REFRESH] Fetching fresh recommendations now...');
         await fetchRecommendations();
-        toast.success('New scan results available!');
+        console.log('[AUTO-REFRESH] Recommendations updated!');
+        toast.success('✨ New scan results loaded automatically!');
       }
       
       if (response.data.recent_run) {
