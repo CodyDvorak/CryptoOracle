@@ -9,71 +9,11 @@
   },
   {
     "content": "Update index.css with design tokens and load fonts in public/index.html",
+    "status": "completed"
+  },
+  {
+    "content": "Create Shadcn UI components and all MVP files in bulk",
     "status": "in_progress"
-  },
-  {
-    "content": "Create Shadcn UI components in /frontend/src/components/ui (Button, Card, Input, Select, Switch, Tabs, Toggle, Dialog, Tooltip)",
-    "status": "pending"
-  },
-  {
-    "content": "Backend: Create Coinalyze API client to fetch coin list and 2-year OHLCV data",
-    "status": "pending"
-  },
-  {
-    "content": "Backend: Implement indicator engine (SMA/EMA, RSI, MACD, Bollinger Bands, ATR, OBV, Volume, VWAP)",
-    "status": "pending"
-  },
-  {
-    "content": "Backend: Create 20 diverse bot strategies with long/short recommendations, TP/SL, and confidence scoring",
-    "status": "pending"
-  },
-  {
-    "content": "Backend: Integrate Claude 4.5 via emergentintegrations for LLM synthesis and rationale generation",
-    "status": "pending"
-  },
-  {
-    "content": "Backend: Build aggregation engine to compute Top 5 coins by average confidence with consensus TP/SL",
-    "status": "pending"
-  },
-  {
-    "content": "Backend: Create MongoDB models (ScanRun, BotResult, Recommendation, IntegrationsConfig, Settings)",
-    "status": "pending"
-  },
-  {
-    "content": "Backend: Implement scheduler with APScheduler for 6h/12h/24h intervals",
-    "status": "pending"
-  },
-  {
-    "content": "Backend: Create email notification service via SMTP",
-    "status": "pending"
-  },
-  {
-    "content": "Backend: Implement Google Sheets integration for appending recommendation logs",
-    "status": "pending"
-  },
-  {
-    "content": "Backend: Create API endpoints (/scan/run, /recommendations/top5, /bots/status, /config/schedule, /config/integrations, /coins)",
-    "status": "pending"
-  },
-  {
-    "content": "Frontend: Create TopNav with filters and scheduler controls",
-    "status": "pending"
-  },
-  {
-    "content": "Frontend: Build BotStatusGrid showing 20 bot statuses",
-    "status": "pending"
-  },
-  {
-    "content": "Frontend: Create Top5Recommendations cards with confidence gauges, TP/SL, and copy functionality",
-    "status": "pending"
-  },
-  {
-    "content": "Frontend: Build IntegrationsPanel for email and Google Sheets configuration",
-    "status": "pending"
-  },
-  {
-    "content": "Frontend: Create Dashboard layout integrating all components",
-    "status": "pending"
   },
   {
     "content": "Test the complete flow: run scan -> view recommendations -> email notification -> sheets logging",
