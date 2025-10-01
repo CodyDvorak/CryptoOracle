@@ -37,6 +37,7 @@ class Token(BaseModel):
 
 class ScanRun(BaseModel):
     id: str = Field(default_factory=uuid_str)
+    user_id: Optional[str] = None  # User who initiated the scan
     started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     completed_at: Optional[datetime] = None
     interval: Optional[str] = None  # '6h', '12h', '24h' or None for manual
