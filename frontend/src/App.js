@@ -435,6 +435,59 @@ function App() {
                   </div>
                 </div>
                 
+                <div>
+                  <Label>Start Time (Optional)</Label>
+                  <Input 
+                    type="time"
+                    placeholder="HH:MM (24-hour)"
+                    value={scheduleStartTime}
+                    onChange={(e) => setScheduleStartTime(e.target.value)}
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-[var(--muted)] mt-1">Leave empty for immediate start</p>
+                </div>
+                
+                <div>
+                  <Label>Timezone</Label>
+                  <Select 
+                    value={scheduleTimezone}
+                    onValueChange={setScheduleTimezone}
+                    className="mt-1"
+                  >
+                    <SelectOption value="UTC">UTC</SelectOption>
+                    <SelectOption value="America/New_York">Eastern Time (ET)</SelectOption>
+                    <SelectOption value="America/Chicago">Central Time (CT)</SelectOption>
+                    <SelectOption value="America/Denver">Mountain Time (MT)</SelectOption>
+                    <SelectOption value="America/Los_Angeles">Pacific Time (PT)</SelectOption>
+                    <SelectOption value="Europe/London">London (GMT)</SelectOption>
+                    <SelectOption value="Europe/Paris">Central Europe (CET)</SelectOption>
+                    <SelectOption value="Asia/Tokyo">Tokyo (JST)</SelectOption>
+                    <SelectOption value="Asia/Shanghai">Shanghai (CST)</SelectOption>
+                    <SelectOption value="Asia/Dubai">Dubai (GST)</SelectOption>
+                  </Select>
+                </div>
+                
+                {scheduleEnabled && nextRunTime && (
+                  <div className="p-3 rounded-lg bg-[var(--panel)] border border-[var(--accent)]/30">
+                    <div className="text-xs text-[var(--muted)] mb-1">Next Scheduled Run</div>
+                    <div className="text-sm font-mono text-[var(--primary)]">
+                      {new Date(nextRunTime).toLocaleString()}
+                    </div>
+                  </div>
+                )}
+                
+                <Button onClick={saveSchedule} className="w-full gap-2">
+                  <CheckCircle className="w-4 h-4" />
+                  Save Schedule
+                </Button>
+              </CardContent>
+                      value={maxPrice}
+                      onChange={(e) => setMaxPrice(e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+                
                 <Button onClick={saveSchedule} className="w-full gap-2">
                   <CheckCircle className="w-4 h-4" />
                   Save Schedule
