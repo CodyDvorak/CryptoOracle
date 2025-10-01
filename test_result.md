@@ -371,3 +371,86 @@ agent_communication:
       - CryptoCompare provides reliable historical data for 21-bot analysis
       - All recommendation categories populated with quality data
       - Bot details feature working perfectly with individual bot results
+
+backend:
+  - task: "Auto-refresh after scan completion"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Frontend polls /api/scan/status every 5 seconds to detect scan completion and auto-refresh recommendations"
+      - working: true
+        agent: "testing"
+        comment: "PASS - Auto-refresh flow working perfectly. Scan status polling works correctly, scan completed in ~55 seconds, fresh recommendations returned with matching run_id (999d83ec-50b1-40d6-9d59-13cc90d036c2). Frontend would auto-refresh when is_running changes from true to false."
+
+  - task: "Schedule configuration endpoints ObjectId fix"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Fixed ObjectId serialization errors in configuration endpoints by properly handling MongoDB _id fields"
+      - working: true
+        agent: "testing"
+        comment: "PASS - All configuration endpoints working correctly. GET /api/config/integrations returns 200 with proper config fields. GET /api/config/schedule returns 200 with schedule settings. GET /api/config/schedules/all returns 200 with schedules array. No 500 errors detected."
+
+  - task: "Scheduler service functionality"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "AsyncIOScheduler configured with interval triggers for automated scans and email notifications"
+      - working: true
+        agent: "testing"
+        comment: "PASS - Scheduler running correctly. Backend logs show 'Scheduler started' and 'Scheduler configured: 12h intervals starting at 07:00 America/Denver, next run: 2025-10-02 07:00:00-06:00'. Email notifications working (sent to codydvorakwork@gmail.com during test scan)."
+
+agent_communication:
+  - agent: "testing"
+    message: |
+      AUTO-REFRESH AND SCHEDULE FUNCTIONALITY TESTING COMPLETE:
+      
+      ✅ AUTO-REFRESH AFTER SCAN - WORKING PERFECTLY
+      - Scan status endpoint (/api/scan/status) returns proper is_running and recent_run fields
+      - Triggered test scan with scope=all, min_price=10, max_price=1000
+      - Polling every 5 seconds detected scan completion after 11 polls (~55 seconds)
+      - Fresh recommendations endpoint returned matching run_id (999d83ec-50b1-40d6-9d59-13cc90d036c2)
+      - Frontend auto-refresh flow would work correctly when is_running changes to false
+      
+      ✅ SCHEDULE CONFIGURATION ENDPOINTS - 500 ERRORS FIXED
+      - GET /api/config/integrations: Returns 200 with config fields (email_enabled, smtp_host, etc.)
+      - GET /api/config/schedule: Returns 200 with schedule settings (schedule_enabled, interval, etc.)
+      - GET /api/config/schedules/all: Returns 200 with schedules array (1 schedule found)
+      - All ObjectId serialization issues resolved - no 500 errors detected
+      
+      ✅ SCHEDULER STATUS - RUNNING CORRECTLY
+      - Backend logs show "Scheduler started" and configuration messages
+      - Configured for 12h intervals starting at 07:00 America/Denver
+      - Next scheduled run: 2025-10-02 07:00:00-06:00
+      - Email notifications working (test scan sent email to codydvorakwork@gmail.com)
+      
+      ✅ EMAIL SETUP REQUIREMENTS DOCUMENTED
+      - Users need to configure SMTP via PUT /api/config/integrations
+      - Required fields: email_enabled, smtp_host, smtp_port, smtp_user, smtp_pass, email_to
+      - Test endpoint available: POST /api/config/integrations/test-email
+      - Schedule configuration via PUT /api/config/schedule
+      - Gmail users should use App Passwords instead of regular passwords
+      
+      SYSTEM STATUS: ALL REQUESTED FUNCTIONALITY WORKING
+      - Auto-refresh mechanism operational for frontend polling
+      - Configuration endpoints fixed and returning proper responses
+      - Scheduler service running with proper email notifications
+      - Complete email setup documentation provided for users
