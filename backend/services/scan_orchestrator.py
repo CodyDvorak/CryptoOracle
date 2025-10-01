@@ -206,7 +206,7 @@ class ScanOrchestrator:
                 logger.warning(f"LLM synthesis skipped for {symbol}: {e}")
                 aggregated['rationale'] = f"{len(bot_results)} bots analyzed"
             
-            logger.info(f"✓ {symbol}: {len(bot_results)} bots, confidence={aggregated.get('avg_confidence', 0):.1f}, price=${current_price:.4f} (REAL Binance data)")
+            logger.info(f"✓ {symbol}: {len(bot_results)} bots, confidence={aggregated.get('avg_confidence', 0):.1f}, price=${current_price:.4f} (CryptoCompare data)")
             return aggregated
             
         except Exception as e:
