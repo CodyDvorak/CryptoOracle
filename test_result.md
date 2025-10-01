@@ -313,3 +313,46 @@ agent_communication:
       - Bot details feature complete with 21 individual bot results
       - Custom scan functionality operational
       - All APIs responding correctly with proper data structures
+  
+  - agent: "testing"
+    message: |
+      CRYPTOCOMPARE-ONLY IMPLEMENTATION TEST COMPLETE:
+      
+      ✅ FRESH SCAN EXECUTION - WORKING
+      - Scan completed successfully: run_id 19490a71-0d37-443e-82aa-1bd1bc22da89
+      - Duration: ~5 minutes (started 05:38:46, completed 05:43:32)
+      - Successfully analyzed 80 out of 86 available coins (93% success rate)
+      - Backend logs show CryptoCompare data being used exclusively
+      - No TokenMetrics references found (as expected for CryptoCompare-only mode)
+      
+      ✅ TOP 5 RECOMMENDATIONS - ALL CATEGORIES POPULATED
+      - top_confidence: 5 coins (BNB, TON, MANTLE, XMR, UXLINK)
+      - top_percent_movers: 5 coins (DOT, APT, KCS, DOGE, PUMP)
+      - top_dollar_movers: 5 coins (WBTC, BTC, WBETH, WEETH, ETH)
+      - All required fields present: ticker, coin, avg_confidence, current_price, avg_predicted_7d, consensus_direction
+      - Each coin shows bot_count: 21 (confirming 21 bots analyzed each coin)
+      
+      ✅ BOT DETAILS ENDPOINT - WORKING PERFECTLY
+      - Tested with BNB from run_id 19490a71-0d37-443e-82aa-1bd1bc22da89
+      - Response contains exactly 21 bots as expected
+      - All bots have proper structure: bot_name, confidence, direction, entry_price, take_profit, stop_loss
+      - Bots properly sorted by confidence (descending: 10, 10, 10, 9, 9, 8, 8, 8, 8, 7, 7, 6, 5, 5, 5, 5, 5, 5, 5, 4, 4)
+      - avg_confidence matches calculated average: 6.81
+      
+      ✅ BACKEND LOGS ANALYSIS
+      - Logs show successful CryptoCompare data fetching for each coin
+      - Each coin processed with "21 bots, confidence=X.X, price=$X.XX (CryptoCompare data)"
+      - No errors or TokenMetrics references found
+      - LiteLLM integration working for AI analysis enhancement
+      
+      ✅ EXPECTED RESULTS VERIFICATION
+      - Coins analyzed: 80 (exceeds expectation of 10-15+)
+      - All 3 Top 5 categories populated (meets requirement)
+      - No TokenMetrics references (confirmed CryptoCompare-only mode)
+      - Bot details working for analyzed coins (21 bots per coin)
+      
+      CRYPTOCOMPARE-ONLY IMPLEMENTATION: FULLY OPERATIONAL
+      - System successfully operates without TokenMetrics dependency
+      - CryptoCompare provides reliable historical data for 21-bot analysis
+      - All recommendation categories populated with quality data
+      - Bot details feature working perfectly with individual bot results
