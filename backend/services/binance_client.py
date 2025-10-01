@@ -155,7 +155,8 @@ class BinanceClient:
         except Exception as e:
             logger.error(f"Exception fetching Binance ticker prices: {e}")
             return {}
-
+    
+    def _parse_klines(self, klines: List) -> List[Dict]:
         """Parse Binance kline data to our format.
         
         Binance kline format:
