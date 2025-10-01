@@ -39,7 +39,8 @@ class BotResult(BaseModel):
 class Recommendation(BaseModel):
     id: str = Field(default_factory=uuid_str)
     run_id: str
-    coin: str
+    coin: str  # Full name (e.g., "Bitcoin")
+    ticker: str = ""  # Ticker symbol (e.g., "BTC")
     current_price: float
     consensus_direction: str  # 'long' or 'short'
     avg_confidence: float
