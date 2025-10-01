@@ -10,5 +10,13 @@
   {
     "content": "Monitor scan progress and verify results with predicted prices",
     "status": "completed"
+  },
+  {
+    "content": "Configure Gmail SMTP for email notifications",
+    "status": "completed"
+  },
+  {
+    "content": "Test email delivery with real credentials",
+    "status": "completed"
   }
 ]
