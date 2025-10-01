@@ -779,8 +779,6 @@ function App() {
             Not financial advice. Always DYOR (Do Your Own Research).
           </p>
         </footer>
-          </div>
-        </section>
       </main>
     </div>
   );
