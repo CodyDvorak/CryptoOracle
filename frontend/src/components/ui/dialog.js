@@ -1,37 +1,34 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { X } from 'lucide-react';
 
 export const Dialog = ({ open, onOpenChange, children }) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [shouldRender, setShouldRender] = useState(false);
-
-  useEffect(() => {
-    if (open) {
-      setShouldRender(true);
-      // Small delay before showing to prevent flash
-      const timer = setTimeout(() => setIsVisible(true), 10);
-      return () => clearTimeout(timer);
-    } else {
-      setIsVisible(false);
-      // Keep in DOM briefly for exit animation
-      const timer = setTimeout(() => setShouldRender(false), 200);
-      return () => clearTimeout(timer);
-    }
-  }, [open]);
-
-  if (!shouldRender) return null;
+  if (!open) return null;
 
   return (
     <div 
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/80 transition-opacity duration-200 ${
-        isVisible ? 'opacity-100' : 'opacity-0'
-      }`}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+      style={{ animation: 'fadeIn 0.15s ease-out' }}
       onClick={() => onOpenChange(false)}
     >
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideIn {
+          from { 
+            opacity: 0;
+            transform: scale(0.96);
+          }
+          to { 
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+      `}</style>
       <div 
-        className={`relative bg-[var(--surface)] border border-[var(--card-border)] rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden transition-all duration-200 ${
-          isVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
-        }`}
+        className="relative bg-[var(--surface)] border border-[var(--card-border)] rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden"
+        style={{ animation: 'slideIn 0.15s ease-out' }}
         onClick={(e) => e.stopPropagation()}
       >
         {children}
