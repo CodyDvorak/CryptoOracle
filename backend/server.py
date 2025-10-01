@@ -129,6 +129,10 @@ async def get_scan_status():
     # Get most recent run
     recent_run = await db.scan_runs.find_one(sort=[('started_at', -1)])
     
+    # Convert ObjectId to string if present
+    if recent_run and '_id' in recent_run:
+        recent_run['_id'] = str(recent_run['_id'])
+    
     return {
         "is_running": is_running,
         "recent_run": recent_run
