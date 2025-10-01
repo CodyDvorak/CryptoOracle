@@ -274,9 +274,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Bot details API endpoint"
-    - "Bot details modal component"
-    - "Custom scan UI"
+    - "User Registration API"
+    - "User Login API" 
+    - "Protected Endpoints Authentication"
+    - "Database User Persistence"
   stuck_tasks: []
   test_all: true
   test_priority: "high_first"
