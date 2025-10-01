@@ -43,7 +43,7 @@ class CoinalyzeClient:
                                 symbols.append(symbol)
                     
                     logger.info(f"Fetched {len(symbols)} coins from Coinalyze")
-                    return symbols[:50]  # Limit for MVP
+                    return symbols  # Return ALL coins
                 else:
                     logger.error(f"Error fetching coins: {response.status}")
                     # Fallback to popular coins
@@ -63,12 +63,12 @@ class CoinalyzeClient:
             'COMP', 'MKR', 'SNX', 'YFI', 'CRV', 'SUSHI', 'BAL', 'RUNE', 'KSM', 'NEAR'
         ]
 
-    async def get_ohlcv(self, symbol: str, days: int = 730) -> List[Dict]:
+    async def get_ohlcv(self, symbol: str, days: int = 365) -> List[Dict]:
         """Fetch OHLCV data for a symbol over the specified number of days.
         
         Args:
             symbol: Trading symbol (e.g., 'BTC')
-            days: Number of days of historical data (default 730 = 2 years)
+            days: Number of days of historical data (default 365 = 1 year)
         
         Returns:
             List of OHLCV candles with keys: timestamp, open, high, low, close, volume
