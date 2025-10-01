@@ -214,7 +214,7 @@ async def get_bots_status():
         
         status = {
             'bot_name': bot.name,
-            'status': 'idle',
+            'status': 'running' if recent_result else 'idle',
             'last_run': recent_result['created_at'].isoformat() if recent_result else None,
             'latency_ms': None
         }
