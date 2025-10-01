@@ -390,6 +390,54 @@ async def update_schedule_config(request: UpdateScheduleRequest):
     return {"message": "Schedule configuration updated successfully"}
 
 
+@api_router.get("/config/schedules/all")
+async def get_all_schedules():
+    """Get all saved schedule configurations."""
+    # For now we only have one schedule (can extend to multiple later)
+    current_schedule = await db.settings.find_one({})
+    
+    if not current_schedule:
+        return {"schedules": []}
+    
+    # Add next run time
+    next_run = None
+    if scheduler.running:
+        jobs = scheduler.get_jobs()
+        if jobs:
+            job = jobs[0]
+            if job.next_run_time:
+                next_run = job.next_run_time.isoformat()
+    
+    current_schedule['next_run_time'] = next_run
+    current_schedule['schedule_id'] = 'default'  # For future multi-schedule support
+    
+    if '_id' in current_schedule:
+        current_schedule['_id'] = str(current_schedule['_id'])
+    
+    return {"schedules": [current_schedule]}
+
+
+@api_router.delete("/config/schedule/{schedule_id}")
+async def delete_schedule(schedule_id: str):
+    """Delete/disable a schedule."""
+    if schedule_id == 'default':
+        # Disable the schedule
+        await db.settings.update_one(
+            {},
+            {'$set': {'schedule_enabled': False, 'updated_at': datetime.now(timezone.utc)}},
+            upsert=True
+        )
+        
+        # Stop scheduler
+        if scheduler.running:
+            scheduler.remove_all_jobs()
+        
+        logger.info("Schedule disabled")
+        return {"message": "Schedule disabled successfully"}
+    
+    raise HTTPException(status_code=404, detail="Schedule not found")
+
+
 # ==================== Coins Endpoint ====================
 
 @api_router.get("/coins")
