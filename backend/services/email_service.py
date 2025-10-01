@@ -101,15 +101,15 @@ class EmailService:
                         </div>
                         <div class="metric">
                             <div class="label">Entry</div>
-                            <div class="value">${entry:.2f}</div>
+                            <div class="value">${entry:.6f}</div>
                         </div>
                         <div class="metric">
                             <div class="label">Take Profit</div>
-                            <div class="value">${tp:.2f}</div>
+                            <div class="value">${tp:.6f}</div>
                         </div>
                         <div class="metric">
                             <div class="label">Stop Loss</div>
-                            <div class="value">${sl:.2f}</div>
+                            <div class="value">${sl:.6f}</div>
                         </div>
                     </div>
                 </div>
