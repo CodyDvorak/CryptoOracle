@@ -78,20 +78,26 @@ class ScanOrchestrator:
                 logger.info(f"Applied price filter: max_price=${max_price}")
             
             # 3. **SMART FILTERING: Sort by AI confidence and take top performers (skip for custom)**
-            # Calculate combined AI score for each token
-            tokens_with_scores = []
-            for symbol, display_name, current_price, token_id, trader_grade, investor_grade in tokens:
-                # Combined score: 60% trader grade + 40% investor grade
-                # Trader grade is more important for short-term signals
-                combined_score = (trader_grade * 0.6) + (investor_grade * 0.4)
-                tokens_with_scores.append((combined_score, symbol, display_name, current_price, token_id, trader_grade, investor_grade))
-            
-            # Sort by combined score (highest first) and take top 30
-            tokens_with_scores.sort(reverse=True, key=lambda x: x[0])
-            top_tokens = tokens_with_scores[:30]  # Only analyze top 30 most promising tokens
-            
-            logger.info(f"Pre-filtered to top 30 tokens by AI confidence (from {len(tokens)} after filters)")
-            logger.info(f"Top 5 AI scores: {[f'{t[1]}:{t[0]:.1f}' for t in top_tokens[:5]]}")
+            if custom_symbols:
+                # Custom scan: analyze all selected symbols
+                top_tokens = [(0, symbol, display_name, current_price, token_id, trader_grade, investor_grade) 
+                             for symbol, display_name, current_price, token_id, trader_grade, investor_grade in tokens]
+                logger.info(f"Custom scan: analyzing {len(top_tokens)} selected tokens")
+            else:
+                # Calculate combined AI score for each token
+                tokens_with_scores = []
+                for symbol, display_name, current_price, token_id, trader_grade, investor_grade in tokens:
+                    # Combined score: 60% trader grade + 40% investor grade
+                    # Trader grade is more important for short-term signals
+                    combined_score = (trader_grade * 0.6) + (investor_grade * 0.4)
+                    tokens_with_scores.append((combined_score, symbol, display_name, current_price, token_id, trader_grade, investor_grade))
+                
+                # Sort by combined score (highest first) and take top 30
+                tokens_with_scores.sort(reverse=True, key=lambda x: x[0])
+                top_tokens = tokens_with_scores[:30]  # Only analyze top 30 most promising tokens
+                
+                logger.info(f"Pre-filtered to top 30 tokens by AI confidence (from {len(tokens)} after filters)")
+                logger.info(f"Top 5 AI scores: {[f'{t[1]}:{t[0]:.1f}' for t in top_tokens[:5]]}")
             
             scan_run.total_coins = len(top_tokens)
             
