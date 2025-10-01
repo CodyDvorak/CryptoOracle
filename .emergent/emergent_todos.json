@@ -1,30 +1,14 @@
 [
   {
-    "content": "Update app branding from CryptoTrendHunter to Crypto Oracle",
+    "content": "Fix syntax error in bot_strategies.py preventing scans",
     "status": "completed"
   },
   {
-    "content": "Change lookback period from 2 years to 1 year",
+    "content": "Make 'Coins Analyzed' stat dynamic based on actual scan results",
     "status": "completed"
   },
   {
-    "content": "Remove 50 coin limit - fetch ALL coins from Coinalyze",
-    "status": "completed"
-  },
-  {
-    "content": "Update bot strategies to return predicted prices (24h, 48h, 7d)",
-    "status": "completed"
-  },
-  {
-    "content": "Update aggregation to compute average predicted prices",
-    "status": "completed"
-  },
-  {
-    "content": "Update UI to show current price + predicted prices + average TP/SL",
-    "status": "completed"
-  },
-  {
-    "content": "Test the updated application",
-    "status": "completed"
+    "content": "Monitor scan progress and verify results with predicted prices",
+    "status": "in_progress"
   }
 ]
