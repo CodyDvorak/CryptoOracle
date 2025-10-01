@@ -4,16 +4,31 @@ import { Activity, TrendingUp, TrendingDown, Clock } from 'lucide-react';
 import GaugeComponent from 'react-gauge-component';
 
 export const CoinRecommendationCard = ({ recommendation, rank }) => {
-  const { coin, consensus_direction, avg_confidence, avg_entry, avg_take_profit, avg_stop_loss } = recommendation;
+  const { 
+    coin, 
+    consensus_direction, 
+    avg_confidence, 
+    current_price,
+    avg_entry, 
+    avg_take_profit, 
+    avg_stop_loss,
+    avg_predicted_24h,
+    avg_predicted_48h,
+    avg_predicted_7d
+  } = recommendation;
   
   const isLong = consensus_direction === 'long';
   const profitPct = isLong 
     ? ((avg_take_profit - avg_entry) / avg_entry * 100)
     : ((avg_entry - avg_take_profit) / avg_entry * 100);
   
+  // Calculate predicted changes
+  const change24h = ((avg_predicted_24h - current_price) / current_price * 100);
+  const change48h = ((avg_predicted_48h - current_price) / current_price * 100);
+  const change7d = ((avg_predicted_7d - current_price) / current_price * 100);
+  
   const copyToClipboard = (text, label) => {
     navigator.clipboard.writeText(text);
-    // You can add toast notification here
   };
   
   return (
@@ -74,15 +89,49 @@ export const CoinRecommendationCard = ({ recommendation, rank }) => {
           />
         </div>
         
-        {/* Trading Metrics */}
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-[var(--muted)]">Entry</span>
-            <span className="font-mono font-bold" data-testid="entry-value">${avg_entry.toFixed(2)}</span>
+        {/* Current Price */}
+        <div className="mb-3 p-3 rounded-lg bg-[var(--panel)] border border-[var(--card-border)]">
+          <div className="text-xs text-[var(--muted)] mb-1">Current Price</div>
+          <div className="text-2xl font-mono font-bold text-[var(--primary)]" data-testid="current-price">
+            ${current_price?.toFixed(2) || avg_entry.toFixed(2)}
+          </div>
+        </div>
+        
+        {/* Predicted Prices */}
+        <div className="space-y-2 mb-3">
+          <div className="text-xs font-semibold text-[var(--muted)] mb-1">AI Predicted Prices</div>
+          
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-[var(--muted)]">24h</span>
+            <span className={`font-mono font-bold ${change24h >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
+              ${avg_predicted_24h?.toFixed(2)} 
+              <span className="text-xs ml-1">({change24h >= 0 ? '+' : ''}{change24h.toFixed(1)}%)</span>
+            </span>
           </div>
           
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-[var(--muted)]">48h</span>
+            <span className={`font-mono font-bold ${change48h >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
+              ${avg_predicted_48h?.toFixed(2)}
+              <span className="text-xs ml-1">({change48h >= 0 ? '+' : ''}{change48h.toFixed(1)}%)</span>
+            </span>
+          </div>
+          
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-[var(--muted)]">7d</span>
+            <span className={`font-mono font-bold ${change7d >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
+              ${avg_predicted_7d?.toFixed(2)}
+              <span className="text-xs ml-1">({change7d >= 0 ? '+' : ''}{change7d.toFixed(1)}%)</span>
+            </span>
+          </div>
+        </div>
+        
+        {/* Trading Metrics */}
+        <div className="space-y-2 pt-3 border-t border-[var(--card-border)]">
+          <div className="text-xs font-semibold text-[var(--muted)] mb-1">Average TP/SL (from 21 bots)</div>
+          
           <div className="flex justify-between items-center">
-            <span className="text-sm text-[var(--success)]">Take Profit</span>
+            <span className="text-xs text-[var(--success)]">Take Profit</span>
             <span className="font-mono font-bold text-[var(--success)]" data-testid="tp-value">
               ${avg_take_profit.toFixed(2)}
               <span className="text-xs ml-1">({profitPct > 0 ? '+' : ''}{profitPct.toFixed(1)}%)</span>
@@ -90,7 +139,7 @@ export const CoinRecommendationCard = ({ recommendation, rank }) => {
           </div>
           
           <div className="flex justify-between items-center">
-            <span className="text-sm text-[var(--danger)]">Stop Loss</span>
+            <span className="text-xs text-[var(--danger)]">Stop Loss</span>
             <span className="font-mono font-bold text-[var(--danger)]" data-testid="sl-value">
               ${avg_stop_loss.toFixed(2)}
             </span>
@@ -101,7 +150,7 @@ export const CoinRecommendationCard = ({ recommendation, rank }) => {
         <div className="mt-4 pt-4 border-t border-[var(--card-border)] flex gap-2">
           <button
             className="flex-1 px-3 py-2 bg-[var(--surface)] hover:bg-[#171c25] rounded-md text-xs transition-colors"
-            onClick={() => copyToClipboard(`${coin}: ${consensus_direction.toUpperCase()} @ $${avg_entry.toFixed(2)}`, 'Trade copied')}
+            onClick={() => copyToClipboard(`${coin}: ${consensus_direction.toUpperCase()} @ $${avg_entry.toFixed(2)} | Pred 7d: $${avg_predicted_7d?.toFixed(2)}`, 'Trade copied')}
             data-testid="copy-trade-button"
           >
             Copy Trade
