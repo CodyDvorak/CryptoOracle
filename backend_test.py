@@ -539,53 +539,91 @@ class CryptoOracleTestSuite:
             return
         
         print()
-        print("🔄 Running full scan to get test data...")
+        print("🔐 Testing Authentication System...")
         
-        # 2. Run a full scan first to get data
+        # 2. Test user registration
+        access_token = await self.test_user_registration()
+        if not access_token:
+            print("❌ User registration failed - continuing with other tests")
+            access_token = None
+        
+        # Extract username for database test
+        registered_username = None
+        if access_token:
+            # Try to get username from the token by calling /auth/me
+            try:
+                headers = {"Authorization": f"Bearer {access_token}"}
+                async with self.session.get(f"{API_BASE}/auth/me", headers=headers) as response:
+                    if response.status == 200:
+                        user_data = await response.json()
+                        registered_username = user_data.get('username')
+            except:
+                pass
+        
+        # 3. Test user login (try with registered user first, then fallback)
+        login_token = None
+        if registered_username:
+            login_token = await self.test_user_login(registered_username, "SecurePass123!")
+        
+        if not login_token:
+            # Fallback to default test user
+            login_token = await self.test_user_login()
+        
+        # 4. Test protected endpoint
+        if login_token or access_token:
+            test_token = login_token or access_token
+            await self.test_protected_endpoint(test_token)
+        else:
+            self.log_test("Protected Endpoint", "SKIP", "No valid token available")
+        
+        # 5. Test invalid login
+        await self.test_invalid_login()
+        
+        # 6. Test database user creation
+        if registered_username:
+            await self.test_database_user_creation(registered_username)
+        
+        print()
+        print("🔄 Running scan to get test data for other features...")
+        
+        # 7. Run a scan to test other features
         full_scan_request = {"scope": "all"}
         run_id = await self.run_scan_and_wait(full_scan_request)
         
-        if not run_id:
-            print("❌ Initial scan failed - aborting tests")
-            return
-        
-        # Get recommendations to find a coin to test
-        async with self.session.get(f"{API_BASE}/recommendations/top5?run_id={run_id}") as response:
-            if response.status == 200:
-                data = await response.json()
-                recommendations = data.get('recommendations', [])
-                if recommendations:
-                    test_coin = recommendations[0].get('ticker')
-                    print(f"Using {test_coin} for bot details testing")
+        if run_id:
+            # Get recommendations to find a coin to test
+            async with self.session.get(f"{API_BASE}/recommendations/top5?run_id={run_id}") as response:
+                if response.status == 200:
+                    data = await response.json()
+                    recommendations = data.get('recommendations', [])
+                    if recommendations:
+                        test_coin = recommendations[0].get('ticker')
+                        print(f"Using {test_coin} for bot details testing")
+                        
+                        print()
+                        print("🧪 Testing Bot Details API...")
+                        
+                        # 8. Test bot details API
+                        await self.test_bot_details_api(run_id, test_coin)
+                        await self.test_bot_details_error_cases()
+                        
+                        print()
+                        print("🧪 Testing Dynamic Confidence Calculation...")
+                        
+                        # 9. Test dynamic confidence calculation
+                        await self.test_dynamic_confidence_calculation(run_id)
+                    else:
+                        print("⚠️ No recommendations found - skipping bot details tests")
                 else:
-                    print("❌ No recommendations found - aborting tests")
-                    return
-            else:
-                print("❌ Failed to get recommendations - aborting tests")
-                return
-        
-        print()
-        print("🧪 Testing Bot Details API...")
-        
-        # 3. Test bot details API
-        await self.test_bot_details_api(run_id, test_coin)
-        await self.test_bot_details_error_cases()
-        
-        print()
-        print("🧪 Testing Custom Scan Backend...")
-        
-        # 4. Test custom scan
-        custom_run_id = await self.test_custom_scan_backend()
-        
-        print()
-        print("🧪 Testing Dynamic Confidence Calculation...")
-        
-        # 5. Test dynamic confidence calculation
-        if custom_run_id:
-            await self.test_dynamic_confidence_calculation(custom_run_id)
+                    print("⚠️ Failed to get recommendations - skipping bot details tests")
+            
+            print()
+            print("🧪 Testing Custom Scan Backend...")
+            
+            # 10. Test custom scan
+            await self.test_custom_scan_backend()
         else:
-            # Fallback to original run_id
-            await self.test_dynamic_confidence_calculation(run_id)
+            print("⚠️ Scan failed - skipping feature tests")
         
         # Print summary
         print()
@@ -596,6 +634,7 @@ class CryptoOracleTestSuite:
         passed = sum(1 for result in self.test_results if result['status'] == 'PASS')
         failed = sum(1 for result in self.test_results if result['status'] == 'FAIL')
         partial = sum(1 for result in self.test_results if result['status'] == 'PARTIAL')
+        skipped = sum(1 for result in self.test_results if result['status'] == 'SKIP')
         info = sum(1 for result in self.test_results if result['status'] == 'INFO')
         
         for result in self.test_results:
@@ -605,6 +644,8 @@ class CryptoOracleTestSuite:
                 status_icon = "❌"
             elif result['status'] == 'PARTIAL':
                 status_icon = "⚠️"
+            elif result['status'] == 'SKIP':
+                status_icon = "⏭️"
             else:
                 status_icon = "ℹ️"
             print(f"{status_icon} {result['test']}: {result['details']}")
@@ -614,6 +655,7 @@ class CryptoOracleTestSuite:
         print(f"Passed: {passed}")
         print(f"Partial: {partial}")
         print(f"Failed: {failed}")
+        print(f"Skipped: {skipped}")
         print(f"Info: {info}")
         
         # Calculate success rate (PASS + PARTIAL as success)
