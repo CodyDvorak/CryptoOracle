@@ -55,9 +55,6 @@ function App() {
   const [scheduleTimezone, setScheduleTimezone] = useState('UTC');
   const [nextRunTime, setNextRunTime] = useState(null);
   
-  // Bots
-  const [bots, setBots] = useState([]);
-  
   // Stats
   const [stats, setStats] = useState({
     activeBots: 21,
