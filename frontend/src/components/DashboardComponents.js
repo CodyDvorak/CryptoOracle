@@ -141,7 +141,7 @@ export const CoinRecommendationCard = ({ recommendation, rank }) => {
           <div className="flex justify-between items-center text-sm">
             <span className="text-[var(--muted)]">24h</span>
             <span className={`font-mono font-bold ${change24h >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
-              ${avg_predicted_24h?.toFixed(6)} 
+              ${avg_predicted_24h?.toFixed(8)} 
               <span className="text-xs ml-1">({change24h >= 0 ? '+' : ''}{change24h.toFixed(4)}%)</span>
             </span>
           </div>
@@ -149,7 +149,7 @@ export const CoinRecommendationCard = ({ recommendation, rank }) => {
           <div className="flex justify-between items-center text-sm">
             <span className="text-[var(--muted)]">48h</span>
             <span className={`font-mono font-bold ${change48h >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
-              ${avg_predicted_48h?.toFixed(6)}
+              ${avg_predicted_48h?.toFixed(8)}
               <span className="text-xs ml-1">({change48h >= 0 ? '+' : ''}{change48h.toFixed(4)}%)</span>
             </span>
           </div>
@@ -157,7 +157,7 @@ export const CoinRecommendationCard = ({ recommendation, rank }) => {
           <div className="flex justify-between items-center text-sm">
             <span className="text-[var(--muted)]">7d</span>
             <span className={`font-mono font-bold ${change7d >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
-              ${avg_predicted_7d?.toFixed(6)}
+              ${avg_predicted_7d?.toFixed(8)}
               <span className="text-xs ml-1">({change7d >= 0 ? '+' : ''}{change7d.toFixed(4)}%)</span>
             </span>
           </div>
@@ -170,7 +170,7 @@ export const CoinRecommendationCard = ({ recommendation, rank }) => {
           <div className="flex justify-between items-center">
             <span className="text-xs text-[var(--success)]">Take Profit</span>
             <span className="font-mono font-bold text-[var(--success)]" data-testid="tp-value">
-              ${avg_take_profit.toFixed(6)}
+              ${avg_take_profit.toFixed(8)}
               <span className="text-xs ml-1">({profitPct > 0 ? '+' : ''}{profitPct.toFixed(4)}%)</span>
             </span>
           </div>
@@ -178,7 +178,7 @@ export const CoinRecommendationCard = ({ recommendation, rank }) => {
           <div className="flex justify-between items-center">
             <span className="text-xs text-[var(--danger)]">Stop Loss</span>
             <span className="font-mono font-bold text-[var(--danger)]" data-testid="sl-value">
-              ${avg_stop_loss.toFixed(6)}
+              ${avg_stop_loss.toFixed(8)}
             </span>
           </div>
         </div>
@@ -187,7 +187,7 @@ export const CoinRecommendationCard = ({ recommendation, rank }) => {
         <div className="mt-4 pt-4 border-t border-[var(--card-border)] flex gap-2">
           <button
             className="flex-1 px-3 py-2 bg-[var(--surface)] hover:bg-[#171c25] rounded-md text-xs transition-colors"
-            onClick={() => copyToClipboard(`${displayName}: ${consensus_direction.toUpperCase()} @ $${avg_entry.toFixed(6)} | Pred 7d: $${avg_predicted_7d?.toFixed(6)}`, 'Trade copied')}
+            onClick={() => copyToClipboard(`${displayName}: ${consensus_direction.toUpperCase()} @ $${avg_entry.toFixed(8)} | Pred 7d: $${avg_predicted_7d?.toFixed(8)}`, 'Trade copied')}
             data-testid="copy-trade-button"
           >
             Copy Trade
