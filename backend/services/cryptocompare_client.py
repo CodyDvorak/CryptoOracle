@@ -30,10 +30,10 @@ class CryptoCompareClient:
         try:
             session = await self._get_session()
             
-            # Fetch top 500 coins by market cap
+            # Fetch top 100 coins by market cap
             url = f'{self.base_url}/top/mktcapfull'
             params = {
-                'limit': 500,
+                'limit': 100,
                 'tsym': 'USD'
             }
             
