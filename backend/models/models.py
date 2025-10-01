@@ -71,9 +71,13 @@ class Settings(BaseModel):
     id: str = Field(default_factory=uuid_str)
     schedule_enabled: bool = False
     schedule_interval: str = '12h'  # '6h', '12h', or '24h'
-    schedule_start_time: Optional[str] = None  # HH:MM format
+    schedule_start_time: Optional[str] = None  # HH:MM format (e.g., "09:00")
+    timezone: str = 'UTC'  # Timezone for schedule_start_time (e.g., "America/New_York", "Europe/London")
     filter_scope: str = 'all'  # 'all' or 'alt'
+    min_price: Optional[float] = None
+    max_price: Optional[float] = None
     alt_exclusions: List[str] = ['BTC', 'ETH', 'USDT', 'USDC', 'DAI', 'TUSD', 'BUSD']
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class BotStatus(BaseModel):
