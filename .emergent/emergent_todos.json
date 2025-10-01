@@ -1,34 +1,30 @@
 [
   {
-    "content": "Install required Python packages (emergentintegrations, apscheduler, pandas, numpy, aiohttp, gspread, etc.)",
-    "status": "completed"
+    "content": "Update app branding from CryptoTrendHunter to Crypto Oracle",
+    "status": "in_progress"
   },
   {
-    "content": "Install required frontend packages (framer-motion, lightweight-charts, recharts, react-gauge-component, lucide-react, sonner)",
-    "status": "completed"
+    "content": "Change lookback period from 2 years to 1 year",
+    "status": "pending"
   },
   {
-    "content": "Update index.css with design tokens and load fonts in public/index.html",
-    "status": "completed"
+    "content": "Remove 50 coin limit - fetch ALL coins from Coinalyze",
+    "status": "pending"
   },
   {
-    "content": "Create Shadcn UI components and all MVP files in bulk",
-    "status": "completed"
+    "content": "Update bot strategies to return predicted prices (24h, 48h, 7d)",
+    "status": "pending"
   },
   {
-    "content": "Test backend: Check for import errors and fix linting issues",
-    "status": "completed"
+    "content": "Update aggregation to compute average predicted prices",
+    "status": "pending"
   },
   {
-    "content": "Test frontend: Compile and check for errors",
-    "status": "completed"
+    "content": "Update UI to show current price + predicted prices + average TP/SL",
+    "status": "pending"
   },
   {
-    "content": "Restart services and verify the application loads",
-    "status": "completed"
-  },
-  {
-    "content": "Test a complete scan flow",
-    "status": "completed"
+    "content": "Test the updated application",
+    "status": "pending"
   }
 ]
