@@ -86,9 +86,9 @@ class ScanOrchestrator:
             # 3. Analyze each coin
             all_aggregated_results = []
             
-            for coin_id, symbol, current_price in coins:
+            for symbol, display_symbol, current_price, has_binance_data in coins:
                 try:
-                    coin_result = await self._analyze_coin_with_coingecko(coin_id, symbol, current_price, scan_run.id)
+                    coin_result = await self._analyze_coin_with_binance(symbol, display_symbol, current_price, scan_run.id)
                     if coin_result:
                         all_aggregated_results.append(coin_result)
                 except Exception as e:
