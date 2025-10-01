@@ -82,6 +82,8 @@ class ScanOrchestrator:
                 try:
                     coin_result = await self._analyze_coin_with_cryptocompare(symbol, display_name, current_price, scan_run.id)
                     if coin_result:
+                        # Add ticker symbol to result
+                        coin_result['ticker'] = symbol
                         all_aggregated_results.append(coin_result)
                 except Exception as e:
                     logger.error(f"Error analyzing {symbol}: {e}")
