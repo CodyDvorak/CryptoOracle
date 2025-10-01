@@ -141,7 +141,6 @@ class RSI_Bot(BotStrategy):
         predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
         
         return {
-{
             'direction': direction,
             'entry': price,
             'take_profit': price * (1 + tp_pct) if direction == 'long' else price * (1 - tp_pct),
@@ -232,7 +231,6 @@ class BollingerBandsBot(BotStrategy):
         predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
         
         return {
-{
             'direction': direction,
             'entry': price,
             'take_profit': bb_middle if direction == 'long' else bb_lower,
@@ -278,7 +276,6 @@ class EMA_RibbonBot(BotStrategy):
         predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
         
         return {
-{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.04 if direction == 'long' else price * 0.96,
@@ -327,7 +324,6 @@ class VolumeBreakoutBot(BotStrategy):
         predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
         
         return {
-{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.05 if direction == 'long' else price * 0.95,
@@ -377,7 +373,6 @@ class ATR_VolatilityBot(BotStrategy):
         predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
         
         return {
-{
             'direction': direction,
             'entry': price,
             'take_profit': price * (1 + tp_pct) if direction == 'long' else price * (1 - tp_pct),
@@ -427,7 +422,6 @@ class StochasticBot(BotStrategy):
         predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
         
         return {
-{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.035 if direction == 'long' else price * 0.965,
@@ -474,7 +468,6 @@ class TrendStrengthBot(BotStrategy):
         predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
         
         return {
-{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.04 if direction == 'long' else price * 0.96,
@@ -531,7 +524,6 @@ class SupportResistanceBot(BotStrategy):
         predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
         
         return {
-{
             'direction': direction,
             'entry': price,
             'take_profit': tp,
@@ -577,7 +569,6 @@ class OBV_TrendBot(BotStrategy):
         predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
         
         return {
-{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.035 if direction == 'long' else price * 0.965,
@@ -627,7 +618,6 @@ class VWAP_Bot(BotStrategy):
         predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
         
         return {
-{
             'direction': direction,
             'entry': price,
             'take_profit': vwap,
@@ -676,7 +666,6 @@ class MomentumBot(BotStrategy):
         predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
         
         return {
-{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.04 if direction == 'long' else price * 0.96,
@@ -723,7 +712,6 @@ class BreakoutBot(BotStrategy):
         predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
         
         return {
-{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.05 if direction == 'long' else price * 0.95,
@@ -770,7 +758,6 @@ class ConsolidationBot(BotStrategy):
         predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
         
         return {
-{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.04 if direction == 'long' else price * 0.96,
@@ -818,7 +805,6 @@ class ScalpingBot(BotStrategy):
         predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
         
         return {
-{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.015 if direction == 'long' else price * 0.985,
@@ -866,7 +852,6 @@ class DivergenceBot(BotStrategy):
         predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
         
         return {
-{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.04 if direction == 'long' else price * 0.96,
@@ -914,7 +899,6 @@ class SwingBot(BotStrategy):
         predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
         
         return {
-{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.06 if direction == 'long' else price * 0.94,
@@ -962,7 +946,6 @@ class VolatilityBreakoutBot(BotStrategy):
         predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
         
         return {
-{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.05 if direction == 'long' else price * 0.95,
@@ -1021,7 +1004,6 @@ class MultiTimeframeBot(BotStrategy):
         predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
         
         return {
-{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.045 if direction == 'long' else price * 0.955,
@@ -1070,7 +1052,6 @@ class ConservativeBot(BotStrategy):
         predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
         
         return {
-{
             'direction': direction,
             'entry': price,
             'take_profit': price * 1.025 if direction == 'long' else price * 0.975,
