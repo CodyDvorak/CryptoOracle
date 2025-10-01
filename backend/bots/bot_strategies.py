@@ -147,7 +147,7 @@ class RSI_Bot(BotStrategy):
             'stop_loss': price * (1 - sl_pct) if direction == 'long' else price * (1 + sl_pct),
             'confidence': confidence,
             'rationale': rationale
-        ,
+,
             **predictions
         }
 
@@ -237,7 +237,7 @@ class BollingerBandsBot(BotStrategy):
             'stop_loss': bb_lower * 0.98 if direction == 'long' else bb_upper * 1.02,
             'confidence': confidence,
             'rationale': rationale
-        ,
+,
             **predictions
         }
 
@@ -282,7 +282,7 @@ class EMA_RibbonBot(BotStrategy):
             'stop_loss': price * 0.975 if direction == 'long' else price * 1.025,
             'confidence': confidence,
             'rationale': rationale
-        ,
+,
             **predictions
         }
 
@@ -330,7 +330,7 @@ class VolumeBreakoutBot(BotStrategy):
             'stop_loss': price * 0.97 if direction == 'long' else price * 1.03,
             'confidence': confidence,
             'rationale': rationale
-        ,
+,
             **predictions
         }
 
@@ -379,7 +379,7 @@ class ATR_VolatilityBot(BotStrategy):
             'stop_loss': price * (1 - sl_pct) if direction == 'long' else price * (1 + sl_pct),
             'confidence': confidence,
             'rationale': rationale
-        ,
+,
             **predictions
         }
 
@@ -428,7 +428,7 @@ class StochasticBot(BotStrategy):
             'stop_loss': price * 0.98 if direction == 'long' else price * 1.02,
             'confidence': confidence,
             'rationale': rationale
-        ,
+,
             **predictions
         }
 
@@ -474,7 +474,7 @@ class TrendStrengthBot(BotStrategy):
             'stop_loss': price * 0.975 if direction == 'long' else price * 1.025,
             'confidence': confidence,
             'rationale': rationale
-        ,
+,
             **predictions
         }
 
@@ -530,7 +530,7 @@ class SupportResistanceBot(BotStrategy):
             'stop_loss': sl,
             'confidence': confidence,
             'rationale': rationale
-        ,
+,
             **predictions
         }
 
@@ -575,7 +575,7 @@ class OBV_TrendBot(BotStrategy):
             'stop_loss': price * 0.98 if direction == 'long' else price * 1.02,
             'confidence': confidence,
             'rationale': rationale
-        ,
+,
             **predictions
         }
 
@@ -624,7 +624,7 @@ class VWAP_Bot(BotStrategy):
             'stop_loss': price * 0.975 if direction == 'long' else price * 1.025,
             'confidence': confidence,
             'rationale': rationale
-        ,
+,
             **predictions
         }
 
@@ -672,7 +672,7 @@ class MomentumBot(BotStrategy):
             'stop_loss': price * 0.97 if direction == 'long' else price * 1.03,
             'confidence': confidence,
             'rationale': rationale
-        ,
+,
             **predictions
         }
 
@@ -718,7 +718,7 @@ class BreakoutBot(BotStrategy):
             'stop_loss': price * 0.97 if direction == 'long' else price * 1.03,
             'confidence': confidence,
             'rationale': rationale
-        ,
+,
             **predictions
         }
 
@@ -764,7 +764,7 @@ class ConsolidationBot(BotStrategy):
             'stop_loss': price * 0.98 if direction == 'long' else price * 1.02,
             'confidence': confidence,
             'rationale': rationale
-        ,
+,
             **predictions
         }
 
@@ -811,7 +811,7 @@ class ScalpingBot(BotStrategy):
             'stop_loss': price * 0.99 if direction == 'long' else price * 1.01,
             'confidence': confidence,
             'rationale': rationale
-        ,
+,
             **predictions
         }
 
@@ -858,7 +858,7 @@ class DivergenceBot(BotStrategy):
             'stop_loss': price * 0.975 if direction == 'long' else price * 1.025,
             'confidence': confidence,
             'rationale': rationale
-        ,
+,
             **predictions
         }
 
@@ -905,7 +905,7 @@ class SwingBot(BotStrategy):
             'stop_loss': price * 0.96 if direction == 'long' else price * 1.04,
             'confidence': confidence,
             'rationale': rationale
-        ,
+,
             **predictions
         }
 
@@ -952,7 +952,7 @@ class VolatilityBreakoutBot(BotStrategy):
             'stop_loss': price * 0.97 if direction == 'long' else price * 1.03,
             'confidence': confidence,
             'rationale': rationale
-        ,
+,
             **predictions
         }
 
@@ -1010,7 +1010,7 @@ class MultiTimeframeBot(BotStrategy):
             'stop_loss': price * 0.975 if direction == 'long' else price * 1.025,
             'confidence': confidence,
             'rationale': rationale
-        ,
+,
             **predictions
         }
 
@@ -1058,7 +1058,7 @@ class ConservativeBot(BotStrategy):
             'stop_loss': price * 0.985 if direction == 'long' else price * 1.015,
             'confidence': confidence,
             'rationale': rationale
-        ,
+,
             **predictions
         }
 
