@@ -154,7 +154,7 @@ export const CoinRecommendationCard = ({ recommendation, rank }) => {
         <div className="mt-4 pt-4 border-t border-[var(--card-border)] flex gap-2">
           <button
             className="flex-1 px-3 py-2 bg-[var(--surface)] hover:bg-[#171c25] rounded-md text-xs transition-colors"
-            onClick={() => copyToClipboard(`${coin}: ${consensus_direction.toUpperCase()} @ $${avg_entry.toFixed(6)} | Pred 7d: $${avg_predicted_7d?.toFixed(6)}`, 'Trade copied')}
+            onClick={() => copyToClipboard(`${displayName}: ${consensus_direction.toUpperCase()} @ $${avg_entry.toFixed(6)} | Pred 7d: $${avg_predicted_7d?.toFixed(6)}`, 'Trade copied')}
             data-testid="copy-trade-button"
           >
             Copy Trade
