@@ -263,7 +263,6 @@ class ATR_VolatilityBot(BotStrategy):
         if not all(k in features for k in ['atr_14', 'current_price', 'bb_width']):
             return None
         
-        atr = features['atr_14']
         price = features['current_price']
         bb_width = features.get('bb_width', 0.05)
         
