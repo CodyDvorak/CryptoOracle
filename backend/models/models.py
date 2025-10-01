@@ -12,6 +12,7 @@ class ScanRun(BaseModel):
     completed_at: Optional[datetime] = None
     interval: Optional[str] = None  # '6h', '12h', '24h' or None for manual
     filter_scope: str = 'all'  # 'all' or 'alt'
+    max_price: Optional[float] = None  # Optional price filter (e.g., only coins under $1)
     status: str = 'running'  # 'running', 'completed', 'failed'
     total_coins: int = 0
     total_bots: int = 20
