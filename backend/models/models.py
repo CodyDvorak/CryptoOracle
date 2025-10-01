@@ -51,6 +51,12 @@ class Recommendation(BaseModel):
     avg_predicted_48h: float
     avg_predicted_7d: float
     bot_count: int = 20
+    trader_grade: float = 0  # TokenMetrics AI trader grade (0-100)
+    investor_grade: float = 0  # TokenMetrics AI investor grade (0-100)
+    ai_trend: str = ""  # AI trend analysis (bullish/bearish/neutral)
+    category: str = ""  # confidence/percent_mover/dollar_mover
+    predicted_percent_change: float = 0  # Predicted % change
+    predicted_dollar_change: float = 0  # Predicted $ change
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class IntegrationsConfig(BaseModel):
