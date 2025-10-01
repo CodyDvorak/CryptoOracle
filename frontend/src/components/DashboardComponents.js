@@ -39,6 +39,18 @@ export const CoinRecommendationCard = ({ recommendation, rank, runId }) => {
   // Format display name
   const displayName = ticker ? `${coin}/${ticker}` : coin;
   
+  // Format price with conditional decimal places
+  const formatPrice = (price) => {
+    if (!price) return '0.00';
+    if (price < 10) {
+      return price.toFixed(8);
+    } else if (price < 100) {
+      return price.toFixed(4);
+    } else {
+      return price.toFixed(2);
+    }
+  };
+  
   const copyToClipboard = (text, label) => {
     navigator.clipboard.writeText(text);
   };
