@@ -14,9 +14,11 @@ from apscheduler.triggers.interval import IntervalTrigger
 
 from models.models import (
     ScanRun, BotResult, Recommendation, IntegrationsConfig, Settings, BotStatus,
-    ScanRunRequest, Top5Response, UpdateIntegrationsRequest, UpdateScheduleRequest
+    ScanRunRequest, Top5Response, UpdateIntegrationsRequest, UpdateScheduleRequest,
+    User, UserCreate, UserLogin, UserResponse, Token
 )
 from services.scan_orchestrator import ScanOrchestrator
+from services.auth_service import hash_password, verify_password, create_access_token, decode_access_token
 
 # Setup
 ROOT_DIR = Path(__file__).parent
