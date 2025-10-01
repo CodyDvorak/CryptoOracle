@@ -28,6 +28,9 @@ class BotResult(BaseModel):
     stop_loss: float
     confidence: int  # 1-10
     rationale: str
+    predicted_24h: Optional[float] = None
+    predicted_48h: Optional[float] = None
+    predicted_7d: Optional[float] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class Recommendation(BaseModel):
