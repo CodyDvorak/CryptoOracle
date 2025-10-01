@@ -93,3 +93,60 @@ class AggregationEngine:
         )
         
         return sorted_results[:n]
+    
+    @staticmethod
+    def get_top_percent_movers(aggregated_results: List[Dict], n: int = 5) -> List[Dict]:
+        """Get top N coins by predicted percentage move (7-day).
+        
+        Args:
+            aggregated_results: List of aggregated coin results
+            n: Number of top coins to return
+        
+        Returns:
+            Top N coins by predicted % change
+        """
+        results_with_percent = []
+        for result in aggregated_results:
+            current = result.get('current_price', 0)
+            predicted_7d = result.get('avg_predicted_7d', current)
+            if current > 0:
+                percent_change = abs((predicted_7d - current) / current * 100)
+                result['predicted_percent_change'] = percent_change
+                results_with_percent.append(result)
+        
+        # Sort by absolute percentage change
+        sorted_results = sorted(
+            results_with_percent,
+            key=lambda x: x.get('predicted_percent_change', 0),
+            reverse=True
+        )
+        
+        return sorted_results[:n]
+    
+    @staticmethod
+    def get_top_dollar_movers(aggregated_results: List[Dict], n: int = 5) -> List[Dict]:
+        """Get top N coins by predicted dollar volume move.
+        
+        Args:
+            aggregated_results: List of aggregated coin results
+            n: Number of top coins to return
+        
+        Returns:
+            Top N coins by predicted $ change
+        """
+        results_with_volume = []
+        for result in aggregated_results:
+            current = result.get('current_price', 0)
+            predicted_7d = result.get('avg_predicted_7d', current)
+            dollar_change = abs(predicted_7d - current)
+            result['predicted_dollar_change'] = dollar_change
+            results_with_volume.append(result)
+        
+        # Sort by absolute dollar change
+        sorted_results = sorted(
+            results_with_volume,
+            key=lambda x: x.get('predicted_dollar_change', 0),
+            reverse=True
+        )
+        
+        return sorted_results[:n]
