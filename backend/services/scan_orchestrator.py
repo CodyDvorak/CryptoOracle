@@ -137,6 +137,7 @@ class ScanOrchestrator:
             for rec_data in all_top_recommendations:
                 recommendation = Recommendation(
                     run_id=scan_run.id,
+                    user_id=user_id,
                     **rec_data
                 )
                 await self.db.recommendations.insert_one(recommendation.dict())
