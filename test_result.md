@@ -209,29 +209,34 @@ test_plan:
 agent_communication:
   - agent: "main"
     message: |
-      Implementation complete for all 3 phases:
+      Implementation complete for all 3 phases + Dual-source architecture upgrade:
       
-      Phase 1 - Bot Details Popup:
+      Phase 1 - Bot Details Popup: ✅ WORKING
       - Created backend endpoint /api/recommendations/{run_id}/{coin_symbol}/bot_details
+      - Returns all 21 bot results with confidence scores
       - Created BotDetailsModal and dialog UI components
       - Added "Bot Details" button to CoinRecommendationCard
-      - Integrated runId state management in App.js
       
-      Phase 2 - Dynamic Confidence Validation:
-      - Verified aggregation_engine.py uses statistics.mean() for dynamic calculation
-      - Confidence scores are properly averaged from all bot results
-      - AI-only fallback intentionally simplified (no individual bots)
+      Phase 2 - Dynamic Confidence Validation: ✅ VERIFIED
+      - Confidence calculated as statistics.mean() from all 21 bot results
+      - Truly dynamic averaging
       
-      Phase 3 - Custom Scan UI:
-      - Added customSymbols state and input field
-      - Created dedicated Custom Scan section in UI
-      - Modified runScan function to handle custom symbol arrays
-      - Backend support already existed and works correctly
+      Phase 3 - Custom Scan UI: ✅ WORKING
+      - Frontend: Custom Scan section with comma-separated input
+      - Backend: Filters to specified symbols correctly
+      - Tested with ["BTC", "ETH"] - working perfectly
       
-      Ready for backend testing. All endpoints need validation:
-      - Test bot details endpoint with valid run_id and coin_symbol
-      - Test custom scan with symbol array
-      - Verify dynamic confidence calculations
+      DUAL-SOURCE ARCHITECTURE: ✅ IMPLEMENTED & TESTED
+      - CryptoCompare: Primary source for coins list and historical data
+      - TokenMetrics: Optional AI enhancement (trader/investor grades)
+      - 21 Bots: Analyze CryptoCompare data enhanced with TokenMetrics AI
+      - Graceful fallback when TokenMetrics unavailable
+      
+      Backend testing confirmed:
+      - Scan completed: 34 coins analyzed
+      - Bot details endpoint returns 21 bots as expected
+      - All required fields present and validated
+      - Custom scans working correctly
   
   - agent: "testing"
     message: |
