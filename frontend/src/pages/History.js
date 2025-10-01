@@ -310,22 +310,35 @@ const History = () => {
                               </span>
                             </div>
 
-                            <div className="mt-2 grid grid-cols-4 gap-4 text-sm">
+                            <div className="mt-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-sm">
                               <div>
-                                <p className="text-[var(--muted)]">Entry Price</p>
-                                <p className="font-mono">${rec.avg_entry?.toFixed(8)}</p>
+                                <p className="text-[var(--muted)] text-xs">Entry Price</p>
+                                <p className="font-mono font-semibold">${rec.avg_entry?.toFixed(8)}</p>
                               </div>
+                              
                               <div>
-                                <p className="text-[var(--muted)]">Predicted 7d</p>
-                                <p className="font-mono">${rec.avg_predicted_7d?.toFixed(8)}</p>
+                                <p className="text-[var(--success)] text-xs">Take Profit (TP)</p>
+                                <p className="font-mono font-semibold text-[var(--success)]">${rec.avg_take_profit?.toFixed(8)}</p>
                               </div>
+                              
                               <div>
-                                <p className="text-[var(--muted)]">Confidence</p>
+                                <p className="text-[var(--danger)] text-xs">Stop Loss (SL)</p>
+                                <p className="font-mono font-semibold text-[var(--danger)]">${rec.avg_stop_loss?.toFixed(8)}</p>
+                              </div>
+                              
+                              <div>
+                                <p className="text-[var(--muted)] text-xs">Predicted 7d</p>
+                                <p className="font-mono font-semibold">${rec.avg_predicted_7d?.toFixed(8)}</p>
+                              </div>
+                              
+                              <div>
+                                <p className="text-[var(--muted)] text-xs">Confidence</p>
                                 <p className="font-bold text-[var(--primary)]">{rec.avg_confidence?.toFixed(1)}/10</p>
                               </div>
+                              
                               <div>
-                                <p className="text-[var(--muted)]">Status</p>
-                                <p className={`font-bold ${
+                                <p className="text-[var(--muted)] text-xs">Status</p>
+                                <p className={`font-bold text-xs ${
                                   rec.outcome_7d === 'success' ? 'text-[var(--success)]' :
                                   rec.outcome_7d === 'failed' ? 'text-[var(--danger)]' :
                                   'text-[var(--muted)]'
