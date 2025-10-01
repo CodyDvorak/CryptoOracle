@@ -222,6 +222,223 @@ class ScanOrchestrator:
                 logger.warning(f"LLM synthesis skipped for {symbol}: {e}")
                 aggregated['rationale'] = f"{len(bot_results)} bots analyzed"
             
+            logger.info(f"✓ {symbol}: {len(bot_results)} bots, confidence={aggregated.get('avg_confidence', 0):.1f}, price=${current_price:.4f} (TokenMetrics AI)")
+            return aggregated
+            
+        except Exception as e:
+            logger.error(f"Critical error analyzing {symbol}: {e}", exc_info=True)
+            return None
+    
+    async def _analyze_coin_with_tokenmetrics(self, symbol: str, display_name: str, current_price: float, 
+                                              token_id: str, trader_grade: float, investor_grade: float, 
+                                              run_id: str) -> Optional[Dict]:
+        """Analyze a single token with TokenMetrics AI data and enhanced entry signal detection.
+        
+        Args:
+            symbol: Token symbol (e.g., 'BTC')
+            display_name: Display name for results
+            current_price: Real-time current price
+            token_id: TokenMetrics token ID
+            trader_grade: AI trader grade (0-100)
+            investor_grade: AI investor grade (0-100)
+            run_id: Scan run ID
+        
+        Returns:
+            Aggregated result dict or None if insufficient data
+        """
+        try:
+            # 1. Fetch comprehensive TokenMetrics data
+            candles = await self.token_client.get_historical_data(symbol, days=365)
+            ai_signals = await self.token_client.get_ai_signals(symbol)
+            support_resistance = await self.token_client.get_support_resistance(token_id)
+            
+            if len(candles) < 50:
+                logger.warning(f"Insufficient TokenMetrics data for {symbol}: {len(candles)} candles")
+                return None
+            
+            # 2. Update most recent candle with current price
+            if candles and current_price > 0:
+                candles[-1]['close'] = current_price
+                candles[-1]['high'] = max(candles[-1]['high'], current_price)
+                candles[-1]['low'] = min(candles[-1]['low'], current_price)
+            
+            # 3. Compute technical indicators
+            features = self.indicator_engine.compute_all_indicators(candles)
+            
+            if not features:
+                logger.warning(f"Failed to compute indicators for {symbol}")
+                return None
+            
+            # Ensure current price is accurate
+            features['current_price'] = current_price
+            
+            # 4. Add TokenMetrics AI data to features
+            features['trader_grade'] = trader_grade
+            features['investor_grade'] = investor_grade
+            
+            if ai_signals:
+                features['ai_signal_strength'] = ai_signals.get('signal_strength', 'weak')
+                features['trader_trend'] = ai_signals.get('trader_trend', 'neutral')
+                features['grade_history'] = ai_signals.get('grade_history', [])
+            
+            if support_resistance:
+                features['resistance'] = support_resistance.get('resistance', current_price * 1.1)
+                features['support'] = support_resistance.get('support', current_price * 0.9)
+            
+            # 5. Run all bots with enhanced AI features
+            bot_results = []
+            
+            for bot in self.bots:
+                try:
+                    result = bot.analyze(features)
+                    if result:
+                        # Ensure predicted prices exist
+                        if 'predicted_24h' not in result:
+                            result['predicted_24h'] = current_price
+                        if 'predicted_48h' not in result:
+                            result['predicted_48h'] = current_price
+                        if 'predicted_7d' not in result:
+                            result['predicted_7d'] = current_price
+                        
+                        # Save bot result to DB
+                        bot_result = BotResult(
+                            run_id=run_id,
+                            coin=display_name,
+                            bot_name=bot.name,
+                            direction=result['direction'],
+                            entry_price=result['entry'],
+                            take_profit=result['take_profit'],
+                            stop_loss=result['stop_loss'],
+                            confidence=result['confidence'],
+                            rationale=result['rationale'],
+                            predicted_24h=result.get('predicted_24h'),
+                            predicted_48h=result.get('predicted_48h'),
+                            predicted_7d=result.get('predicted_7d')
+                        )
+                        await self.db.bot_results.insert_one(bot_result.dict())
+                        bot_results.append(result)
+                except Exception as e:
+                    logger.error(f"Bot {bot.name} failed for {symbol}: {e}", exc_info=True)
+            
+            if not bot_results:
+                logger.warning(f"No bot results for {symbol}")
+                return None
+            
+            # 6. Aggregate results
+            aggregated = self.aggregation_engine.aggregate_coin_results(display_name, bot_results, current_price)
+            
+            # 7. Add AI insights to aggregated results
+            aggregated['trader_grade'] = trader_grade
+            aggregated['investor_grade'] = investor_grade
+            if ai_signals:
+                aggregated['ai_trend'] = ai_signals.get('trader_trend', 'neutral')
+            
+            # 8. Optional: LLM synthesis with AI context
+            try:
+                ai_context = f"TokenMetrics Trader Grade: {trader_grade}/100, Investor Grade: {investor_grade}/100"
+                if ai_signals:
+                    ai_context += f", Trend: {ai_signals.get('trader_trend', 'neutral')}"
+                
+                features['ai_context'] = ai_context
+                enhanced_rationale = await self.llm_service.synthesize_recommendations(display_name, bot_results, features)
+                aggregated['rationale'] = enhanced_rationale
+            except Exception as e:
+                logger.warning(f"LLM synthesis skipped for {symbol}: {e}")
+                aggregated['rationale'] = f"{len(bot_results)} bots analyzed with AI grades (T:{trader_grade:.0f}/I:{investor_grade:.0f})"
+            
+            logger.info(f"✓ {symbol}: {len(bot_results)} bots, confidence={aggregated.get('avg_confidence', 0):.1f}, price=${current_price:.6f}, AI grades T:{trader_grade:.0f}/I:{investor_grade:.0f}")
+            return aggregated
+            
+        except Exception as e:
+            logger.error(f"Critical error analyzing {symbol}: {e}", exc_info=True)
+            return None
+    
+    async def _analyze_coin_with_cryptocompare(self, symbol: str, display_name: str, current_price: float, run_id: str) -> Optional[Dict]:
+        """Analyze a single coin with CryptoCompare historical data.
+        
+        Args:
+            symbol: Coin symbol (e.g., 'BTC')
+            display_name: Display name for results
+            current_price: Real-time current price
+            run_id: Scan run ID
+        
+        Returns:
+            Aggregated result dict or None if insufficient data
+        """
+        try:
+            # 1. Fetch historical data from CryptoCompare (1 year, daily candles)
+            candles = await self.crypto_client.get_historical_data(symbol, days=365)
+            
+            if len(candles) < 50:
+                logger.warning(f"Insufficient CryptoCompare data for {symbol}: {len(candles)} candles")
+                return None
+            
+            # 2. Update most recent candle with current price
+            if candles and current_price > 0:
+                candles[-1]['close'] = current_price
+                candles[-1]['high'] = max(candles[-1]['high'], current_price)
+                candles[-1]['low'] = min(candles[-1]['low'], current_price)
+            
+            # 3. Compute indicators
+            features = self.indicator_engine.compute_all_indicators(candles)
+            
+            if not features:
+                logger.warning(f"Failed to compute indicators for {symbol}")
+                return None
+            
+            # Ensure current price is accurate
+            features['current_price'] = current_price
+            
+            # 4. Run all bots
+            bot_results = []
+            
+            for bot in self.bots:
+                try:
+                    result = bot.analyze(features)
+                    if result:
+                        # Ensure predicted prices exist
+                        if 'predicted_24h' not in result:
+                            result['predicted_24h'] = current_price
+                        if 'predicted_48h' not in result:
+                            result['predicted_48h'] = current_price
+                        if 'predicted_7d' not in result:
+                            result['predicted_7d'] = current_price
+                        
+                        # Save bot result to DB
+                        bot_result = BotResult(
+                            run_id=run_id,
+                            coin=display_name,
+                            bot_name=bot.name,
+                            direction=result['direction'],
+                            entry_price=result['entry'],
+                            take_profit=result['take_profit'],
+                            stop_loss=result['stop_loss'],
+                            confidence=result['confidence'],
+                            rationale=result['rationale'],
+                            predicted_24h=result.get('predicted_24h'),
+                            predicted_48h=result.get('predicted_48h'),
+                            predicted_7d=result.get('predicted_7d')
+                        )
+                        await self.db.bot_results.insert_one(bot_result.dict())
+                        bot_results.append(result)
+                except Exception as e:
+                    logger.error(f"Bot {bot.name} failed for {symbol}: {e}", exc_info=True)
+            
+            if not bot_results:
+                logger.warning(f"No bot results for {symbol}")
+                return None
+            
+            # 5. Aggregate results
+            aggregated = self.aggregation_engine.aggregate_coin_results(display_name, bot_results, current_price)
+            
+            # 6. Optional: LLM synthesis
+            try:
+                enhanced_rationale = await self.llm_service.synthesize_recommendations(display_name, bot_results, features)
+                aggregated['rationale'] = enhanced_rationale
+            except Exception as e:
+                logger.warning(f"LLM synthesis skipped for {symbol}: {e}")
+                aggregated['rationale'] = f"{len(bot_results)} bots analyzed"
+            
             logger.info(f"✓ {symbol}: {len(bot_results)} bots, confidence={aggregated.get('avg_confidence', 0):.1f}, price=${current_price:.4f} (CryptoCompare data)")
             return aggregated
             
