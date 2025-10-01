@@ -78,13 +78,18 @@ class SMA_CrossBot(BotStrategy):
         tp_pct = 0.03 + volatility * 2
         sl_pct = 0.015 + volatility
         
+        # Calculate predicted prices
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, volatility * 10, strength)
+        
         return {
             'direction': direction,
             'entry': price,
             'take_profit': price * (1 + tp_pct) if direction == 'long' else price * (1 - tp_pct),
             'stop_loss': price * (1 - sl_pct) if direction == 'long' else price * (1 + sl_pct),
             'confidence': confidence,
-            'rationale': f"SMA20 {'above' if direction == 'long' else 'below'} SMA50, indicating {direction} trend"
+            'rationale': f"SMA20 {'above' if direction == 'long' else 'below'} SMA50, indicating {direction} trend",
+            **predictions
         }
 
 
