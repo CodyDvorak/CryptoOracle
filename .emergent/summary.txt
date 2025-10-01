@@ -1,88 +1,88 @@
 <analysis>
-The trajectory details the development of a crypto-analysis application, initially named CryptoTrendHunter and later rebranded to Crypto Oracle. The process began with a user request for a multi-bot AI agent to provide trade recommendations. The AI engineer built the full-stack MVP using FastAPI, React, and MongoDB, integrating Claude for data analysis.
+The trajectory documents the iterative development and significant pivoting of a full-stack application, Crypto Oracle, designed to provide AI-driven cryptocurrency trading recommendations. The process began with debugging a non-functional data pipeline. The initial Binance API integration failed due to geographic restrictions, forcing a pivot to CoinGecko, which was then abandoned due to rate-limiting. A stable data source was found with the CryptoCompare API.
 
-Initial development involved creating a complex backend with 20 distinct bot strategies, data indicator engines, and API clients. The frontend was built with Shadcn UI for a modern look. The MVP completion was followed by several iterative cycles of feature enhancement and bug fixing.
+Following this, development entered a rapid, feature-driven cycle based on user requests. Key features added include customizable price filters (min/max), enhanced scheduling with custom start times and timezones, and UI improvements like decimal precision adjustments and ticker symbol displays.
 
-Key challenges encountered were significant. The primary data source proved unreliable, forcing a pivot from the user-specified Coinalyze API to CoinGecko, which then suffered from rate-limiting issues. This led to a final strategic shift to the Binance API for both coin lists and historical data. Debugging was also a major theme, with recurring issues like silent background task failures (requiring enhanced logging), MongoDB  serialization errors, and syntax errors introduced by an automated script.
+A major strategic shift occurred with the integration of the TokenMetrics API, per the user's request, to leverage its built-in AI grades. This introduced new complexities, as the free API key had limited access to historical data. To solve this, the AI engineer implemented a smart pre-filtering mechanism, prioritizing coins with high AI grades and creating a fallback analysis method for coins without full data.
 
-The work concluded with the implementation of the Binance API integration and the initiation of a new scan to test its effectiveness. The immediate focus is on validating this new data pipeline.
+The final phase focused on UI refinement and advanced features, including tabbed views for different Top 5 recommendation categories (confidence, percentage movers, dollar volume), a Custom Scan feature, and displaying detailed AI grades. The work concluded with the engineer about to address the user's latest requests: making confidence scores and percentages fully dynamic and implementing a pop-up to show individual bot breakdowns for each recommendation.
 </analysis>
 
 <product_requirements>
-The goal is to build an AI agent, Crypto Oracle, that provides cryptocurrency trading recommendations. The system uses 21 diverse AI bots to analyze market data, identify trends, and generate predictions.
+The objective is to build Crypto Oracle, an AI-powered agent that analyzes the cryptocurrency market and provides actionable trading recommendations.
 
-**Core Features:**
-- **Analysis Engine:** 21 bots analyze historical crypto data (1-year lookback) to find trends.
-- **Recommendations:** For each coin, bots provide a  or  recommendation, a Take Profit (TP) and Stop Loss (SL) price, and a 1-10 confidence score.
-- **Top 5 Coins:** The agent aggregates results from all bots to identify the top 5 coins with the highest average confidence.
-- **Data Display:** The UI must show the top 5 recommendations, including the coin's current price and the average predicted prices for 24h, 48h, and 7-day intervals, along with the aggregated TP/SL.
-- **Scheduling:** Users can schedule scans to run at 6, 12, or 24-hour intervals.
-- **Filtering:** Users can filter scans for all coins or only altcoins.
-- **Integrations:** The system must send results to a user-provided email (via SMTP) and log results to a specified Google Sheet.
-- **Data Accuracy:** The system must use up-to-date and accurate market data for all available coins from a reliable source (currently implemented with the Binance API).
+**Core Functionality:**
+-   **Analysis Engine:** Utilizes 21 AI bots and external AI signals (from TokenMetrics) to analyze market data for a wide range of cryptocurrencies.
+-   **Categorized Recommendations:** Identifies and displays the top 5 coins in three distinct categories:
+    1.  Highest average confidence score.
+    2.  Biggest predicted movers by percentage.
+    3.  Biggest predicted movers by dollar volume.
+-   **Detailed Insights:** Each recommendation includes the coin's name/ticker, current price, predicted prices (24h, 48h, 7d), a / signal, average Take Profit (TP) and Stop Loss (SL) points, confidence score, and AI-driven insights like Trader and Investor Grades from TokenMetrics.
+-   **Customizable Scans:** Users can run on-demand scans with specific filters, including a scope (all vs. altcoins) and a price range (minimum and maximum price).
+-   **Advanced Scheduling:** Users can configure automated scans to run at set intervals (6, 12, 24 hours) with specific filter criteria, custom start times, and timezone settings.
+-   **Data Source:** The system leverages the TokenMetrics API as its primary source for coin lists, real-time prices, and AI-driven analytics, with a smart fallback for coins with limited data.
 </product_requirements>
 
 <key_technical_concepts>
-- **Backend:** FastAPI (Python)
-- **Frontend:** React.js, Shadcn UI, Tailwind CSS
-- **Database:** MongoDB (using  for async operations)
-- **AI/LLM:** Claude 4.5 via Emergent LLM Key for data synthesis.
-- **Data APIs:** The project evolved from using Coinalyze, to CoinGecko, and finally settled on the **Binance API** for reliable, real-time market data (coin lists, prices, and historical OHLCV).
-- **Scheduling:**  for background tasks.
-- **Email:** Standard Python  for SMTP integration.
+- **Backend:** Python with FastAPI for the web server and API.
+- **Frontend:** JavaScript with React, using Shadcn UI components and Tailwind CSS for styling.
+- **Database:** MongoDB, accessed asynchronously using the  library.
+- **External APIs:** The application evolved from using Binance and CoinGecko to primarily relying on CryptoCompare, and finally, the **TokenMetrics API** for market data and AI grades.
+- **Scheduling:**  is used for running background scan tasks at user-defined intervals.
+- **AI/LLM:** Claude is used for synthesizing data and generating rationales.
 </key_technical_concepts>
 
 <code_architecture>
-The application is a standard monorepo with a React frontend and a FastAPI backend.
+The application follows a monorepo structure with a distinct separation between the frontend and backend services.
 
 
 
-- ****
-  - **Importance:** The main entry point for the FastAPI application. It defines all API endpoints (, , etc.), manages the database connection, and initializes the background scheduler.
-  - **Changes:** Heavily modified to add new endpoints, fix  serialization errors, and implement robust error handling for background scan tasks.
+-   ****
+    -   **Importance:** The main entry point for the FastAPI application. It defines all API endpoints, manages application lifecycle (startup/shutdown), initializes the , and configures the scheduler.
+    -   **Changes:** Heavily modified to add and update endpoints for running scans (), getting status (), fetching categorized recommendations (), and managing schedule configurations (). It was updated to handle API keys and initialize different API clients as the project pivoted.
 
-- ****
-  - **Importance:** This is the core logic engine. It orchestrates the entire scan process: fetching coins, getting historical data, running each of the 21 bots, aggregating results, saving them to MongoDB, and triggering notifications.
-  - **Changes:** This file has seen the most changes, pivoting data sources from Coinalyze to a CoinGecko/Binance hybrid, and finally to a pure Binance implementation to resolve data inaccuracy and rate-limiting issues. Error logging was also significantly enhanced here.
+-   ****
+    -   **Importance:** This is the application's core logic engine. It orchestrates the entire scan process: fetching tokens, applying filters, running analysis with bots and AI grades, calling the aggregation engine, and saving results.
+    -   **Changes:** This file underwent the most significant refactoring. It was adapted to switch from Binance to CryptoCompare and finally to TokenMetrics. Logic for smart pre-filtering based on TokenMetrics' AI grades was added, along with a fallback  method to handle tokens with incomplete data. It was also updated to handle custom scan lists.
 
-- ****
-  - **Importance:** The current, definitive client for all market data. It interfaces with the public Binance API to fetch the list of all tradable symbols, their current ticker prices, and historical OHLCV (candlestick) data.
-  - **Changes:** Created late in the project to solve data source reliability issues that plagued previous implementations (Coinalyze and CoinGecko).
+-   ****
+    -   **Importance:** The current primary data source client. It handles all interactions with the TokenMetrics API to fetch a list of tokens, their market data, and AI grades.
+    -   **Changes:** This file was created to replace the . It was debugged to handle API limitations (like a  of 100) and to parse the token data correctly.
 
-- ****
-  - **Importance:** Defines the logic for each of the 21 trading bots. Each bot class implements a different technical analysis strategy (e.g., RSI, MACD, Bollinger Bands) to generate predictions.
-  - **Changes:** Initially created in bulk. Later, it was broken by a faulty automated script and had to be manually fixed. It was also updated to include logic for predicting future prices at 24h, 48h, and 7d intervals.
+-   ****
+    -   **Importance:** Defines all Pydantic data models for API requests, responses, and database documents. This ensures data consistency and validation.
+    -   **Changes:** Models like , , , and  were repeatedly updated to support new features, including min/max price filters, custom symbols for scans, timezone settings, and additional data fields like , , and .
 
-- ****
-  - **Importance:** The main React component that renders the entire user interface, including the dashboard layout, navigation, and all data display components. It also handles state management and API calls to the backend.
-  - **Changes:** Updated to reflect the rebranding to Crypto Oracle, fetch dynamic stats like , and integrate the . It was also fixed early on due to a JSX compilation error.
+-   ****
+    -   **Importance:** The root component of the React application. It manages the primary state, orchestrates API calls, and renders the main layout, including the navigation, recommendation lists, and configuration sections.
+    -   **Changes:** This file was extensively modified. State management was expanded to handle min/max price filters, schedule settings (timezone, start time), and categorized recommendations. The UI was refactored to use a tabbed interface for different Top 5 lists and to include a Saved Schedules management section.
 
-- ****
-  - **Importance:** Contains the specialized React components for the dashboard, such as the  cards and the .
-  - **Changes:** Updated to display the new data points requested by the user, including the current price and predicted 24h/48h/7d prices for each recommended coin.
+-   ****
+    -   **Importance:** Contains the  component, which is responsible for displaying a single recommendation card.
+    -   **Changes:** Updated to display new data fields, including the coin's ticker, AI insights (Investor/Trader Grades), and to format prices and percentages to the user-requested decimal precision (8 for prices, 4 for percentages).
 </code_architecture>
 
 <pending_tasks>
-- Verify that the new Binance API integration successfully fetches a large list of coins and their historical data without errors.
-- Confirm that the current price and historical data from Binance are accurate and up-to-date.
-- Ensure the bot predictions and resulting Top 5 recommendations are sensible and displayed correctly in the UI with the new, accurate data.
-- Confirm that the Coins Analyzed statistic updates dynamically to reflect the total number of coins processed from the Binance API after a scan completes.
+- **Bot Details Popup:** Implement a feature where clicking a recommendation card opens a popup showing the confidence score from each of the 21 individual bots for that coin.
+- **Dynamic Confidence Score:** Ensure the main confidence score displayed is a true dynamic average of all bot results for a given coin, not a static or fallback value.
+- **Dynamic Percentages:** Fix the percentage change predictions in the AI-only analysis fallback to be dynamic and variable, not static values.
+- **Custom Scan UI:** Complete the frontend implementation for the Custom Scan feature.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary, the AI engineer was debugging a critical issue where the application was failing to fetch accurate, real-time crypto data for analysis. The initial Coinalyze API was unreliable, and a switch to the CoinGecko API resulted in severe rate-limiting errors (HTTP 429).
+The AI engineer was actively addressing several user-reported issues and feature requests from the last message. The most recent actions were focused on both the backend and frontend to enhance data accuracy and add new functionality.
 
-Following a discussion with the user, the decision was made to pivot entirely to the **Binance API**, which offers free, high-volume access to both coin lists and historical data.
+**Backend Fixes (Completed):**
+1.  **Dynamic Percentages:** The  method in  was updated to add random variance to the predicted price changes, TP, and SL percentages, so they are no longer static.
+2.  **Custom Scan Logic:** The  endpoint in  and the main  method in  were modified to accept and process a list of , allowing users to scan a pre-selected group of coins.
 
-The most recent actions were:
-1.  Creating a new client  to handle all interactions with the Binance API.
-2.  Refactoring the  to remove all dependencies on CoinGecko and use the new  for fetching the coin list, current prices, and historical OHLCV data.
-3.  Restarting the backend server to apply these changes.
-4.  Triggering a new scan via the  endpoint to test the end-to-end flow with the 100% Binance-powered data pipeline.
+**Frontend Fixes (Completed):**
+1.  **Price Precision:** The price display format in  was updated from  to  to show 8 decimal places.
 
-The system is currently in the middle of executing this first scan with the new Binance integration, and the next step is to monitor its progress and results.
+**Current Task (In Progress):**
+Immediately before this summary, the engineer acknowledged the user's request for a popup showing individual bot confidence scores. The very last action taken was to begin the implementation by outlining the first step: creating a new backend API endpoint to serve this detailed bot data. This is the first sub-task of the user's latest request.
 </current_work>
 
 <optional_next_step>
-Monitor the backend logs to confirm that the scan initiated with the Binance API integration is fetching a large number of coins and processing them without hitting rate limits or other errors.
+Create the new backend API endpoint () that retrieves and returns the individual bot results for a specific coin from a completed scan.
 </optional_next_step>
