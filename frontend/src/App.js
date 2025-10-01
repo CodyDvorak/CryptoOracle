@@ -166,7 +166,7 @@ function App() {
     }
   };
 
-  const runScan = async () => {
+  const runScan = async (isCustomScan = false) => {
     if (loading) return;
     
     setLoading(true);
@@ -174,10 +174,27 @@ function App() {
     
     try {
       const requestBody = { 
-        scope: filter,
-        min_price: minPrice ? parseFloat(minPrice) : null,
-        max_price: maxPrice ? parseFloat(maxPrice) : null
+        scope: isCustomScan ? 'custom' : filter,
+        min_price: isCustomScan ? null : (minPrice ? parseFloat(minPrice) : null),
+        max_price: isCustomScan ? null : (maxPrice ? parseFloat(maxPrice) : null)
       };
+      
+      // Add custom symbols if custom scan
+      if (isCustomScan && customSymbols) {
+        const symbolsArray = customSymbols
+          .split(',')
+          .map(s => s.trim().toUpperCase())
+          .filter(s => s.length > 0);
+        
+        if (symbolsArray.length === 0) {
+          toast.error('Please enter at least one valid symbol');
+          setLoading(false);
+          return;
+        }
+        
+        requestBody.custom_symbols = symbolsArray;
+      }
+      
       await axios.post(`${API}/scan/run`, requestBody);
       toast.success('Scan started successfully!');
       
