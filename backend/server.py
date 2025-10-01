@@ -171,8 +171,15 @@ async def get_top5_recommendations(run_id: Optional[str] = None):
     if not recommendations:
         raise HTTPException(status_code=404, detail=f"No recommendations found for run {run_id}")
     
+    # Convert ObjectId to string for all recommendations
+    for rec in recommendations:
+        if '_id' in rec:
+            rec['_id'] = str(rec['_id'])
+    
     # Get scan info
     scan_run = await db.scan_runs.find_one({'id': run_id})
+    if scan_run and '_id' in scan_run:
+        scan_run['_id'] = str(scan_run['_id'])
     
     return {
         "run_id": run_id,
