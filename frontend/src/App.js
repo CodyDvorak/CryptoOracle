@@ -569,14 +569,8 @@ function App() {
           <BotStatusGrid bots={bots} />
         </section>
         
-        {/* Configuration Section */}
-        <section>
-          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-            <Settings className="w-6 h-6 text-[var(--primary)]" />
-            Configuration
-          </h2>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Configuration already added above with saved schedules */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
             {/* Schedule Config */}
             <Card>
               <CardHeader>
