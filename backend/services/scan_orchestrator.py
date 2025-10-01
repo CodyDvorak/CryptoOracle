@@ -49,15 +49,13 @@ class ScanOrchestrator:
         logger.info(f"Starting scan run {scan_run.id} with scope={filter_scope}")
         
         try:
-            # 1. Fetch coin list from both sources
-            logger.info("Fetching coins from Binance and CoinGecko...")
-            
-            # Get Binance trading pairs (300+ coins with real data)
+            # 1. Fetch coin list from Binance (300+ coins available)
+            logger.info("Fetching trading pairs from Binance...")
             binance_symbols = await self.binance_client.get_all_symbols()
-            binance_set = set(binance_symbols)
             
-            # Get CoinGecko data for current prices
-            coingecko_data = await self.coingecko_client.get_top_coins(limit=500)
+            logger.info(f"Fetching current prices from CoinGecko...")
+            # Get CoinGecko data with rate limiting
+            coingecko_data = await self.coingecko_client.get_top_coins(limit=250)  # First page only
             
             # Create mapping: symbol -> current price
             price_map = {}
@@ -67,16 +65,18 @@ class ScanOrchestrator:
                 if symbol and price > 0:
                     price_map[symbol] = price
             
-            # Prioritize coins available on Binance (real historical data)
+            # Use Binance symbols with available prices
             coins = []
             for symbol in binance_symbols:
-                current_price = price_map.get(symbol, 0)
-                if current_price > 0:
-                    coins.append((symbol, symbol, current_price, True))  # (symbol, display_symbol, price, has_binance_data)
+                current_price = price_map.get(symbol)
+                if current_price and current_price > 0:
+                    coins.append((symbol, symbol, current_price))
+            
+            # For symbols without CoinGecko price, skip them for now
+            # In production, could use Binance ticker prices as fallback
             
             # 2. Apply filter
             if filter_scope == 'alt':
-                # Exclude major coins and stablecoins
                 exclusions = ['BTC', 'ETH', 'USDT', 'USDC', 'DAI', 'TUSD', 'BUSD', 'USDD']
                 coins = [c for c in coins if c[0] not in exclusions]
             
