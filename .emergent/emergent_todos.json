@@ -1,7 +1,7 @@
 [
   {
     "content": "Install required Python packages (emergentintegrations, apscheduler, pandas, numpy, aiohttp, gspread, etc.)",
-    "status": "pending"
+    "status": "in_progress"
   },
   {
     "content": "Install required frontend packages (framer-motion, lightweight-charts, recharts, react-gauge-component, lucide-react, sonner)",
