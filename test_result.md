@@ -111,39 +111,48 @@ user_problem_statement: |
 backend:
   - task: "Bot details API endpoint"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Created GET /api/recommendations/{run_id}/{coin_symbol}/bot_details endpoint to fetch individual bot results for a specific coin"
+      - working: true
+        agent: "testing"
+        comment: "PASS - Bot details API endpoint working correctly. Returns proper 404 for AI-only analysis coins (expected behavior). Response structure validated. Error handling works for invalid run_ids."
 
   - task: "Custom scan backend support"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/services/scan_orchestrator.py, backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Backend already supports custom_symbols parameter in scan endpoint. Verified implementation in scan_orchestrator.py run_scan method"
+      - working: true
+        agent: "testing"
+        comment: "PASS - Custom scan backend support working. POST /api/scan/run correctly accepts and processes custom_symbols parameter. API validation working properly."
 
   - task: "Dynamic confidence calculation validation"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/services/aggregation_engine.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Verified that confidence calculation uses statistics.mean() on all bot confidences. Dynamic by design. AI-only fallback intentionally uses simplified single confidence value when no bot results available"
+      - working: true
+        agent: "testing"
+        comment: "PASS - Dynamic confidence calculation working correctly. Confidence scores are valid (0-10 range). AI-only analysis produces consistent values. System handles both individual bot results and AI-only fallback properly."
 
 frontend:
   - task: "Bot details modal component"
