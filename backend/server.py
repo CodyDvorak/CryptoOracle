@@ -346,6 +346,16 @@ async def get_schedule_config():
         default_config = Settings()
         return default_config.dict()
     
+    # Add next run time if scheduler is active
+    next_run = None
+    if scheduler.running:
+        jobs = scheduler.get_jobs()
+        if jobs:
+            job = jobs[0]  # Get the crypto scan job
+            if job.next_run_time:
+                next_run = job.next_run_time.isoformat()
+    
+    config['next_run_time'] = next_run
     return config
 
 
