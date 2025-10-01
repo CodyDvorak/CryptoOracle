@@ -130,7 +130,7 @@ export const CoinRecommendationCard = ({ recommendation, rank }) => {
         <div className="mb-3 p-3 rounded-lg bg-[var(--panel)] border border-[var(--card-border)]">
           <div className="text-xs text-[var(--muted)] mb-1">Current Price</div>
           <div className="text-2xl font-mono font-bold text-[var(--primary)]" data-testid="current-price">
-            ${current_price?.toFixed(6) || avg_entry.toFixed(6)}
+            ${current_price?.toFixed(8) || avg_entry.toFixed(8)}
           </div>
         </div>
         
