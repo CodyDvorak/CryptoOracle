@@ -922,8 +922,14 @@ class CryptoOracleTestSuite:
 
 async def main():
     """Main test runner"""
+    import sys
+    
     async with CryptoOracleTestSuite() as test_suite:
-        await test_suite.run_all_tests()
+        # Check if we should run bug fix tests specifically
+        if len(sys.argv) > 1 and sys.argv[1] == "--bug-fixes":
+            await test_suite.run_bug_fix_tests()
+        else:
+            await test_suite.run_all_tests()
 
 if __name__ == "__main__":
     asyncio.run(main())
