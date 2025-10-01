@@ -274,12 +274,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "User Registration API"
-    - "User Login API" 
-    - "Protected Endpoints Authentication"
-    - "Database User Persistence"
+    - "Auto-refresh after scan completion"
+    - "Email notification after scan completion"
   stuck_tasks: []
-  test_all: true
+  test_all: false
   test_priority: "high_first"
 
 agent_communication:
