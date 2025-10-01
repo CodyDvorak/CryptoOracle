@@ -145,7 +145,7 @@ const History = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <Card>
             <CardContent className="pt-6">
               <div className="text-center">
@@ -159,25 +159,7 @@ const History = () => {
             <CardContent className="pt-6">
               <div className="text-center">
                 <div className="text-3xl font-bold text-[var(--primary)]">{stats.total_predictions}</div>
-                <div className="text-sm text-[var(--muted)] mt-1">Total Predictions</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-[var(--success)]">{stats.successful_predictions}</div>
-                <div className="text-sm text-[var(--muted)] mt-1">Successful</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-[var(--primary)]">{stats.overall_success_rate.toFixed(1)}%</div>
-                <div className="text-sm text-[var(--muted)] mt-1">Success Rate</div>
+                <div className="text-sm text-[var(--muted)] mt-1">Total Recommendations</div>
               </div>
             </CardContent>
           </Card>
