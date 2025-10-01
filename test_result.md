@@ -109,6 +109,66 @@ user_problem_statement: |
   Phase 3: Custom Scan UI - Allow users to scan specific coins via UI input
 
 backend:
+  - task: "User Registration API"
+    implemented: true
+    working: true
+    file: "backend/server.py, backend/services/auth_service.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Authentication system implemented with user registration, login, and JWT token management"
+      - working: true
+        agent: "testing"
+        comment: "PASS - User registration working perfectly. Creates user with proper validation, returns access_token and user object with all required fields (id, username, email, created_at, is_active). Fixed bcrypt password hashing issue."
+
+  - task: "User Login API"
+    implemented: true
+    working: true
+    file: "backend/server.py, backend/services/auth_service.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "User login endpoint with username/password authentication and JWT token generation"
+      - working: true
+        agent: "testing"
+        comment: "PASS - User login working correctly. Validates credentials, returns access_token and user object. Properly rejects invalid credentials with 401 status."
+
+  - task: "Protected Endpoints Authentication"
+    implemented: true
+    working: true
+    file: "backend/server.py, backend/services/auth_service.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "JWT token validation for protected endpoints like /auth/me"
+      - working: true
+        agent: "testing"
+        comment: "PASS - Protected endpoint /auth/me working correctly. Validates JWT tokens, returns user information. Proper authorization header handling."
+
+  - task: "Database User Persistence"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "User data persistence in MongoDB database"
+      - working: true
+        agent: "testing"
+        comment: "PASS - User data properly persisted in MongoDB. Users can login after registration, confirming database storage is working correctly."
+
   - task: "Bot details API endpoint"
     implemented: true
     working: true
