@@ -1,14 +1,18 @@
 [
   {
-    "content": "Debug silent scan failures - add comprehensive error logging",
+    "content": "Fix Coinalyze API endpoints to get real data instead of mock data",
     "status": "in_progress"
   },
   {
-    "content": "Fix background task error handling",
+    "content": "Remove 50-coin limit and fetch ALL available coins from Coinalyze",
     "status": "pending"
   },
   {
-    "content": "Verify scan completion and data persistence",
+    "content": "Verify accurate current prices and historical data",
+    "status": "pending"
+  },
+  {
+    "content": "Test with real API data and verify predictions are accurate",
     "status": "pending"
   }
 ]
