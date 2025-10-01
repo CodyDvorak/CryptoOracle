@@ -15,7 +15,12 @@ export const CoinRecommendationCard = ({ recommendation, rank }) => {
     avg_stop_loss,
     avg_predicted_24h,
     avg_predicted_48h,
-    avg_predicted_7d
+    avg_predicted_7d,
+    trader_grade = 0,
+    investor_grade = 0,
+    ai_trend = '',
+    predicted_percent_change = 0,
+    predicted_dollar_change = 0
   } = recommendation;
   
   const isLong = consensus_direction === 'long';
@@ -42,12 +47,40 @@ export const CoinRecommendationCard = ({ recommendation, rank }) => {
     >
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <span className="text-[var(--primary)]">
-              #{rank}
-            </span>
-            <span data-testid="coin-symbol">{displayName}</span>
-          </CardTitle>
+          <div className="flex flex-col gap-1">
+            <CardTitle className="flex items-center gap-2">
+              <span className="text-[var(--primary)]">
+                #{rank}
+              </span>
+              <span data-testid="coin-symbol">{displayName}</span>
+            </CardTitle>
+            {/* AI Insights */}
+            {(trader_grade > 0 || investor_grade > 0) && (
+              <div className="flex gap-2 text-xs">
+                {trader_grade > 0 && (
+                  <div className="flex items-center gap-1 text-[var(--muted)]">
+                    <span className="text-[var(--accent)]">T:</span>
+                    <span className="font-mono">{trader_grade.toFixed(0)}/100</span>
+                  </div>
+                )}
+                {investor_grade > 0 && (
+                  <div className="flex items-center gap-1 text-[var(--muted)]">
+                    <span className="text-[var(--accent)]">I:</span>
+                    <span className="font-mono">{investor_grade.toFixed(0)}/100</span>
+                  </div>
+                )}
+                {ai_trend && (
+                  <div className={`flex items-center gap-1 ${
+                    ai_trend === 'bullish' ? 'text-[var(--success)]' : 
+                    ai_trend === 'bearish' ? 'text-[var(--danger)]' : 'text-[var(--muted)]'
+                  }`}>
+                    <span>•</span>
+                    <span className="capitalize">{ai_trend}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           <span 
             className={`px-3 py-1 rounded-md text-xs font-bold ${
               isLong 
