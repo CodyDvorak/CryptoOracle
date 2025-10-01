@@ -6,11 +6,11 @@ export const Dialog = ({ open, onOpenChange, children }) => {
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 animate-in fade-in duration-200"
       onClick={() => onOpenChange(false)}
     >
       <div 
-        className="relative bg-[var(--surface)] border border-[var(--card-border)] rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden"
+        className="relative bg-[var(--surface)] border border-[var(--card-border)] rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {children}
