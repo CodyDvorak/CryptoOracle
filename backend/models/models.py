@@ -111,7 +111,8 @@ class UpdateIntegrationsRequest(BaseModel):
 class UpdateScheduleRequest(BaseModel):
     schedule_enabled: bool
     schedule_interval: str  # '6h', '12h', '24h'
-    schedule_start_time: Optional[str] = None
+    schedule_start_time: Optional[str] = None  # HH:MM format
+    timezone: str = 'UTC'  # Timezone string (e.g., "America/New_York")
     filter_scope: str = 'all'
     min_price: Optional[float] = None
     max_price: Optional[float] = None
