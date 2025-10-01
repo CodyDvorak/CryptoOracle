@@ -74,8 +74,8 @@ class EmailService:
         <body>
             <div class="container">
                 <div class="header">
-                    <h1 style="margin: 0; color: #0b0f14;">🎯 CryptoTrendHunter</h1>
-                    <p style="margin: 5px 0 0 0; color: #0b0f14;">Top 5 AI-Powered Recommendations</p>
+                    <h1 style="margin: 0; color: #0b0f14;">🔮 Crypto Oracle</h1>
+                    <p style="margin: 5px 0 0 0; color: #0b0f14;">Top 5 AI-Powered Predictions</p>
                 </div>
         """
         
