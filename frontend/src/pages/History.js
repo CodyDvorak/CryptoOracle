@@ -206,15 +206,23 @@ const History = () => {
                     {history.map((scan) => (
                       <div
                         key={scan.id}
-                        className="p-4 border border-[var(--card-border)] rounded-lg hover:bg-[var(--panel)] cursor-pointer transition-colors"
-                        onClick={() => fetchRunDetails(scan.id)}
+                        className="p-4 border-2 border-[var(--card-border)] rounded-lg hover:border-[var(--primary)] hover:bg-[var(--panel)] cursor-pointer transition-all"
+                        onClick={() => {
+                          fetchRunDetails(scan.id);
+                          // Switch to details tab
+                          const detailsTab = document.querySelector('[value="details"]');
+                          if (detailsTab) detailsTab.click();
+                        }}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-3">
                               <div>
-                                <p className="font-semibold text-[var(--text)]">
+                                <p className="font-semibold text-[var(--text)] flex items-center gap-2">
                                   {new Date(scan.started_at).toLocaleDateString()} - {new Date(scan.started_at).toLocaleTimeString()}
+                                  <span className="text-xs px-2 py-1 bg-[var(--primary)]/20 text-[var(--primary)] rounded">
+                                    Click to view
+                                  </span>
                                 </p>
                                 <p className="text-sm text-[var(--muted)] mt-1">
                                   {scan.total_coins} coins analyzed • {scan.filter_scope} scope
@@ -233,7 +241,9 @@ const History = () => {
 
                             <div className="text-right">
                               <p className="text-sm text-[var(--muted)]">Success Rate</p>
-                              <p className="font-bold text-[var(--success)]">{scan.success_rate.toFixed(1)}%</p>
+                              <p className={`font-bold ${scan.success_rate > 0 ? 'text-[var(--success)]' : 'text-[var(--muted)]'}`}>
+                                {scan.success_rate > 0 ? `${scan.success_rate.toFixed(1)}%` : 'Pending'}
+                              </p>
                             </div>
 
                             <TrendingUp className="w-5 h-5 text-[var(--primary)]" />
