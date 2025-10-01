@@ -426,7 +426,6 @@ class ScanOrchestrator:
             from models.models import Recommendation
             recommendation = Recommendation(
                 run_id=run_id,
-                coin=display_name,
                 ticker=symbol,
                 **result
             )
