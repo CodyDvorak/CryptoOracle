@@ -617,7 +617,7 @@ class ScanOrchestrator:
                 'trader_grade': trader_grade,  # Add AI grades (may be 0)
                 'investor_grade': investor_grade,
                 'ai_trend': 'bullish' if direction == 'long' else 'bearish',
-                'rationale': f"Fallback analysis (limited data)" if trader_grade == 0 else f"AI analysis: T:{trader_grade:.0f}/I:{investor_grade:.0f}"
+                'rationale': "Fallback analysis (limited data)" if trader_grade == 0 else f"AI analysis: T:{trader_grade:.0f}/I:{investor_grade:.0f}"
             }
             
             # Save as recommendation directly
@@ -1008,6 +1008,6 @@ class ScanOrchestrator:
                     recommendations=recommendations,
                     run_id=run_id
                 )
-                logger.info(f"Recommendations logged to Google Sheets")
+                logger.info("Recommendations logged to Google Sheets")
             except Exception as e:
                 logger.error(f"Google Sheets logging failed: {e}")
