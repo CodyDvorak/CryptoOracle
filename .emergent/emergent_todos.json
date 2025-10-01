@@ -1,22 +1,14 @@
 [
   {
-    "content": "Fix syntax error in bot_strategies.py preventing scans",
-    "status": "completed"
+    "content": "Debug silent scan failures - add comprehensive error logging",
+    "status": "in_progress"
   },
   {
-    "content": "Make 'Coins Analyzed' stat dynamic based on actual scan results",
-    "status": "completed"
+    "content": "Fix background task error handling",
+    "status": "pending"
   },
   {
-    "content": "Monitor scan progress and verify results with predicted prices",
-    "status": "completed"
-  },
-  {
-    "content": "Configure Gmail SMTP for email notifications",
-    "status": "completed"
-  },
-  {
-    "content": "Test email delivery with real credentials",
-    "status": "completed"
+    "content": "Verify scan completion and data persistence",
+    "status": "pending"
   }
 ]
