@@ -142,13 +142,16 @@ async def get_scan_status():
     
     # Get total coins analyzed from most recent completed run
     coins_analyzed = 0
+    total_available = 0
     if recent_run:
         coins_analyzed = recent_run.get('total_coins', 0)
+        total_available = recent_run.get('total_available_coins', 0)
     
     return {
         "is_running": is_running,
         "recent_run": recent_run,
-        "coins_analyzed": coins_analyzed
+        "coins_analyzed": coins_analyzed,
+        "total_available_coins": total_available
     }
 
 
