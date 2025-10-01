@@ -464,8 +464,8 @@ async def shutdown_event():
     # Close MongoDB connection
     client.close()
     
-    # Close Coinalyze client
-    await scan_orchestrator.coinalyze_client.close()
+    # Close CryptoCompare client
+    await scan_orchestrator.crypto_client.close()
     
     logger.info("Application shutdown complete")
 
