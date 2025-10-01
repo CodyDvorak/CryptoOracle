@@ -252,7 +252,9 @@ function App() {
             
             // Fetch fresh recommendations
             console.log('[AUTO-REFRESH] Fetching recommendations inline...');
-            const recsResponse = await axios.get(`${API}/recommendations/top5`);
+            const recsResponse = await axios.get(`${API}/recommendations/top5`, {
+              headers: getAuthHeader()
+            });
             console.log(`[AUTO-REFRESH] Received ${recsResponse.data.top_confidence?.length || 0} confidence, ${recsResponse.data.top_percent_movers?.length || 0} percent, ${recsResponse.data.top_dollar_movers?.length || 0} dollar recommendations`);
             
             setTopConfidence(recsResponse.data.top_confidence || []);
