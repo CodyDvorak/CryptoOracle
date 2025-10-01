@@ -33,7 +33,7 @@ class TokenMetricsClient:
         try:
             session = await self._get_session()
             
-            # Fetch token list with metadata
+            # Fetch token list with metadata (includes current price!)
             url = f'{self.base_url}/tokens'
             params = {'limit': limit}
             
@@ -47,18 +47,16 @@ class TokenMetricsClient:
                             symbol = item.get('TOKEN_SYMBOL')
                             name = item.get('TOKEN_NAME')
                             token_id = item.get('TOKEN_ID')
+                            price = float(item.get('CURRENT_PRICE', 0))
                             
-                            if symbol and token_id:
-                                # Fetch current price and grades
-                                price_data = await self.get_latest_price(symbol)
+                            if symbol and token_id and price > 0:
+                                # Fetch AI grades separately (not in tokens endpoint)
                                 grade_data = await self.get_latest_grades(symbol)
                                 
-                                if price_data:
-                                    price = price_data.get('price', 0)
-                                    trader_grade = grade_data.get('trader_grade', 0) if grade_data else 0
-                                    investor_grade = grade_data.get('investor_grade', 0) if grade_data else 0
-                                    
-                                    tokens.append((symbol, name or symbol, price, token_id, trader_grade, investor_grade))
+                                trader_grade = grade_data.get('trader_grade', 0) if grade_data else 0
+                                investor_grade = grade_data.get('investor_grade', 0) if grade_data else 0
+                                
+                                tokens.append((symbol, name or symbol, price, token_id, trader_grade, investor_grade))
                         
                         logger.info(f"Fetched {len(tokens)} tokens from TokenMetrics")
                         return tokens
@@ -66,7 +64,8 @@ class TokenMetricsClient:
                         logger.error(f"TokenMetrics API error: {data}")
                         return []
                 else:
-                    logger.error(f"TokenMetrics API HTTP error: {response.status}")
+                    error_text = await response.text()
+                    logger.error(f"TokenMetrics API HTTP error: {response.status}, body: {error_text[:200]}")
                     return []
                     
         except Exception as e:
