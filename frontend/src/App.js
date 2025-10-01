@@ -777,12 +777,14 @@ function App() {
         {/* Footer */}
         <footer className="text-center text-sm text-[var(--muted)] py-8 border-t border-[var(--card-border)] mt-12">
           <p>
-            Crypto Oracle - AI-Powered Price Predictions with 21 Diverse Bots
+            Crypto Oracle - AI-Powered Price Predictions with TokenMetrics AI & 21 Bots
           </p>
           <p className="mt-1 text-xs">
             Not financial advice. Always DYOR (Do Your Own Research).
           </p>
         </footer>
+          </div>
+        </section>
       </main>
     </div>
   );
