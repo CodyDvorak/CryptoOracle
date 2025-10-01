@@ -1,15 +1,15 @@
 [
   {
     "content": "Integrate Binance API for real historical OHLCV data",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "Combine CoinGecko prices with Binance historical data",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Test with real data from 300+ coins",
-    "status": "pending"
+    "status": "in_progress"
   },
   {
     "content": "Verify accurate predictions with real market data",
