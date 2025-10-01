@@ -94,7 +94,7 @@ const BotDetailsModal = ({ open, onClose, runId, coinSymbol, coinName }) => {
                 {botDetails.bot_results && botDetails.bot_results.map((bot, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-3 bg-[var(--surface)] hover:bg-[var(--panel)] rounded-lg border border-[var(--card-border)] transition-colors"
+                    className="flex items-center justify-between p-3 bg-[var(--surface)] rounded-lg border border-[var(--card-border)]"
                   >
                     <div className="flex items-center gap-3 flex-1">
                       <Activity className="w-4 h-4 text-[var(--primary)]" />
