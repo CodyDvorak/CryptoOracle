@@ -93,9 +93,9 @@ class GoogleSheetsService:
                     rec.get('coin', ''),
                     rec.get('consensus_direction', ''),
                     f"{rec.get('avg_confidence', 0):.1f}",
-                    f"{rec.get('avg_entry', 0):.2f}",
-                    f"{rec.get('avg_take_profit', 0):.2f}",
-                    f"{rec.get('avg_stop_loss', 0):.2f}",
+                    f"{rec.get('avg_entry', 0):.6f}",
+                    f"{rec.get('avg_take_profit', 0):.6f}",
+                    f"{rec.get('avg_stop_loss', 0):.6f}",
                     str(rec.get('bot_count', 20))
                 ]
                 worksheet.append_row(row)
