@@ -394,9 +394,15 @@ async def scheduled_scan_job():
         # Get current settings
         settings = await db.settings.find_one({})
         filter_scope = settings.get('filter_scope', 'all') if settings else 'all'
+        min_price = settings.get('min_price') if settings else None
+        max_price = settings.get('max_price') if settings else None
         
         # Run scan
-        result = await scan_orchestrator.run_scan(filter_scope=filter_scope)
+        result = await scan_orchestrator.run_scan(
+            filter_scope=filter_scope,
+            min_price=min_price,
+            max_price=max_price
+        )
         
         # Send notifications
         integrations = await db.integrations_config.find_one({})
