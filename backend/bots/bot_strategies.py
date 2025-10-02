@@ -2233,6 +2233,188 @@ class VortexBot(BotStrategy):
         }
 
 
+class AIAnalystBot(BotStrategy):
+    """AI-Powered Analyst Bot using OpenAI ChatGPT-5 for comprehensive analysis.
+    
+    This bot is unique among the 50 - it uses LLM for deep analytical reasoning
+    combining all technical indicators, sentiment, and market context.
+    """
+    
+    def __init__(self):
+        super().__init__("AIAnalystBot")
+        self.api_key = None
+        try:
+            import os
+            from dotenv import load_dotenv
+            load_dotenv()
+            self.api_key = os.environ.get('EMERGENT_LLM_KEY')
+        except:
+            pass
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        """Use ChatGPT-5 to analyze all available features and make recommendation."""
+        if not self.api_key:
+            # Fallback to simple analysis if no API key
+            return self._fallback_analysis(features)
+        
+        try:
+            # Import here to avoid import errors if library not installed
+            from emergentintegrations.llm.chat import LlmChat, UserMessage
+            import asyncio
+            
+            # Run async analysis
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            result = loop.run_until_complete(self._async_analysis(features))
+            loop.close()
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"AIAnalystBot failed: {e}")
+            return self._fallback_analysis(features)
+    
+    async def _async_analysis(self, features: Dict) -> Optional[Dict]:
+        """Async analysis using ChatGPT-5."""
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        
+        price = features.get('current_price', 0)
+        if price == 0:
+            return None
+        
+        # Build comprehensive feature summary
+        feature_summary = f"""
+PRICE: ${price:.6f}
+TREND: SMA20={features.get('sma_20', 0):.2f}, SMA50={features.get('sma_50', 0):.2f}, SMA200={features.get('sma_200', 0):.2f}
+MOMENTUM: RSI={features.get('rsi_14', 50):.1f}, MACD={features.get('macd', 0):.2f}, Stochastic={features.get('stoch_k', 50):.1f}
+VOLATILITY: ATR={features.get('atr', 0):.4f}, BB_width={features.get('bb_width', 0):.4f}
+VOLUME: OBV={features.get('obv', 0):.0f}
+SENTIMENT: {features.get('sentiment_text', 'neutral')} (score: {features.get('sentiment_score', 5)}/10)
+FUNDAMENTALS: {features.get('fundamental_notes', 'N/A')[:100]}
+"""
+        
+        # Initialize ChatGPT-5
+        chat = LlmChat(
+            api_key=self.api_key,
+            session_id="ai_analyst",
+            system_message="""You are an expert cryptocurrency trading analyst. 
+            Analyze all technical indicators, sentiment, and fundamentals to make a trading recommendation.
+            Be decisive but realistic. Consider risk/reward."""
+        ).with_model("openai", "gpt-5")
+        
+        user_message = UserMessage(
+            text=f"""Analyze this crypto and provide a trading recommendation:
+
+{feature_summary}
+
+Provide:
+DIRECTION: [LONG or SHORT]
+CONFIDENCE: [1-10]
+ENTRY: [specific price or "current"]
+TAKE_PROFIT: [price target]
+STOP_LOSS: [stop loss price]
+PREDICTED_24H: [price prediction]
+PREDICTED_7D: [price prediction]
+RATIONALE: [brief explanation in 1-2 sentences]
+
+Be specific with numbers. Use current price ${price:.6f} as reference."""
+        )
+        
+        response = await chat.send_message(user_message)
+        
+        # Parse AI response
+        direction = 'long'
+        confidence = 6
+        take_profit = price * 1.05
+        stop_loss = price * 0.97
+        predicted_24h = price * 1.02
+        predicted_7d = price * 1.05
+        rationale = response[:150]
+        
+        # Extract structured data
+        if 'DIRECTION:' in response:
+            dir_line = [line for line in response.split('\n') if 'DIRECTION:' in line][0]
+            direction = 'long' if 'LONG' in dir_line.upper() else 'short'
+        
+        if 'CONFIDENCE:' in response:
+            conf_line = [line for line in response.split('\n') if 'CONFIDENCE:' in line][0]
+            try:
+                confidence = int(''.join(filter(str.isdigit, conf_line)))
+                confidence = min(10, max(1, confidence))
+            except:
+                confidence = 6
+        
+        if 'RATIONALE:' in response:
+            rationale = response.split('RATIONALE:')[1].strip()[:150]
+        
+        # Extract prices if provided
+        try:
+            if 'TAKE_PROFIT:' in response:
+                tp_line = [line for line in response.split('\n') if 'TAKE_PROFIT:' in line][0]
+                take_profit = float(''.join(c for c in tp_line if c.isdigit() or c == '.'))
+            
+            if 'STOP_LOSS:' in response:
+                sl_line = [line for line in response.split('\n') if 'STOP_LOSS:' in line][0]
+                stop_loss = float(''.join(c for c in sl_line if c.isdigit() or c == '.'))
+            
+            if 'PREDICTED_24H:' in response:
+                p24_line = [line for line in response.split('\n') if 'PREDICTED_24H:' in line][0]
+                predicted_24h = float(''.join(c for c in p24_line if c.isdigit() or c == '.'))
+            
+            if 'PREDICTED_7D:' in response:
+                p7d_line = [line for line in response.split('\n') if 'PREDICTED_7D:' in line][0]
+                predicted_7d = float(''.join(c for c in p7d_line if c.isdigit() or c == '.'))
+        except:
+            pass
+        
+        logger.info(f"🤖 AIAnalystBot: {direction.upper()} confidence={confidence} - {rationale[:50]}")
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': take_profit if take_profit > 0 else (price * 1.05 if direction == 'long' else price * 0.95),
+            'stop_loss': stop_loss if stop_loss > 0 else (price * 0.97 if direction == 'long' else price * 1.03),
+            'confidence': confidence,
+            'rationale': f"AI Analysis: {rationale}",
+            'predicted_24h': predicted_24h,
+            'predicted_48h': (predicted_24h + predicted_7d) / 2,  # Interpolate
+            'predicted_7d': predicted_7d
+        }
+    
+    def _fallback_analysis(self, features: Dict) -> Optional[Dict]:
+        """Fallback analysis if LLM unavailable."""
+        if not all(k in features for k in ['rsi_14', 'macd', 'current_price']):
+            return None
+        
+        price = features['current_price']
+        rsi = features['rsi_14']
+        macd = features['macd']
+        
+        # Simple combined analysis
+        if rsi < 35 and macd > 0:
+            direction = 'long'
+            confidence = 7
+        elif rsi > 65 and macd < 0:
+            direction = 'short'
+            confidence = 7
+        else:
+            direction = 'long'
+            confidence = 5
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, 0.02, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': price * 1.04 if direction == 'long' else price * 0.96,
+            'stop_loss': price * 0.98 if direction == 'long' else price * 1.02,
+            'confidence': confidence,
+            'rationale': "AI Analyst (fallback): Combined technical analysis",
+            **predictions
+        }
+
+
 # Bot Registry
 ALL_BOTS = [
     # Original 21 bots
