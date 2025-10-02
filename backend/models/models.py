@@ -141,7 +141,7 @@ class ScanRunRequest(BaseModel):
     min_price: Optional[float] = None  # Optional: filter for coins above this price
     max_price: Optional[float] = None  # Optional: filter for coins under this price
     custom_symbols: Optional[List[str]] = None  # Optional: list of specific symbols to scan
-    scan_type: str = 'quick_scan'  # 'quick_scan', 'focused_scan', 'fast_parallel', 'full_scan', 'speed_run'
+    scan_type: str = 'quick_scan'  # 'quick_scan', 'focused_scan', 'fast_parallel', 'full_scan_lite', 'heavy_speed_run', 'full_scan', 'speed_run'
 
 class Top5Response(BaseModel):
     recommendations: List[Recommendation]
