@@ -260,7 +260,11 @@ function App() {
     try {
       const response = await axios.get(`${API}/bots/status`);
       setBots(response.data.bots || []);
-      setStats(prev => ({ ...prev, activeBots: response.data.total || 49 }));
+      // Use 'active' if available, fallback to 'total' for total bot count
+      setStats(prev => ({ 
+        ...prev, 
+        activeBots: response.data.active !== undefined ? response.data.active : response.data.total || 49 
+      }));
     } catch (error) {
       console.error('Error fetching bots:', error);
     }
