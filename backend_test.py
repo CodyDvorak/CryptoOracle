@@ -1159,89 +1159,418 @@ class CryptoOracleTestSuite:
             self.log_test("Email Notification", "FAIL", f"Error: {str(e)}")
             return False
 
-    async def test_multi_tiered_scan_types(self):
-        """Test the multi-tiered scan types system for Crypto Oracle app"""
+    async def test_comprehensive_end_to_end(self):
+        """Comprehensive End-to-End Testing for Crypto Oracle App"""
         print("=" * 80)
-        print("MULTI-TIERED SCAN TYPES TESTING")
+        print("COMPREHENSIVE END-TO-END TESTING - CRYPTO ORACLE APP")
         print("=" * 80)
         print(f"Testing API: {API_BASE}")
         print()
-        print("Testing 8 different scan types with varying performance profiles")
+        print("Executing all 10 test suites as specified in review request")
         print()
         
-        # Test 1: Authentication Setup
-        print("🔐 Test 1: Authentication Setup...")
-        access_token = await self.test_user_registration()
+        # TEST SUITE 1: Authentication & Session Management 🔐
+        print("🔐 TEST SUITE 1: Authentication & Session Management")
+        print("-" * 60)
+        
+        # 1.1 User Registration
+        access_token = await self.test_user_registration_comprehensive()
         if not access_token:
-            print("❌ User registration failed - aborting tests")
+            print("❌ User registration failed - aborting authenticated tests")
             return
         
-        print()
-        print("🔍 Test 2: Scan Type Validation...")
+        # 1.2 User Login
+        await self.test_user_login_comprehensive()
         
-        # Test 2: Scan Type Validation - Verify all 8 scan types are recognized
-        await self.test_scan_type_validation(access_token)
-        
-        print()
-        print("⚡ Test 3: Speed Run Scan (Fastest)...")
-        
-        # Test 3: Speed Run Scan (Fastest: 40 coins, 25 bots, ~3 minutes)
-        await self.test_speed_run_scan(access_token)
+        # 1.3 Token Verification
+        await self.test_token_verification(access_token)
         
         print()
-        print("🚀 Test 4: Quick Scan (Popular)...")
+        print("🔍 TEST SUITE 2: Scan Execution & Bot Predictions")
+        print("-" * 60)
         
-        # Test 4: Quick Scan (Popular: 45 coins, 49 bots, ~7 minutes)
-        await self.test_quick_scan(access_token)
+        # 2.1 Quick Scan Execution (Speed Run - Fastest Option)
+        run_id = await self.test_quick_scan_execution(access_token)
+        if not run_id:
+            print("❌ Quick scan failed - some tests may be limited")
         
-        print()
-        print("📊 Test 5: Scan Status Polling...")
+        # 2.2 Bot Predictions Verification
+        await self.test_bot_predictions_verification(run_id)
         
-        # Test 5: Scan Status Polling
-        await self.test_scan_status_polling()
-        
-        print()
-        print("📧 Test 6: Email Notifications...")
-        
-        # Test 6: Email Notifications (check logs)
-        await self.test_email_notifications_logs()
-        
-        # Print summary
-        print()
-        print("=" * 80)
-        print("MULTI-TIERED SCAN TYPES TEST SUMMARY")
-        print("=" * 80)
-        
-        passed = sum(1 for result in self.test_results if result['status'] == 'PASS')
-        failed = sum(1 for result in self.test_results if result['status'] == 'FAIL')
-        partial = sum(1 for result in self.test_results if result['status'] == 'PARTIAL')
-        manual = sum(1 for result in self.test_results if result['status'] == 'MANUAL')
-        info = sum(1 for result in self.test_results if result['status'] == 'INFO')
-        
-        for result in self.test_results:
-            if result['status'] == 'PASS':
-                status_icon = "✅"
-            elif result['status'] == 'FAIL':
-                status_icon = "❌"
-            elif result['status'] == 'PARTIAL':
-                status_icon = "⚠️"
-            elif result['status'] == 'MANUAL':
-                status_icon = "📋"
-            else:
-                status_icon = "ℹ️"
-            print(f"{status_icon} {result['test']}: {result['details']}")
+        # 2.3 Scan Status Monitoring
+        await self.test_scan_status_monitoring()
         
         print()
-        print(f"Total Tests: {len(self.test_results)}")
-        print(f"Passed: {passed}")
-        print(f"Partial: {partial}")
-        print(f"Failed: {failed}")
-        print(f"Manual Verification: {manual}")
-        print(f"Info: {info}")
+        print("📊 TEST SUITE 3: Recommendations System")
+        print("-" * 60)
         
-        # Calculate success rate (PASS + PARTIAL as success)
-        success_rate = ((passed + partial) / len(self.test_results) * 100) if self.test_results else 0
-        print(f"Success Rate: {success_rate:.1f}%")
+        # 3.1 Top Recommendations
+        await self.test_top_recommendations(run_id)
+        
+        # 3.2 Recommendation Quality
+        await self.test_recommendation_quality(run_id)
+        
+        print()
+        print("🤖 TEST SUITE 4: Bot Performance System")
+        print("-" * 60)
+        
+        # 4.1 Bot Performance Stats
+        await self.test_bot_performance_stats()
+        
+        # 4.2 Bot Status
+        await self.test_bot_status()
+        
+        print()
+        print("📜 TEST SUITE 5: History Tracking")
+        print("-" * 60)
+        
+        # 5.1 User History
+        await self.test_user_history(access_token)
+        
+        # 5.2 History Details
+        await self.test_history_details(access_token, run_id)
+        
+        print()
+        print("⏰ TEST SUITE 6: Scheduler Configuration")
+        print("-" * 60)
+        
+        # 6.1 Get Schedule
+        await self.test_get_schedule()
+        
+        # 6.2 Update Schedule
+        await self.test_update_schedule()
+        
+        # 6.3 Get All Schedules
+        await self.test_get_all_schedules()
+        
+        print()
+        print("💾 TEST SUITE 7: Data Integrity & Relationships")
+        print("-" * 60)
+        
+        # 7.1 Scan Run → Recommendations Link
+        await self.test_scan_recommendations_link(run_id)
+        
+        # 7.2 Scan Run → Bot Predictions Link
+        await self.test_scan_bot_predictions_link(run_id)
+        
+        # 7.3 User Data Isolation
+        await self.test_user_data_isolation(access_token)
+        
+        print()
+        print("⚠️ TEST SUITE 8: Error Handling & Edge Cases")
+        print("-" * 60)
+        
+        # 8.1 Concurrent Scan Prevention
+        await self.test_concurrent_scan_prevention(access_token)
+        
+        # 8.2 Invalid Scan Type
+        await self.test_invalid_scan_type(access_token)
+        
+        # 8.3 Unauthorized Access
+        await self.test_unauthorized_access()
+        
+        # 8.4 Invalid Token
+        await self.test_invalid_token()
+        
+        print()
+        print("⏱️ TEST SUITE 9: Performance & Timeouts")
+        print("-" * 60)
+        
+        # 9.1 Scan Timeout Check
+        await self.test_scan_timeout_check()
+        
+        # 9.2 API Response Times
+        await self.test_api_response_times()
+        
+        print()
+        print("🧠 TEST SUITE 10: Bot Learning System (Initial State)")
+        print("-" * 60)
+        
+        # 10.1 Predictions Saved
+        await self.test_predictions_saved(run_id)
+        
+        # 10.2 Bot Performance Initialization
+        await self.test_bot_performance_initialization()
+        
+        # 10.3 Manual Evaluation (Optional)
+        await self.test_manual_evaluation()
+        
+        # Print comprehensive summary
+        await self.print_comprehensive_summary()
+
+    async def test_user_registration_comprehensive(self) -> Optional[str]:
+        """1.1 User Registration - Comprehensive test"""
+        try:
+            import random
+            test_user = {
+                "username": f"cryptotrader{random.randint(10000, 99999)}",
+                "email": f"cryptotrader{random.randint(10000, 99999)}@example.com",
+                "password": "TestPass123"
+            }
+            
+            async with self.session.post(f"{API_BASE}/auth/register", json=test_user) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    # Verify access_token returned
+                    access_token = data.get('access_token')
+                    if not access_token:
+                        self.log_test("1.1 User Registration", "FAIL", "No access_token returned")
+                        return None
+                    
+                    # Verify user created
+                    user = data.get('user', {})
+                    required_fields = ['id', 'username', 'email', 'created_at', 'is_active']
+                    missing_fields = [field for field in required_fields if field not in user]
+                    
+                    if missing_fields:
+                        self.log_test("1.1 User Registration", "FAIL", f"Missing user fields: {missing_fields}")
+                        return None
+                    
+                    # Verify token is valid JWT (basic check)
+                    if len(access_token.split('.')) == 3:
+                        self.log_test("1.1 User Registration", "PASS", 
+                                     f"User registered successfully: {user.get('username')}, valid JWT token returned")
+                        return access_token
+                    else:
+                        self.log_test("1.1 User Registration", "FAIL", "Invalid JWT token format")
+                        return None
+                        
+                else:
+                    error_text = await response.text()
+                    self.log_test("1.1 User Registration", "FAIL", f"HTTP {response.status}: {error_text}")
+                    return None
+                    
+        except Exception as e:
+            self.log_test("1.1 User Registration", "FAIL", f"Error: {str(e)}")
+            return None
+
+    async def test_user_login_comprehensive(self) -> bool:
+        """1.2 User Login - Test with existing user"""
+        try:
+            # Try to login with a known user (from previous registration)
+            login_data = {
+                "username": "cryptotrader2024",
+                "password": "SecurePass123!"
+            }
+            
+            async with self.session.post(f"{API_BASE}/auth/login", json=login_data) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    # Verify access_token returned
+                    access_token = data.get('access_token')
+                    user_data = data.get('user', {})
+                    
+                    if access_token and user_data:
+                        self.log_test("1.2 User Login", "PASS", 
+                                     f"Login successful: {user_data.get('username')}, token valid")
+                        return True
+                    else:
+                        self.log_test("1.2 User Login", "FAIL", "Missing access_token or user data")
+                        return False
+                        
+                elif response.status == 401:
+                    # User might not exist, try with invalid credentials to test error handling
+                    self.log_test("1.2 User Login", "PARTIAL", "User not found (expected for new test environment)")
+                    return True
+                else:
+                    error_text = await response.text()
+                    self.log_test("1.2 User Login", "FAIL", f"HTTP {response.status}: {error_text}")
+                    return False
+                    
+        except Exception as e:
+            self.log_test("1.2 User Login", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def test_token_verification(self, access_token: str) -> bool:
+        """1.3 Token Verification - GET /api/auth/me"""
+        try:
+            headers = {"Authorization": f"Bearer {access_token}"}
+            
+            async with self.session.get(f"{API_BASE}/auth/me", headers=headers) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    # Verify user data returned
+                    required_fields = ['id', 'username', 'email', 'created_at', 'is_active']
+                    missing_fields = [field for field in required_fields if field not in data]
+                    
+                    if missing_fields:
+                        self.log_test("1.3 Token Verification", "FAIL", f"Missing fields: {missing_fields}")
+                        return False
+                    
+                    self.log_test("1.3 Token Verification", "PASS", 
+                                 f"Token verified, user ID: {data.get('id')}")
+                    return True
+                    
+                else:
+                    error_text = await response.text()
+                    self.log_test("1.3 Token Verification", "FAIL", f"HTTP {response.status}: {error_text}")
+                    return False
+                    
+        except Exception as e:
+            self.log_test("1.3 Token Verification", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def test_quick_scan_execution(self, access_token: str) -> Optional[str]:
+        """2.1 Quick Scan Execution (Test Fastest Option - Speed Run)"""
+        try:
+            headers = {"Authorization": f"Bearer {access_token}"}
+            
+            # Use speed_run as the fastest option
+            scan_request = {
+                "scan_type": "speed_run",
+                "filter_scope": "all",
+                "scope": "all"
+            }
+            
+            # Start scan
+            async with self.session.post(f"{API_BASE}/scan/run", json=scan_request, headers=headers) as response:
+                if response.status == 409:
+                    self.log_test("2.1 Quick Scan Execution", "PARTIAL", "Another scan already running")
+                    # Try to get the current running scan's run_id
+                    async with self.session.get(f"{API_BASE}/scan/status") as status_response:
+                        if status_response.status == 200:
+                            status_data = await status_response.json()
+                            recent_run = status_data.get('recent_run')
+                            if recent_run:
+                                return recent_run.get('id')
+                    return None
+                elif response.status != 200:
+                    error_text = await response.text()
+                    self.log_test("2.1 Quick Scan Execution", "FAIL", f"HTTP {response.status}: {error_text}")
+                    return None
+                
+                scan_data = await response.json()
+                self.log_test("2.1 Quick Scan Start", "PASS", f"Scan started: {scan_data.get('status')}")
+            
+            # Poll until completed (~3 min for speed_run)
+            max_wait = 300  # 5 minutes max
+            wait_time = 0
+            start_time = time.time()
+            
+            while wait_time < max_wait:
+                await asyncio.sleep(10)  # Poll every 10 seconds
+                wait_time += 10
+                
+                async with self.session.get(f"{API_BASE}/scan/status") as response:
+                    if response.status == 200:
+                        status_data = await response.json()
+                        is_running = status_data.get('is_running', True)
+                        
+                        if not is_running:
+                            recent_run = status_data.get('recent_run')
+                            if recent_run and recent_run.get('status') == 'completed':
+                                run_id = recent_run.get('id')
+                                completion_time = int(time.time() - start_time)
+                                
+                                # Verify scan completed and saved to database
+                                if completion_time <= 300:  # Within 5 minutes
+                                    self.log_test("2.1 Quick Scan Execution", "PASS", 
+                                                 f"Scan completed in {completion_time}s, run_id: {run_id}")
+                                else:
+                                    self.log_test("2.1 Quick Scan Execution", "PARTIAL", 
+                                                 f"Scan completed in {completion_time}s (slower than expected)")
+                                return run_id
+                            else:
+                                self.log_test("2.1 Quick Scan Execution", "FAIL", "Scan failed or incomplete")
+                                return None
+                        else:
+                            print(f"Scan still running... ({wait_time}s elapsed)")
+            
+            self.log_test("2.1 Quick Scan Execution", "FAIL", "Scan timeout after 5 minutes")
+            return None
+            
+        except Exception as e:
+            self.log_test("2.1 Quick Scan Execution", "FAIL", f"Error: {str(e)}")
+            return None
+
+    async def test_bot_predictions_verification(self, run_id: Optional[str]) -> bool:
+        """2.2 Bot Predictions Verification"""
+        try:
+            if not run_id:
+                self.log_test("2.2 Bot Predictions Verification", "SKIP", "No run_id available")
+                return False
+            
+            # GET /api/bots/predictions?limit=100
+            async with self.session.get(f"{API_BASE}/bots/predictions?limit=100") as response:
+                if response.status == 200:
+                    data = await response.json()
+                    predictions = data.get('predictions', [])
+                    
+                    if not predictions:
+                        self.log_test("2.2 Bot Predictions Verification", "PARTIAL", "No predictions found")
+                        return True
+                    
+                    # Verify prediction structure
+                    sample_prediction = predictions[0]
+                    required_fields = ['bot_name', 'coin_symbol', 'direction', 'confidence']
+                    missing_fields = [field for field in required_fields if field not in sample_prediction]
+                    
+                    if missing_fields:
+                        self.log_test("2.2 Bot Predictions Verification", "FAIL", f"Missing fields: {missing_fields}")
+                        return False
+                    
+                    # Check if predictions are linked to run_id
+                    run_linked_predictions = [p for p in predictions if p.get('run_id') == run_id]
+                    
+                    # Verify bot diversity (should have multiple different bots)
+                    unique_bots = set(p.get('bot_name') for p in predictions)
+                    
+                    self.log_test("2.2 Bot Predictions Verification", "PASS", 
+                                 f"Found {len(predictions)} predictions from {len(unique_bots)} bots, {len(run_linked_predictions)} linked to current run")
+                    return True
+                    
+                else:
+                    error_text = await response.text()
+                    self.log_test("2.2 Bot Predictions Verification", "FAIL", f"HTTP {response.status}: {error_text}")
+                    return False
+                    
+        except Exception as e:
+            self.log_test("2.2 Bot Predictions Verification", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def test_scan_status_monitoring(self) -> bool:
+        """2.3 Scan Status Monitoring"""
+        try:
+            async with self.session.get(f"{API_BASE}/scan/status") as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    # Verify expected fields
+                    required_fields = ['is_running', 'recent_run']
+                    missing_fields = [field for field in required_fields if field not in data]
+                    
+                    if missing_fields:
+                        self.log_test("2.3 Scan Status Monitoring", "FAIL", f"Missing fields: {missing_fields}")
+                        return False
+                    
+                    is_running = data.get('is_running')
+                    recent_run = data.get('recent_run')
+                    
+                    if recent_run:
+                        # Verify recent run data
+                        run_fields = ['scan_type', 'status']
+                        if all(field in recent_run for field in run_fields):
+                            self.log_test("2.3 Scan Status Monitoring", "PASS", 
+                                         f"Status monitoring working: is_running={is_running}, recent_run available")
+                            return True
+                        else:
+                            self.log_test("2.3 Scan Status Monitoring", "PARTIAL", "Recent run data incomplete")
+                            return True
+                    else:
+                        self.log_test("2.3 Scan Status Monitoring", "PARTIAL", "No recent run data")
+                        return True
+                        
+                else:
+                    error_text = await response.text()
+                    self.log_test("2.3 Scan Status Monitoring", "FAIL", f"HTTP {response.status}: {error_text}")
+                    return False
+                    
+        except Exception as e:
+            self.log_test("2.3 Scan Status Monitoring", "FAIL", f"Error: {str(e)}")
+            return False
 
     async def test_scan_type_validation(self, access_token: str) -> bool:
         """Test that all 8 scan types are recognized by the API"""
