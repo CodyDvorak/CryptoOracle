@@ -326,7 +326,8 @@ async def run_scan(request: ScanRunRequest, background_tasks: BackgroundTasks, c
                 min_price=request.min_price,
                 max_price=request.max_price,
                 custom_symbols=request.custom_symbols,
-                user_id=user_id
+                user_id=user_id,
+                scan_type=request.scan_type
             )
         except Exception as e:
             logger.error(f"Scan error: {e}")
