@@ -22,18 +22,25 @@ class CryptoCompareClient:
         if self.session and not self.session.closed:
             await self.session.close()
     
-    async def get_all_coins(self) -> List[tuple]:
+    async def get_all_coins(self, max_coins: int = 100) -> List[tuple]:
         """Fetch top coins by market cap from CryptoCompare.
+        
+        Args:
+            max_coins: Maximum number of coins to fetch (uses pagination if > 100)
         
         Returns list of tuples: (symbol, name, current_price_usd)
         """
         try:
+            # If requesting more than 100, use pagination
+            if max_coins > 100:
+                return await self._get_coins_with_pagination(max_coins)
+            
+            # Standard single request for <= 100 coins
             session = await self._get_session()
             
-            # Fetch top 100 coins by market cap
             url = f'{self.base_url}/top/mktcapfull'
             params = {
-                'limit': 100,
+                'limit': min(max_coins, 100),  # API max is 100
                 'tsym': 'USD'
             }
             
@@ -65,6 +72,80 @@ class CryptoCompareClient:
                     
         except Exception as e:
             logger.error(f"Exception fetching CryptoCompare coins: {e}")
+            return []
+    
+    async def _get_coins_with_pagination(self, max_coins: int) -> List[tuple]:
+        """Fetch coins using pagination (multiple API calls for > 100 coins).
+        
+        Args:
+            max_coins: Total number of coins to fetch
+            
+        Returns list of tuples: (symbol, name, current_price_usd)
+        """
+        try:
+            session = await self._get_session()
+            all_coins = []
+            seen_symbols = set()
+            
+            # Calculate number of pages needed (100 coins per page)
+            num_pages = (max_coins + 99) // 100  # Ceiling division
+            logger.info(f"🔄 Pagination: Fetching {max_coins} coins across {num_pages} pages...")
+            
+            for page in range(num_pages):
+                url = f'{self.base_url}/top/mktcapfull'
+                params = {
+                    'limit': 100,
+                    'tsym': 'USD',
+                    'page': page
+                }
+                
+                try:
+                    async with session.get(url, params=params, timeout=30) as response:
+                        if response.status == 200:
+                            data = await response.json()
+                            
+                            if data.get('Message') == 'Success':
+                                page_coins = 0
+                                for item in data.get('Data', []):
+                                    coin_info = item.get('CoinInfo', {})
+                                    raw_data = item.get('RAW', {}).get('USD', {})
+                                    
+                                    symbol = coin_info.get('Name')
+                                    full_name = coin_info.get('FullName')
+                                    price = raw_data.get('PRICE', 0)
+                                    
+                                    # Avoid duplicates and ensure valid data
+                                    if symbol and price > 0 and symbol not in seen_symbols:
+                                        all_coins.append((symbol, full_name or symbol, price))
+                                        seen_symbols.add(symbol)
+                                        page_coins += 1
+                                        
+                                        # Stop if we've reached max_coins
+                                        if len(all_coins) >= max_coins:
+                                            break
+                                
+                                logger.info(f"  Page {page + 1}/{num_pages}: +{page_coins} coins (total: {len(all_coins)})")
+                            else:
+                                logger.warning(f"Page {page + 1} error: {data.get('Message')}")
+                        else:
+                            logger.warning(f"Page {page + 1} HTTP error: {response.status}")
+                        
+                        # Stop if we've reached max_coins
+                        if len(all_coins) >= max_coins:
+                            break
+                        
+                        # Small delay between requests to be nice to the API
+                        await asyncio.sleep(0.5)
+                        
+                except Exception as e:
+                    logger.error(f"Error fetching page {page + 1}: {e}")
+                    continue
+            
+            logger.info(f"✅ Pagination complete: Fetched {len(all_coins)} total coins")
+            return all_coins[:max_coins]  # Ensure we don't exceed max_coins
+            
+        except Exception as e:
+            logger.error(f"Exception in pagination: {e}")
             return []
     
     async def get_historical_data(self, symbol: str, days: int = 365) -> List[Dict]:
