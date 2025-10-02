@@ -774,7 +774,7 @@ function App() {
                   {loading || scanStatus.is_running ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin" />
-                      Scanning...
+                      Scanning... {scanStartTime && `(${formatElapsedTime(scanElapsedTime)})`}
                     </>
                   ) : (
                     <>
