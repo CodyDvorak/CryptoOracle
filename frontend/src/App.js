@@ -497,25 +497,67 @@ function App() {
               </Button>
             )}
             
-            {/* Run Scan Button */}
-            <Button 
-              onClick={runScan}
-              disabled={loading || scanStatus.is_running}
-              data-testid="refresh-button"
-              className="gap-2"
-            >
-              {loading || scanStatus.is_running ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span className="hidden sm:inline">Scanning...</span>
-                </>
-              ) : (
-                <>
-                  <Play className="w-4 h-4" />
-                  <span className="hidden sm:inline">Run Scan</span>
-                </>
+            {/* Scan Type Dropdown */}
+            <div className="relative">
+              <Button 
+                onClick={() => runScan(selectedScanType)}
+                disabled={loading || scanStatus.is_running}
+                data-testid="refresh-button"
+                className="gap-2"
+              >
+                {loading || scanStatus.is_running ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span className="hidden sm:inline">Scanning...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-lg">{scanTypes[selectedScanType].icon}</span>
+                    <span className="hidden sm:inline">{scanTypes[selectedScanType].label}</span>
+                  </>
+                )}
+              </Button>
+              
+              <Button
+                onClick={() => setShowScanMenu(!showScanMenu)}
+                disabled={loading || scanStatus.is_running}
+                variant="outline"
+                className="ml-1 px-2"
+                title="Choose scan type"
+              >
+                ▼
+              </Button>
+              
+              {showScanMenu && (
+                <div className="absolute right-0 mt-2 w-80 bg-[var(--surface)] border border-[var(--card-border)] rounded-lg shadow-xl z-50">
+                  <div className="p-2">
+                    <div className="text-sm font-semibold text-[var(--text)] mb-2 px-2">Choose Scan Type</div>
+                    {Object.entries(scanTypes).map(([key, config]) => (
+                      <button
+                        key={key}
+                        onClick={() => {
+                          setSelectedScanType(key);
+                          setShowScanMenu(false);
+                          runScan(key);
+                        }}
+                        disabled={loading || scanStatus.is_running}
+                        className={`w-full flex items-start gap-3 px-3 py-3 text-left hover:bg-[var(--panel)] rounded transition-colors ${
+                          selectedScanType === key ? 'bg-[var(--panel)] border-l-2 border-[var(--primary)]' : ''
+                        }`}
+                      >
+                        <span className="text-xl mt-0.5">{config.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-[var(--text)] mb-1">{config.label}</div>
+                          <div className="text-xs text-[var(--muted)] whitespace-pre-line leading-relaxed">
+                            {config.tooltip}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
-            </Button>
+            </div>
           </div>
         </div>
       </nav>
