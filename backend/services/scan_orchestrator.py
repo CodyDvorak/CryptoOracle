@@ -461,12 +461,17 @@ class ScanOrchestrator:
             
             # 5.5. Save individual bot predictions for learning (NEW!)
             logger.info("💾 Saving individual bot predictions for performance tracking...")
+            
+            # Classify market regime for this scan
+            market_regime = await self.bot_performance_service.classify_market_regime()
+            
             saved_predictions = await self.bot_performance_service.save_bot_predictions(
                 run_id=scan_run.id,
                 user_id=user_id,
-                bot_results=all_individual_bot_results  # Use collected individual bot results
+                bot_results=all_individual_bot_results,  # Use collected individual bot results
+                market_regime=market_regime  # Pass market regime
             )
-            logger.info(f"✅ Saved {saved_predictions} bot predictions for learning")
+            logger.info(f"✅ Saved {saved_predictions} bot predictions for learning (Market: {market_regime})")
             
             # 6. Update scan run status
             scan_run.status = 'completed'
