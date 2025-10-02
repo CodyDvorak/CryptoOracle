@@ -783,6 +783,382 @@ class CryptoOracleTestSuite:
         print("2. Check email inbox for scan results notification")
         print("3. Verify no silent failures in email notification flow")
 
+    async def test_triple_layer_llm_integration(self):
+        """Test the Triple-Layer LLM Integration + 49 Bot Expansion"""
+        print("=" * 80)
+        print("TRIPLE-LAYER LLM INTEGRATION + 49 BOT EXPANSION TEST SUITE")
+        print("=" * 80)
+        print(f"Testing API: {API_BASE}")
+        print()
+        
+        # Test 1: Bot Count Verification
+        print("🤖 Test 1: Bot Count Verification...")
+        await self.test_bot_count_verification()
+        
+        print()
+        print("🔐 Test 2: Authentication Setup...")
+        
+        # Set up authentication for authenticated scan
+        access_token = await self.test_user_registration()
+        if not access_token:
+            print("❌ User registration failed - aborting authenticated tests")
+            return
+        
+        print()
+        print("🔄 Test 3: Authenticated Scan with Triple-Layer Integration...")
+        
+        # Test 2: Authenticated Scan with Triple-Layer Integration
+        run_id = await self.test_authenticated_scan_with_triple_layer(access_token)
+        if not run_id:
+            print("❌ Authenticated scan failed - aborting remaining tests")
+            return
+        
+        print()
+        print("📋 Test 4: Backend Log Analysis...")
+        
+        # Test 3: Backend Log Analysis (CRITICAL)
+        await self.test_backend_log_analysis()
+        
+        print()
+        print("⭐ Test 5: Enhanced Recommendations Quality...")
+        
+        # Test 4: Enhanced Recommendations Quality
+        await self.test_enhanced_recommendations_quality(access_token)
+        
+        print()
+        print("🔍 Test 6: Bot Details Endpoint (49 bots)...")
+        
+        # Test 5: Bot Details Endpoint (49 bots)
+        await self.test_bot_details_49_bots(run_id)
+        
+        print()
+        print("📧 Test 7: Email Notification (Still Working)...")
+        
+        # Test 6: Email Notification (Still Working)
+        await self.test_email_notification_working()
+        
+        # Print summary
+        print()
+        print("=" * 80)
+        print("TRIPLE-LAYER LLM INTEGRATION TEST SUMMARY")
+        print("=" * 80)
+        
+        passed = sum(1 for result in self.test_results if result['status'] == 'PASS')
+        failed = sum(1 for result in self.test_results if result['status'] == 'FAIL')
+        partial = sum(1 for result in self.test_results if result['status'] == 'PARTIAL')
+        skipped = sum(1 for result in self.test_results if result['status'] == 'SKIP')
+        info = sum(1 for result in self.test_results if result['status'] == 'INFO')
+        
+        for result in self.test_results:
+            if result['status'] == 'PASS':
+                status_icon = "✅"
+            elif result['status'] == 'FAIL':
+                status_icon = "❌"
+            elif result['status'] == 'PARTIAL':
+                status_icon = "⚠️"
+            elif result['status'] == 'SKIP':
+                status_icon = "⏭️"
+            else:
+                status_icon = "ℹ️"
+            print(f"{status_icon} {result['test']}: {result['details']}")
+        
+        print()
+        print(f"Total Tests: {len(self.test_results)}")
+        print(f"Passed: {passed}")
+        print(f"Partial: {partial}")
+        print(f"Failed: {failed}")
+        print(f"Skipped: {skipped}")
+        print(f"Info: {info}")
+        
+        # Calculate success rate (PASS + PARTIAL as success)
+        success_rate = ((passed + partial) / len(self.test_results) * 100) if self.test_results else 0
+        print(f"Success Rate: {success_rate:.1f}%")
+
+    async def test_bot_count_verification(self) -> bool:
+        """Test 1: Bot Count Verification - GET /api/bots/status should show 49 total bots"""
+        try:
+            async with self.session.get(f"{API_BASE}/bots/status") as response:
+                if response.status != 200:
+                    self.log_test("Bot Count Verification", "FAIL", f"HTTP {response.status}")
+                    return False
+                
+                data = await response.json()
+                
+                # Validate response structure
+                if 'bots' not in data or 'total' not in data:
+                    self.log_test("Bot Count Verification", "FAIL", "Missing 'bots' or 'total' fields")
+                    return False
+                
+                total_bots = data.get('total', 0)
+                bots_list = data.get('bots', [])
+                
+                # Check if we have 49 total bots (not 21)
+                if total_bots != 49:
+                    self.log_test("Bot Count Verification", "FAIL", f"Expected 49 bots, got {total_bots}")
+                    return False
+                
+                # Check if AIAnalystBot is in the list
+                ai_analyst_found = any(bot.get('bot_name') == 'AIAnalystBot' for bot in bots_list)
+                if not ai_analyst_found:
+                    self.log_test("Bot Count Verification", "FAIL", "AIAnalystBot not found in bot list")
+                    return False
+                
+                self.log_test("Bot Count Verification", "PASS", f"Found {total_bots} bots including AIAnalystBot")
+                return True
+                
+        except Exception as e:
+            self.log_test("Bot Count Verification", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def test_authenticated_scan_with_triple_layer(self, access_token: str) -> Optional[str]:
+        """Test 2: Authenticated Scan with Triple-Layer Integration"""
+        try:
+            headers = {"Authorization": f"Bearer {access_token}"}
+            
+            # Trigger scan with authentication and specified parameters
+            scan_request = {
+                "scope": "all",
+                "min_price": 50,
+                "max_price": 500
+            }
+            
+            async with self.session.post(f"{API_BASE}/scan/run", json=scan_request, headers=headers) as response:
+                if response.status != 200:
+                    self.log_test("Authenticated Scan Start", "FAIL", f"HTTP {response.status}")
+                    return None
+                
+                scan_data = await response.json()
+                self.log_test("Authenticated Scan Start", "PASS", f"Authenticated scan started: {scan_data.get('status')}")
+            
+            # Poll scan status every 5 seconds (may take 60-120 seconds due to LLM calls)
+            max_wait = 180  # 3 minutes (increased for LLM processing)
+            wait_time = 0
+            poll_count = 0
+            
+            while wait_time < max_wait:
+                await asyncio.sleep(5)  # Poll every 5 seconds
+                wait_time += 5
+                poll_count += 1
+                
+                async with self.session.get(f"{API_BASE}/scan/status") as response:
+                    if response.status == 200:
+                        status_data = await response.json()
+                        is_running = status_data.get('is_running', True)
+                        
+                        print(f"Poll #{poll_count}: Scan running={is_running} ({wait_time}s elapsed)")
+                        
+                        if not is_running:
+                            recent_run = status_data.get('recent_run')
+                            if recent_run and recent_run.get('status') == 'completed':
+                                run_id = recent_run.get('id')
+                                completion_time = wait_time
+                                
+                                # Check if completion time is within expected range (60-120s)
+                                if completion_time <= 120:
+                                    self.log_test("Authenticated Scan Completion", "PASS", 
+                                                 f"Scan completed in {completion_time}s (within 120s limit), run_id: {run_id}")
+                                else:
+                                    self.log_test("Authenticated Scan Completion", "PARTIAL", 
+                                                 f"Scan completed in {completion_time}s (exceeded 120s), run_id: {run_id}")
+                                return run_id
+                            else:
+                                self.log_test("Authenticated Scan Completion", "FAIL", "Scan failed or incomplete")
+                                return None
+            
+            self.log_test("Authenticated Scan Completion", "FAIL", "Scan timeout after 3 minutes")
+            return None
+            
+        except Exception as e:
+            self.log_test("Authenticated Scan Execution", "FAIL", f"Error: {str(e)}")
+            return None
+
+    async def test_backend_log_analysis(self) -> bool:
+        """Test 3: Backend Log Analysis for Triple-Layer integration markers"""
+        try:
+            # Since we can't directly access supervisor logs from the test,
+            # we'll check for the presence of the services and log a manual verification step
+            
+            expected_markers = [
+                "🔮 Layer 1: Sentiment analysis",
+                "🤖 Layer 2: Bot analysis", 
+                "📝 Layer 3: ChatGPT-5 synthesis"
+            ]
+            
+            self.log_test("Backend Log Analysis", "MANUAL", 
+                         f"Manual verification required: Check backend logs for Triple-Layer markers: {', '.join(expected_markers)}")
+            
+            # We can at least verify the services are configured
+            services_check = []
+            
+            # Check if sentiment service is available
+            try:
+                from backend.services.sentiment_analysis_service import SentimentAnalysisService
+                sentiment_service = SentimentAnalysisService()
+                services_check.append("✅ Layer 1: SentimentAnalysisService available")
+            except Exception as e:
+                services_check.append(f"❌ Layer 1: SentimentAnalysisService error: {e}")
+            
+            # Check if LLM synthesis service is available
+            try:
+                from backend.services.llm_synthesis_service import LLMSynthesisService
+                llm_service = LLMSynthesisService()
+                services_check.append("✅ Layer 3: LLMSynthesisService available")
+            except Exception as e:
+                services_check.append(f"❌ Layer 3: LLMSynthesisService error: {e}")
+            
+            self.log_test("Service Configuration Check", "INFO", "; ".join(services_check))
+            
+            return True
+            
+        except Exception as e:
+            self.log_test("Backend Log Analysis", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def test_enhanced_recommendations_quality(self, access_token: str) -> bool:
+        """Test 4: Enhanced Recommendations Quality"""
+        try:
+            headers = {"Authorization": f"Bearer {access_token}"}
+            
+            # GET /api/recommendations/top5 with auth headers
+            async with self.session.get(f"{API_BASE}/recommendations/top5", headers=headers) as response:
+                if response.status == 404:
+                    self.log_test("Enhanced Recommendations Quality", "PARTIAL", "No recommendations found (may be expected for new user)")
+                    return True
+                elif response.status != 200:
+                    self.log_test("Enhanced Recommendations Quality", "FAIL", f"HTTP {response.status}")
+                    return False
+                
+                data = await response.json()
+                
+                # Verify recommendations exist
+                recommendations = data.get('recommendations', [])
+                if not recommendations:
+                    self.log_test("Enhanced Recommendations Quality", "PARTIAL", "No recommendations returned")
+                    return True
+                
+                # Check that rationales are enhanced (should be more detailed/comprehensive)
+                enhanced_count = 0
+                confidence_scores = []
+                
+                for rec in recommendations[:5]:  # Check first 5
+                    rationale = rec.get('rationale', '')
+                    confidence = rec.get('avg_confidence', 0)
+                    
+                    # Enhanced rationales should be longer and more detailed
+                    if len(rationale) > 50:  # More than basic bot count message
+                        enhanced_count += 1
+                    
+                    # Verify confidence scores are calibrated (valid range)
+                    if 1 <= confidence <= 10:
+                        confidence_scores.append(confidence)
+                
+                if enhanced_count > 0:
+                    self.log_test("Enhanced Recommendations Quality", "PASS", 
+                                 f"Found {enhanced_count} enhanced rationales, {len(confidence_scores)} valid confidence scores")
+                else:
+                    self.log_test("Enhanced Recommendations Quality", "PARTIAL", 
+                                 "Rationales appear basic, may not be fully enhanced")
+                
+                return True
+                
+        except Exception as e:
+            self.log_test("Enhanced Recommendations Quality", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def test_bot_details_49_bots(self, run_id: str) -> bool:
+        """Test 5: Bot Details Endpoint should show results from 49 bots"""
+        try:
+            # First get recommendations to find a coin to test
+            async with self.session.get(f"{API_BASE}/recommendations/top5?run_id={run_id}") as response:
+                if response.status != 200:
+                    self.log_test("Bot Details 49 Bots", "FAIL", f"Failed to get recommendations: HTTP {response.status}")
+                    return False
+                
+                data = await response.json()
+                recommendations = data.get('recommendations', [])
+                
+                if not recommendations:
+                    self.log_test("Bot Details 49 Bots", "PARTIAL", "No recommendations found to test bot details")
+                    return True
+                
+                # Test bot details for first coin
+                test_coin = recommendations[0].get('ticker')
+                if not test_coin:
+                    self.log_test("Bot Details 49 Bots", "FAIL", "No ticker found in recommendations")
+                    return False
+                
+                # GET /api/recommendations/{run_id}/{coin_symbol}/bot_details
+                url = f"{API_BASE}/recommendations/{run_id}/{test_coin}/bot_details"
+                async with self.session.get(url) as response:
+                    if response.status == 404:
+                        self.log_test("Bot Details 49 Bots", "PARTIAL", 
+                                     f"No bot details for {test_coin} (may be AI-only analysis)")
+                        return True
+                    elif response.status != 200:
+                        self.log_test("Bot Details 49 Bots", "FAIL", f"HTTP {response.status}")
+                        return False
+                    
+                    bot_data = await response.json()
+                    
+                    # Verify response contains results from MORE bots than before (should be close to 49)
+                    total_bots = bot_data.get('total_bots', 0)
+                    bot_results = bot_data.get('bot_results', [])
+                    
+                    if total_bots >= 40:  # Allow some tolerance (should be close to 49)
+                        # Check for AIAnalystBot in the bot_results list
+                        ai_analyst_found = any(bot.get('bot_name') == 'AIAnalystBot' for bot in bot_results)
+                        
+                        if ai_analyst_found:
+                            self.log_test("Bot Details 49 Bots", "PASS", 
+                                         f"Found {total_bots} bot results including AIAnalystBot for {test_coin}")
+                        else:
+                            self.log_test("Bot Details 49 Bots", "PARTIAL", 
+                                         f"Found {total_bots} bot results but AIAnalystBot not found")
+                    else:
+                        self.log_test("Bot Details 49 Bots", "FAIL", 
+                                     f"Expected ~49 bots, got {total_bots} for {test_coin}")
+                        return False
+                    
+                    return True
+                
+        except Exception as e:
+            self.log_test("Bot Details 49 Bots", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def test_email_notification_working(self) -> bool:
+        """Test 6: Email Notification (Still Working)"""
+        try:
+            # Check if email service is configured
+            import os
+            smtp_user = os.environ.get('SMTP_USER', '')
+            smtp_pass = os.environ.get('SMTP_PASS', '')
+            
+            if not smtp_user or not smtp_pass:
+                self.log_test("Email Notification", "PARTIAL", "SMTP credentials not configured")
+                return True
+            
+            # Since we can't directly verify email was sent without checking logs,
+            # we'll verify the email service configuration
+            self.log_test("Email Notification", "MANUAL", 
+                         "Manual verification required: Check backend logs for email notification flow (✉️, 📤, ✅ indicators)")
+            
+            # We can test the email configuration endpoint
+            async with self.session.get(f"{API_BASE}/config/integrations") as response:
+                if response.status == 200:
+                    config = await response.json()
+                    if config.get('smtp_host') and config.get('smtp_user'):
+                        self.log_test("Email Configuration", "PASS", "Email configuration available")
+                    else:
+                        self.log_test("Email Configuration", "PARTIAL", "Email configuration incomplete")
+                else:
+                    self.log_test("Email Configuration", "FAIL", f"Failed to get email config: HTTP {response.status}")
+            
+            return True
+            
+        except Exception as e:
+            self.log_test("Email Notification", "FAIL", f"Error: {str(e)}")
+            return False
+
     async def run_all_tests(self):
         """Run all test suites"""
         print("=" * 60)
