@@ -735,6 +735,96 @@ backend:
         agent: "testing"
         comment: "PASS - Scheduler running correctly. Backend logs show 'Scheduler started' and 'Scheduler configured: 12h intervals starting at 07:00 America/Denver, next run: 2025-10-02 07:00:00-06:00'. Email notifications working (sent to codydvorakwork@gmail.com during test scan)."
 
+  - task: "Analytics System Health Endpoint"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented GET /api/analytics/system-health endpoint for enhanced data collection feature. Returns months_of_data, total_evaluated_predictions, total_pending_predictions, system_accuracy, accuracy_trend, trend_change_percent, data_readiness_status, readiness_percent"
+      - working: true
+        agent: "testing"
+        comment: "PASS - System Health Analytics endpoint working perfectly. All required fields present and valid: months_of_data, total_evaluated_predictions, total_pending_predictions, system_accuracy, accuracy_trend, trend_change_percent, data_readiness_status, readiness_percent. Status: not_ready, Accuracy: 3.7%, Readiness: 0.8%. Handles no data gracefully with zeros."
+
+  - task: "Analytics Performance by Regime Endpoint"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented GET /api/analytics/performance-by-regime endpoint. Returns bot performance broken down by market regime: bull_market_accuracy, bear_market_accuracy, high_volatility_accuracy, sideways_accuracy, best_regime"
+      - working: true
+        agent: "testing"
+        comment: "PASS - Performance by Regime Analytics endpoint working correctly. Returns regime_performances array and total_bots field. Found 49 bot performances with proper structure including bot_name, bull_market_accuracy, bear_market_accuracy, high_volatility_accuracy, sideways_accuracy, best_regime fields. All accuracy values properly validated (0-100 range or null)."
+
+  - task: "Analytics Bot Degradation Endpoint"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented GET /api/analytics/bot-degradation endpoint. Returns alerts for underperforming bots with bot_name, severity, current_accuracy, previous_accuracy, change_percent, message fields. Includes has_critical flag"
+      - working: true
+        agent: "testing"
+        comment: "PASS - Bot Degradation Analytics endpoint working correctly. Returns alerts array, total_alerts, and has_critical fields. Found 0 alerts with has_critical: false (expected for new deployment). Alert structure validated with proper severity levels (critical/warning) and all required fields present."
+
+  - task: "Analytics Data Readiness Endpoint"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented GET /api/analytics/data-readiness endpoint. Returns simplified readiness metrics: status, readiness_percent, months_collected, months_target, evaluated_predictions, predictions_target"
+      - working: true
+        agent: "testing"
+        comment: "PASS - Data Readiness Analytics endpoint working perfectly. All required fields present and valid: status, readiness_percent, months_collected, months_target, evaluated_predictions, predictions_target. Status: not_ready, 0.0/6.0 months collected, 31/2000 predictions evaluated. Logical consistency validated (months_collected <= months_target)."
+
+  - task: "Existing Endpoints Compatibility"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Verified that existing endpoints still work after analytics implementation: GET /api/bots/performance and GET /api/bots/predictions"
+      - working: true
+        agent: "testing"
+        comment: "PASS - All existing endpoints still working correctly after analytics implementation. GET /api/bots/performance returns 49 bots with proper structure. GET /api/bots/status returns 49 total bots. No breaking changes detected in existing functionality."
+
+  - task: "Market Regime Field in Predictions"
+    implemented: false
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "New market_regime field should be added to bot predictions to support regime-based performance analysis"
+      - working: "NA"
+        agent: "testing"
+        comment: "PARTIAL - market_regime field not found in predictions (may not be implemented yet). This is a new field that should be added to support the performance-by-regime analytics. Current predictions structure does not include market regime classification."
+
 backend:
   - task: "Multi-tiered scan types (8 types)"
     implemented: true
