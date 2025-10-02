@@ -614,6 +614,87 @@ async def get_bot_performance(bot_name: Optional[str] = None):
         "total_bots": len(performances)
     }
 
+
+# ==================== Analytics Endpoints ====================
+
+@api_router.get("/analytics/system-health")
+async def get_system_health():
+    """Get overall system health and data collection progress.
+    
+    Returns metrics like:
+    - Months of data collected
+    - Total evaluated predictions
+    - System accuracy (weighted average)
+    - Accuracy trend
+    - Data readiness for optimization
+    """
+    health = await scan_orchestrator.bot_performance_service.get_system_health()
+    return health
+
+
+@api_router.get("/analytics/performance-by-regime")
+async def get_performance_by_regime():
+    """Get bot performance broken down by market regime.
+    
+    Shows which bots perform best in which market conditions:
+    - Bull market
+    - Bear market
+    - High volatility
+    - Sideways
+    """
+    regime_performance = await scan_orchestrator.bot_performance_service.get_performance_by_regime()
+    
+    return {
+        "regime_performances": regime_performance,
+        "total_bots": len(regime_performance)
+    }
+
+
+@api_router.get("/analytics/bot-degradation")
+async def get_bot_degradation_alerts():
+    """Get alerts for bots showing performance degradation.
+    
+    Returns list of bots that:
+    - Dropped >15% in accuracy (critical)
+    - Dropped 10-15% in accuracy (warning)
+    - Consistently below 40% accuracy (critical)
+    """
+    alerts = await scan_orchestrator.bot_performance_service.get_degradation_alerts()
+    
+    return {
+        "alerts": alerts,
+        "total_alerts": len(alerts),
+        "has_critical": any(a['severity'] == 'critical' for a in alerts)
+    }
+
+
+@api_router.get("/analytics/data-readiness")
+async def get_data_readiness():
+    """Get simplified data readiness status.
+    
+    Quick check to see if system has enough data for optimization decisions.
+    """
+    health = await scan_orchestrator.bot_performance_service.get_system_health()
+    
+    # Calculate milestones
+    months_target = 6.0
+    predictions_target = 2000
+    
+    months_remaining = max(0, months_target - health['months_of_data'])
+    predictions_remaining = max(0, predictions_target - health['total_evaluated_predictions'])
+    
+    return {
+        "status": health['data_readiness_status'],
+        "readiness_percent": health['readiness_percent'],
+        "months_collected": health['months_of_data'],
+        "months_target": months_target,
+        "months_remaining": round(months_remaining, 1),
+        "evaluated_predictions": health['total_evaluated_predictions'],
+        "predictions_target": predictions_target,
+        "predictions_remaining": predictions_remaining,
+        "system_accuracy": health['system_accuracy']
+    }
+
 @api_router.post("/bots/evaluate")
 async def trigger_evaluation(hours_old: int = 24):
     """Manually trigger evaluation of pending predictions.
