@@ -770,12 +770,14 @@ async def scheduled_scan_job():
         filter_scope = settings.get('filter_scope', 'all') if settings else 'all'
         min_price = settings.get('min_price') if settings else None
         max_price = settings.get('max_price') if settings else None
+        scan_type = settings.get('scan_type', 'quick_scan') if settings else 'quick_scan'
         
-        # Run scan
+        # Run scan with configured scan type
         result = await scan_orchestrator.run_scan(
             filter_scope=filter_scope,
             min_price=min_price,
-            max_price=max_price
+            max_price=max_price,
+            scan_type=scan_type
         )
         
         # Send notifications
@@ -787,7 +789,7 @@ async def scheduled_scan_job():
                 sheets_config=integrations
             )
         
-        logger.info(f"Scheduled scan completed: {result['run_id']}")
+        logger.info(f"Scheduled scan completed: {result['run_id']} with scan type: {scan_type}")
     
     except Exception as e:
         logger.error(f"Scheduled scan error: {e}")
