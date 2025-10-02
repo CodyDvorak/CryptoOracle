@@ -447,3 +447,244 @@ class BotPerformanceService:
         performances.sort(key=lambda x: x.get('accuracy_rate', 0), reverse=True)
         
         return performances
+    
+    async def get_system_health(self) -> Dict:
+        """Get overall system health metrics.
+        
+        Returns:
+            Dictionary with system health metrics
+        """
+        try:
+            # Get date range of predictions
+            oldest_prediction = await self.db.bot_predictions.find_one(
+                {},
+                sort=[('timestamp', 1)]
+            )
+            
+            newest_prediction = await self.db.bot_predictions.find_one(
+                {},
+                sort=[('timestamp', -1)]
+            )
+            
+            # Calculate months of data
+            months_of_data = 0.0
+            if oldest_prediction and newest_prediction:
+                time_diff = newest_prediction['timestamp'] - oldest_prediction['timestamp']
+                months_of_data = time_diff.days / 30.0
+            
+            # Get prediction counts
+            total_evaluated = await self.db.bot_predictions.count_documents({
+                'outcome_status': {'$in': ['win', 'loss']}
+            })
+            
+            total_pending = await self.db.bot_predictions.count_documents({
+                'outcome_status': 'pending'
+            })
+            
+            # Calculate weighted average accuracy
+            performances = await self.get_bot_performance()
+            if performances:
+                # Weight by total predictions
+                total_weight = sum(p.get('total_predictions', 0) for p in performances)
+                if total_weight > 0:
+                    weighted_accuracy = sum(
+                        p.get('accuracy_rate', 0) * p.get('total_predictions', 0) 
+                        for p in performances
+                    ) / total_weight
+                else:
+                    weighted_accuracy = 0.0
+            else:
+                weighted_accuracy = 0.0
+            
+            # Calculate trend (compare last 7 days vs previous 7 days)
+            seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
+            fourteen_days_ago = datetime.now(timezone.utc) - timedelta(days=14)
+            
+            # Recent performance
+            recent_predictions = await self.db.bot_predictions.find({
+                'timestamp': {'$gte': seven_days_ago},
+                'outcome_status': {'$in': ['win', 'loss']}
+            }).to_list(10000)
+            
+            recent_accuracy = 0.0
+            if recent_predictions:
+                recent_wins = sum(1 for p in recent_predictions if p['outcome_status'] == 'win')
+                recent_accuracy = (recent_wins / len(recent_predictions)) * 100
+            
+            # Previous period performance
+            previous_predictions = await self.db.bot_predictions.find({
+                'timestamp': {'$gte': fourteen_days_ago, '$lt': seven_days_ago},
+                'outcome_status': {'$in': ['win', 'loss']}
+            }).to_list(10000)
+            
+            previous_accuracy = 0.0
+            if previous_predictions:
+                previous_wins = sum(1 for p in previous_predictions if p['outcome_status'] == 'win')
+                previous_accuracy = (previous_wins / len(previous_predictions)) * 100
+            
+            # Determine trend
+            trend_change = recent_accuracy - previous_accuracy
+            if trend_change > 2:
+                trend = "improving"
+            elif trend_change < -2:
+                trend = "declining"
+            else:
+                trend = "stable"
+            
+            # Data readiness assessment
+            readiness_percent = min(100, (months_of_data / 6.0) * 50 + (total_evaluated / 2000) * 50)
+            
+            if readiness_percent < 30:
+                readiness_status = "not_ready"
+            elif readiness_percent < 80:
+                readiness_status = "collecting"
+            else:
+                readiness_status = "ready_for_optimization"
+            
+            return {
+                'months_of_data': round(months_of_data, 1),
+                'total_evaluated_predictions': total_evaluated,
+                'total_pending_predictions': total_pending,
+                'system_accuracy': round(weighted_accuracy, 1),
+                'accuracy_trend': trend,
+                'trend_change_percent': round(trend_change, 1),
+                'data_readiness_status': readiness_status,
+                'readiness_percent': round(readiness_percent, 1)
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting system health: {e}")
+            return {
+                'months_of_data': 0.0,
+                'total_evaluated_predictions': 0,
+                'total_pending_predictions': 0,
+                'system_accuracy': 0.0,
+                'accuracy_trend': 'unknown',
+                'trend_change_percent': 0.0,
+                'data_readiness_status': 'not_ready',
+                'readiness_percent': 0.0
+            }
+    
+    async def get_performance_by_regime(self) -> List[Dict]:
+        """Get bot performance broken down by market regime.
+        
+        Returns:
+            List of bot performance by regime dictionaries
+        """
+        try:
+            # Get all bot names
+            bot_names = await self.db.bot_performance.distinct('bot_name')
+            
+            regime_performances = []
+            
+            for bot_name in bot_names:
+                # Get predictions for each regime
+                bot_data = {
+                    'bot_name': bot_name,
+                    'bull_market_accuracy': None,
+                    'bull_market_predictions': 0,
+                    'bear_market_accuracy': None,
+                    'bear_market_predictions': 0,
+                    'high_volatility_accuracy': None,
+                    'high_volatility_predictions': 0,
+                    'sideways_accuracy': None,
+                    'sideways_predictions': 0,
+                    'best_regime': None
+                }
+                
+                best_accuracy = 0.0
+                
+                for regime in ['bull_market', 'bear_market', 'high_volatility', 'sideways']:
+                    predictions = await self.db.bot_predictions.find({
+                        'bot_name': bot_name,
+                        'market_regime': regime,
+                        'outcome_status': {'$in': ['win', 'loss']}
+                    }).to_list(10000)
+                    
+                    if predictions:
+                        wins = sum(1 for p in predictions if p['outcome_status'] == 'win')
+                        accuracy = (wins / len(predictions)) * 100
+                        
+                        bot_data[f'{regime}_accuracy'] = round(accuracy, 1)
+                        bot_data[f'{regime}_predictions'] = len(predictions)
+                        
+                        if accuracy > best_accuracy:
+                            best_accuracy = accuracy
+                            bot_data['best_regime'] = regime.replace('_', ' ').title()
+                
+                regime_performances.append(bot_data)
+            
+            return regime_performances
+            
+        except Exception as e:
+            logger.error(f"Error getting performance by regime: {e}")
+            return []
+    
+    async def get_degradation_alerts(self) -> List[Dict]:
+        """Get alerts for bots showing performance degradation.
+        
+        Returns:
+            List of degradation alert dictionaries
+        """
+        try:
+            alerts = []
+            
+            # Get all bots with performance data
+            performances = await self.get_bot_performance()
+            
+            for bot in performances:
+                bot_name = bot['bot_name']
+                current_accuracy = bot.get('accuracy_rate', 0.0)
+                total_preds = bot.get('total_predictions', 0)
+                
+                # Need at least 20 predictions to check degradation
+                if total_preds < 20:
+                    continue
+                
+                # Get recent accuracy (last 30 days)
+                thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
+                recent_predictions = await self.db.bot_predictions.find({
+                    'bot_name': bot_name,
+                    'timestamp': {'$gte': thirty_days_ago},
+                    'outcome_status': {'$in': ['win', 'loss']}
+                }).to_list(1000)
+                
+                if len(recent_predictions) >= 10:
+                    recent_wins = sum(1 for p in recent_predictions if p['outcome_status'] == 'win')
+                    recent_accuracy = (recent_wins / len(recent_predictions)) * 100
+                    
+                    # Compare with historical accuracy
+                    accuracy_drop = current_accuracy - recent_accuracy
+                    
+                    # Critical: dropped >15% or consistently below 40%
+                    if accuracy_drop > 15 or recent_accuracy < 40:
+                        alerts.append({
+                            'bot_name': bot_name,
+                            'severity': 'critical',
+                            'current_accuracy': round(recent_accuracy, 1),
+                            'previous_accuracy': round(current_accuracy, 1),
+                            'change_percent': round(-accuracy_drop, 1),
+                            'total_predictions': total_preds,
+                            'message': f"Accuracy dropped {abs(accuracy_drop):.1f}% (was {current_accuracy:.1f}%, now {recent_accuracy:.1f}%)" if accuracy_drop > 15 else f"Consistently below 40% ({recent_accuracy:.1f}%)"
+                        })
+                    # Warning: dropped 10-15%
+                    elif accuracy_drop > 10:
+                        alerts.append({
+                            'bot_name': bot_name,
+                            'severity': 'warning',
+                            'current_accuracy': round(recent_accuracy, 1),
+                            'previous_accuracy': round(current_accuracy, 1),
+                            'change_percent': round(-accuracy_drop, 1),
+                            'total_predictions': total_preds,
+                            'message': f"Accuracy dropped {accuracy_drop:.1f}% in last 30 days"
+                        })
+            
+            # Sort by severity (critical first) and then by change percent
+            severity_order = {'critical': 0, 'warning': 1, 'info': 2}
+            alerts.sort(key=lambda x: (severity_order[x['severity']], -abs(x['change_percent'])))
+            
+            return alerts
+            
+        except Exception as e:
+            logger.error(f"Error getting degradation alerts: {e}")
+            return []
