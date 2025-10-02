@@ -542,6 +542,73 @@ async def get_bots_status():
     return {"bots": statuses, "total": len(statuses)}
 
 
+
+# ==================== Bot Performance & Learning Endpoints ====================
+
+@api_router.get("/bots/performance")
+async def get_bot_performance(bot_name: Optional[str] = None):
+    """Get performance statistics for bots.
+    
+    Query params:
+    - bot_name: Optional specific bot name, or omit for all bots
+    """
+    performances = await scan_orchestrator.bot_performance_service.get_bot_performance(bot_name)
+    
+    return {
+        "bot_performances": performances,
+        "total_bots": len(performances)
+    }
+
+@api_router.post("/bots/evaluate")
+async def trigger_evaluation(hours_old: int = 24):
+    """Manually trigger evaluation of pending predictions.
+    
+    Query params:
+    - hours_old: Minimum age of predictions to evaluate (default 24h)
+    """
+    result = await scan_orchestrator.bot_performance_service.evaluate_predictions(hours_old)
+    
+    return {
+        "message": "Evaluation complete",
+        "result": result
+    }
+
+@api_router.get("/bots/predictions")
+async def get_bot_predictions(
+    run_id: Optional[str] = None,
+    bot_name: Optional[str] = None,
+    outcome_status: Optional[str] = None,
+    limit: int = 100
+):
+    """Get bot predictions with optional filters.
+    
+    Query params:
+    - run_id: Filter by scan run ID
+    - bot_name: Filter by bot name
+    - outcome_status: Filter by outcome ('pending', 'win', 'loss', 'neutral')
+    - limit: Max number of predictions to return (default 100)
+    """
+    query = {}
+    if run_id:
+        query['run_id'] = run_id
+    if bot_name:
+        query['bot_name'] = bot_name
+    if outcome_status:
+        query['outcome_status'] = outcome_status
+    
+    predictions = await db.bot_predictions.find(query).sort('timestamp', -1).limit(limit).to_list(limit)
+    
+    # Clean up ObjectIds
+    for pred in predictions:
+        if '_id' in pred:
+            del pred['_id']
+    
+    return {
+        "predictions": predictions,
+        "count": len(predictions)
+    }
+
+
 # ==================== Configuration Endpoints ====================
 
 @api_router.get("/config/integrations")
