@@ -57,7 +57,7 @@ function App() {
   
   // Stats
   const [stats, setStats] = useState({
-    activeBots: 21,
+    activeBots: 49,
     lastScan: 'Never',
     totalCoins: 0,
     totalAvailable: 0  // Total available coins from CryptoCompare
