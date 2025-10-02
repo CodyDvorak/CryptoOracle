@@ -1706,11 +1706,13 @@ async def main():
                 await test_suite.run_bug_fix_tests()
             elif sys.argv[1] == "--triple-layer":
                 await test_suite.test_triple_layer_llm_integration()
+            elif sys.argv[1] == "--multi-tier":
+                await test_suite.test_multi_tiered_scan_types()
             else:
                 await test_suite.run_all_tests()
         else:
-            # Default: run Triple-Layer LLM Integration tests
-            await test_suite.test_triple_layer_llm_integration()
+            # Default: run Multi-Tiered Scan Types tests (as requested in review)
+            await test_suite.test_multi_tiered_scan_types()
 
 if __name__ == "__main__":
     asyncio.run(main())
