@@ -1062,7 +1062,7 @@ class ScanOrchestrator:
                 if result:
                     logger.info(f"✅ Email notification sent successfully to {email_to}")
                 else:
-                    logger.error(f"❌ Email notification failed (send_top5_notification returned False)")
+                    logger.error("❌ Email notification failed (send_top5_notification returned False)")
             except Exception as e:
                 logger.error(f"❌ Email notification failed with exception: {e}", exc_info=True)
         else:
