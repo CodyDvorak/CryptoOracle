@@ -86,6 +86,16 @@ function App() {
       icon: '🚀',
       tooltip: '40 coins parallel, 49 bots, NO AI\n~10 minutes\nBest for: Balanced speed'
     },
+    full_scan_lite: {
+      label: '📈 Full Scan Lite',
+      icon: '📈',
+      tooltip: '80 coins parallel, 49 bots, NO AI\n~12 minutes\nBest for: Full coverage without AI'
+    },
+    heavy_speed_run: {
+      label: '⚡💨 Heavy Speed',
+      icon: '⚡',
+      tooltip: '80 coins, 25 best bots, NO AI\n~6 minutes\nBest for: Fast full coverage'
+    },
     full_scan: {
       label: '📊 Full Scan',
       icon: '📊',
