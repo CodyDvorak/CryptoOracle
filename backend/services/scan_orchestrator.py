@@ -181,6 +181,32 @@ class ScanOrchestrator:
         return await self._run_scan_with_config(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id,
                                                max_coins=86, skip_sentiment=False)
     
+    async def _run_all_in_scan(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
+        """All In: 200-300 coins with pagination, 49 bots, parallel processing, ~20 minutes."""
+        logger.info("🚀💎 ALL IN: 200-300 coins (pagination), 8 concurrent, 49 bots, NO AI (~20 min)")
+        return await self._run_scan_with_config(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id,
+                                               max_coins=300, skip_sentiment=True, parallel=True, batch_size=8)
+    
+    async def _run_all_in_under_5_scan(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
+        """All In under $5: 200-300 coins filtered to <$5, 49 bots, parallel, ~12 minutes."""
+        logger.info("🚀💰 ALL IN UNDER $5: 200-300 coins (pagination), <$5 filter, 8 concurrent, 49 bots (~12 min)")
+        # Override max_price to $5 for this scan
+        return await self._run_scan_with_config(scan_run, filter_scope, min_price, 5.0, custom_symbols, user_id,
+                                               max_coins=300, skip_sentiment=True, parallel=True, batch_size=8)
+    
+    async def _run_all_in_lite_scan(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
+        """All In Lite: 100 coins (no pagination), 49 bots, parallel, ~9-11 minutes."""
+        logger.info("⚡💎 ALL IN LITE: 100 coins (no pagination), 8 concurrent, 49 bots, NO AI (~9-11 min)")
+        return await self._run_scan_with_config(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id,
+                                               max_coins=100, skip_sentiment=True, parallel=True, batch_size=8)
+    
+    async def _run_all_in_under_5_lite_scan(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
+        """All In under $5 Lite: 100 coins filtered to <$5, 49 bots, parallel, ~5-7 minutes."""
+        logger.info("⚡💰 ALL IN UNDER $5 LITE: 100 coins (no pagination), <$5 filter, 8 concurrent, 49 bots (~5-7 min)")
+        # Override max_price to $5 for this scan
+        return await self._run_scan_with_config(scan_run, filter_scope, min_price, 5.0, custom_symbols, user_id,
+                                               max_coins=100, skip_sentiment=True, parallel=True, batch_size=8)
+    
     async def _run_scan_with_config(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str], max_coins: int = 80, skip_sentiment: bool = False, parallel: bool = False, batch_size: int = 1) -> Dict:
         """Core scan logic with configurable parameters including parallel processing."""
         
