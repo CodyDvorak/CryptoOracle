@@ -1,82 +1,79 @@
 <analysis>
-The trajectory outlines the development of a Crypto Oracle application, a full-stack tool for AI-driven cryptocurrency trading recommendations. The project underwent significant evolution, starting with data source pivots from Binance and CoinGecko to a stable CryptoCompare API. A major feature phase introduced user-requested enhancements like price filters, advanced scheduling, and UI refinements.
+The trajectory details the evolution of the Crypto Oracle application, a full-stack AI trading recommendation tool. The development process began by resolving two critical user-reported bugs: a faulty frontend auto-refresh mechanism and a failing backend email notification system. These were addressed by correcting authentication headers in frontend API calls and refining the notification logic in the backend.
 
-A key strategic shift involved integrating the TokenMetrics API for its AI grades, which led to complex pre-filtering logic. However, based on user feedback, this was later removed to simplify the architecture and rely solely on CryptoCompare for data sourcing and analysis by the 21 internal bots.
+Following the bug fixes, the project underwent a massive feature expansion phase driven by user requests. The analytical core was upgraded by increasing the number of trading bots from 21 to 49 and integrating a triple-layer OpenAI (GPT-5) architecture for sentiment analysis, deep coin analysis, and result synthesis. This enhancement introduced significant performance overhead, leading to prolonged scan times.
 
-The most substantial development cycle was the implementation of a full-fledged user authentication system. This required creating backend user models, JWT-based auth services, and protected endpoints. The frontend was refactored to use React Context for state management,  for navigation between the main dashboard, login/register pages, and a new user-specific scan history page.
-
-The final messages in the trajectory focus on resolving persistent user-reported issues: a faulty auto-refresh mechanism on the frontend after a scan completes and a failure in the email notification system. The engineer's last actions were aimed at fixing these two specific problems.
+To address the performance degradation, a Smart Scan optimization was implemented, which prioritized analysis and selectively applied the time-intensive AI sentiment layer. Further user feedback led to the development of a multi-tiered scanning system, offering users five distinct scan types with varying speed, depth, and coin counts. This required a major refactoring of the backend scan orchestrator and a complete overhaul of the frontend UI to replace a single scan button with a dynamic dropdown menu. The final interactions involved adding even more scan types, adjusting coin limits, and beginning the implementation of a scheduler update and an all coins scan option.
 </analysis>
 
 <product_requirements>
-The objective is to build Crypto Oracle, a personalized, AI-powered agent that analyzes the cryptocurrency market and provides actionable trading recommendations.
+The Crypto Oracle is a personalized, AI-powered agent designed to provide users with actionable cryptocurrency trading recommendations.
 
-**Core Functionality:**
-*   **User Authentication:** Users must be able to register and log in with a username and password.
-*   **Personalized Experience:** All data, including scans, recommendations, and history, must be tied to the logged-in user's account.
-*   **Analysis Engine:** The system utilizes 21 AI bots to analyze market data sourced exclusively from the CryptoCompare API.
-*   **Categorized Recommendations:** Upon scan completion, the app identifies and displays the top 5 coins in three categories: highest confidence, biggest percentage movers, and biggest dollar volume movers.
-*   **Automated Email Notifications:** After every scan, the system must automatically send a summary of the results to the user's registered email address.
-*   **On-Demand & Scheduled Scans:** Users can run scans on-demand with custom filters (price range, specific coin lists) or schedule them to run automatically.
-*   **Scan History:** A dedicated History page allows users to review their past scans and the raw recommendations generated, without success-rate analytics.
-*   **Auto-Refreshing UI:** The main dashboard must automatically update with the latest scan results upon completion without requiring a manual browser refresh.
+**Core User-Facing Features:**
+*   **Authentication:** Users must register and log in to access the application. All data is user-specific.
+*   **Multi-Tiered Scanning:** Users can choose from several scan types with different performance profiles, from a Quick Scan to a comprehensive Full Scan, each with clear descriptions of what they do.
+*   **AI-Powered Analysis:** The system uses 49 unique AI bots and an integrated OpenAI GPT-5 model to analyze market data from the CryptoCompare API.
+*   **Categorized Results:** After a scan, the app displays the top 5 coins in categories like highest confidence and biggest movers.
+*   **Leverage & Timer:** The UI includes bot-driven leverage recommendations and a real-time timer to track the duration of ongoing scans.
+*   **Automated Notifications:** The system must email a summary of results to the user's registered email after each scan.
+*   **Scan Scheduling & History:** Users can schedule scans to run at intervals and review past scan results on a dedicated history page. The scheduler should allow selecting the desired scan type.
 </product_requirements>
 
 <key_technical_concepts>
-- **Backend:** Python with FastAPI, Motor for asynchronous MongoDB access, and APScheduler for background tasks.
-- **Frontend:** JavaScript with React, utilizing React Router for navigation and React Context for global state management (authentication).
-- **Database:** MongoDB for storing user data, scan configurations, and recommendations.
-- **Authentication:** JSON Web Tokens (JWT) for securing API endpoints, with bcrypt for password hashing.
-- **External APIs:** CryptoCompare for all market data and SMTP for sending email notifications.
+- **Backend:** Python (FastAPI), Motor (async MongoDB), APScheduler (scheduling), asyncio (parallel processing).
+- **Frontend:** JavaScript (React), React Context (auth state), Axios (API calls), TailwindCSS.
+- **Database:** MongoDB for user, scan, and recommendation data.
+- **Authentication:** JWT for securing API endpoints.
+- **APIs:** CryptoCompare for market data,  for OpenAI GPT-5 access, SMTP for email.
 </key_technical_concepts>
 
 <code_architecture>
-The application is a monorepo with separate  and  directories.
+The application is a monorepo with a React frontend and a FastAPI backend.
 
 
 
 -   ****
-    -   **Importance:** The main FastAPI application file. It defines all API endpoints.
-    -   **Changes:** Heavily modified to include a robust authentication system with  and  endpoints, JWT dependency injection to protect routes, and user-specific endpoints for running scans and fetching history. Logic for initializing  was simplified to rely only on CryptoCompare.
+    -   **Importance:** This is the application's core engine. It manages the entire scan lifecycle, from data fetching and filtering to bot execution and result aggregation.
+    -   **Summary of Changes:** This file has been massively refactored. It was modified to handle multiple, distinct  strategies (e.g., , ), each with different parameters for coin count, bot usage, and AI sentiment analysis. Crucially, it was updated to use  to run coin analysis in parallel for faster scan types, significantly improving performance. It also integrates the new .
 
 -   ****
-    -   **Importance:** The core engine that runs the analysis. It fetches data, applies filters, runs the 21 bots, and saves results.
-    -   **Changes:** Significantly refactored to be user-aware, accepting a  for all operations. The data pipeline was simplified to use only CryptoCompare. A crucial update was made to its  method to automatically trigger an email notification to the user upon scan completion.
+    -   **Importance:** The main and only significant frontend component, serving as the entire user dashboard. It manages all UI state, user interactions, and API communication.
+    -   **Summary of Changes:** The UI was transformed from having a single Run Scan button to a dynamic dropdown menu with tooltips for seven different scan types. State management was added for a real-time scan timer (, ). The initial auto-refresh bug was fixed by ensuring the user's auth token was passed in API headers. Error handling for concurrent scans was also improved to provide clearer user feedback.
 
 -   ****
-    -   **Importance:** Defines Pydantic models for data validation and database structure.
-    -   **Changes:** A  model was added for the authentication system. The  and  models were updated to include a  field to associate data with specific users.
+    -   **Importance:** Defines the logic for all individual trading analysis bots.
+    -   **Summary of Changes:** The number of bots was expanded from 21 to 49, adding 28 new strategies. A special  was added, which integrates with OpenAI to provide an LLM-based analysis.
 
 -   ****
-    -   **Importance:** The main dashboard component. It handles state for scans, recommendations, and UI controls.
-    -   **Changes:** Refactored to integrate with the  to get user data and authorization tokens for API calls. A user menu with a logout button was added. The auto-refresh logic, which polls for scan completion, has been a frequent point of modification and is the subject of the current debugging effort.
+    -   **Importance:** Defines all Pydantic models for API request/response validation and database schemas.
+    -   **Summary of Changes:** The  model was updated to include the new  field, allowing the frontend to specify which scan to run. New  enum values were added as more scan options were created. The  and  models were updated to include a  field.
 
 -   ****
-    -   **Importance:** A new file that provides a global authentication state for the entire React application.
-    -   **Changes:** Created from scratch to manage user login, registration, logout, and JWT token storage in . It exposes auth functions and user state to all components.
+    -   **Importance:** Calculates all technical indicators (e.g., SMA, RSI, MACD) used by the bots.
+    -   **Summary of Changes:** This file was updated to calculate several new indicators (e.g., SMA_200, ADX, EMA_12, EMA_26) that were required by the newly added bot strategies, ensuring all 49 bots could function correctly.
 
--   ****
-    -   **Importance:** A new page for viewing a user's past scans.
-    -   **Changes:** Created to display a list of historical scans. It was initially built with success-rate tracking features, which were later removed at the user's request to simplify the view to just raw recommendation data. Navigation was added to allow users to return to the main dashboard.
 </code_architecture>
 
 <pending_tasks>
-- Fix the frontend auto-refresh functionality to ensure the dashboard automatically updates with new results immediately after a scan is completed, without requiring a manual refresh.
-- Ensure the email notification system works reliably, so that every scan (both manual and scheduled) automatically sends the results to the email address the user registered with.
+- Add a dropdown selector to the scheduler UI to allow users to select the scan type for scheduled runs.
+- Implement the backend logic to save and execute the chosen scan type for scheduled jobs.
+- Add a new scan type named All In (or similar) that scans all 86 available coins from the API.
+- Ensure email notifications for scheduled scans are working reliably.
 </pending_tasks>
 
 <current_work>
-The engineer was actively debugging two critical, user-reported issues. The user stated that email notifications were not being sent and the application was not auto-refreshing after a scan completed.
+Immediately before this summary, the AI engineer was implementing a multi-part user request to enhance the scanning functionality.
 
-**Last Actions Taken:**
+The user asked to:
+1.  Increase the coin limits for existing scan types.
+2.  Add a new option to scan ALL available coins (86).
+3.  Add a dropdown selector to the scheduler to choose the scan type for automated runs.
 
-1.  **Email Fix (Backend):** The engineer modified the  method in . The logic was updated to fetch the user's details from the database at the beginning of a scan and then call the  method upon completion, ensuring the user's registered email is used for the notification.
+The engineer had just completed the backend work for the first two items. The  file was modified to update the coin limits for existing scan types like Full Scan and Quick Scan. A new scan strategy method, , was added to handle the scan all coins request.
 
-    
-
-2.  **Auto-Refresh Fix (Frontend):** The engineer began investigating the faulty auto-refresh logic in . They identified the polling mechanism inside the  function as the likely culprit and were in the process of implementing a more aggressive and less strict polling condition to force the data refresh when the trajectory ended.
+The last action was editing  to add this new method. The next logical steps would be to add this new scan type to the  enum, update  to recognize it, and then begin the frontend work for the new scan button and the scheduler UI update.
 </current_work>
 
 <optional_next_step>
-Finalize the implementation of a more robust auto-refresh mechanism in  by making the polling condition less strict and adding a fallback to ensure the recommendations are always fetched after the polling loop concludes.
+I will add the new scan types, including the All In option, to the  enum in  to ensure the backend API can validate and recognize them.
 </optional_next_step>

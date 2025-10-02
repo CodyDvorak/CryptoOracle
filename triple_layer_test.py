@@ -6,7 +6,7 @@ import asyncio
 import aiohttp
 import json
 
-API_BASE = "https://coin-oracle-3.preview.emergentagent.com/api"
+API_BASE = "https://smarttrade-ai-42.preview.emergentagent.com/api"
 
 async def test_triple_layer_integration():
     """Test the key components of Triple-Layer LLM Integration"""
