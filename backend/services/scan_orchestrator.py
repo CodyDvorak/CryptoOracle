@@ -30,6 +30,7 @@ class ScanOrchestrator:
         self.llm_service = LLMSynthesisService()  # Layer 3
         self.sentiment_service = SentimentAnalysisService()  # Layer 1
         self.aggregation_engine = AggregationEngine()
+        self.bot_performance_service = BotPerformanceService(db, self.crypto_client)
         self.bots = get_all_bots()  # Now includes 50 bots (Layer 2 includes AIAnalystBot)
         
         logger.info(f"🤖 Scan Orchestrator initialized with {len(self.bots)} bots (including AI Analyst)")
