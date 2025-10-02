@@ -710,7 +710,21 @@ class ScanOrchestrator:
             # Ensure current price is accurate
             features['current_price'] = current_price
             
-            # 4. Run all bots
+            # 🔮 LAYER 1: Pre-Analysis Sentiment & Fundamentals (ChatGPT-5)
+            try:
+                logger.debug(f"🔮 Layer 1: Running sentiment analysis for {symbol}...")
+                sentiment_data = await self.sentiment_service.analyze_market_sentiment(
+                    symbol=symbol,
+                    coin_name=display_name,
+                    current_price=current_price
+                )
+                features = self.sentiment_service.enrich_features(features, sentiment_data)
+                logger.info(f"✨ Layer 1 complete for {symbol}: {sentiment_data.get('sentiment_text', 'neutral')} (score: {sentiment_data.get('sentiment_score', 5)})")
+            except Exception as e:
+                logger.warning(f"Layer 1 sentiment analysis skipped for {symbol}: {e}")
+                # Continue without sentiment data
+            
+            # 🤖 LAYER 2: Run all 50 bots (including AIAnalystBot with ChatGPT-5)
             bot_results = []
             
             for bot in self.bots:
@@ -749,10 +763,12 @@ class ScanOrchestrator:
                 logger.warning(f"No bot results for {symbol}")
                 return None
             
+            logger.info(f"🤖 Layer 2 complete for {symbol}: {len(bot_results)}/50 bots analyzed")
+            
             # 5. Aggregate results
             aggregated = self.aggregation_engine.aggregate_coin_results(display_name, bot_results, current_price)
             
-            # 6. Optional: LLM synthesis
+            # 📝 LAYER 3: LLM Synthesis (ChatGPT-5)
             try:
                 enhanced_rationale = await self.llm_service.synthesize_recommendations(display_name, bot_results, features)
                 aggregated['rationale'] = enhanced_rationale
