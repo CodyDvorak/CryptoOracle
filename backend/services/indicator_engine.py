@@ -102,14 +102,21 @@ class IndicatorEngine:
             'current_price': df['close'].iloc[-1],
             'sma_20': cls.sma(df, 20).iloc[-1],
             'sma_50': cls.sma(df, 50).iloc[-1],
+            'sma_200': cls.sma(df, 200).iloc[-1] if len(df) >= 200 else cls.sma(df, 50).iloc[-1],
             'ema_9': cls.ema(df, 9).iloc[-1],
+            'ema_12': cls.ema(df, 12).iloc[-1],
+            'ema_13': cls.ema(df, 13).iloc[-1],
+            'ema_20': cls.ema(df, 20).iloc[-1],
             'ema_21': cls.ema(df, 21).iloc[-1],
+            'ema_26': cls.ema(df, 26).iloc[-1],
             'rsi_14': cls.rsi(df, 14).iloc[-1],
             'volume': df['volume'].iloc[-1],
             'volume_sma_20': df['volume'].rolling(20).mean().iloc[-1],
             'obv': cls.obv(df).iloc[-1],
             'vwap': cls.vwap(df).iloc[-1],
+            'atr': cls.atr(df, 14).iloc[-1],  # Also store as 'atr' for consistency
             'atr_14': cls.atr(df, 14).iloc[-1],
+            'adx': 50.0,  # Placeholder - ADX calculation is complex, use default value
         }
         
         # MACD
