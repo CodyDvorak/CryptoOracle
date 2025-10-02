@@ -300,7 +300,16 @@ function App() {
       
     } catch (error) {
       console.error('Error running scan:', error);
-      toast.error('Failed to start scan');
+      
+      // Better error messages
+      if (error.response && error.response.status === 409) {
+        toast.warning('⏳ A scan is already running. Please wait for it to complete.');
+      } else if (error.response && error.response.data && error.response.data.detail) {
+        toast.error(error.response.data.detail);
+      } else {
+        toast.error('Failed to start scan. Please try again.');
+      }
+      
       setLoading(false);
     }
   };
