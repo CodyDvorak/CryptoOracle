@@ -1159,6 +1159,405 @@ class CryptoOracleTestSuite:
             self.log_test("Email Notification", "FAIL", f"Error: {str(e)}")
             return False
 
+    async def test_multi_tiered_scan_types(self):
+        """Test the multi-tiered scan types system for Crypto Oracle app"""
+        print("=" * 80)
+        print("MULTI-TIERED SCAN TYPES TESTING")
+        print("=" * 80)
+        print(f"Testing API: {API_BASE}")
+        print()
+        print("Testing 8 different scan types with varying performance profiles")
+        print()
+        
+        # Test 1: Authentication Setup
+        print("🔐 Test 1: Authentication Setup...")
+        access_token = await self.test_user_registration()
+        if not access_token:
+            print("❌ User registration failed - aborting tests")
+            return
+        
+        print()
+        print("🔍 Test 2: Scan Type Validation...")
+        
+        # Test 2: Scan Type Validation - Verify all 8 scan types are recognized
+        await self.test_scan_type_validation(access_token)
+        
+        print()
+        print("⚡ Test 3: Speed Run Scan (Fastest)...")
+        
+        # Test 3: Speed Run Scan (Fastest: 40 coins, 25 bots, ~3 minutes)
+        await self.test_speed_run_scan(access_token)
+        
+        print()
+        print("🚀 Test 4: Quick Scan (Popular)...")
+        
+        # Test 4: Quick Scan (Popular: 45 coins, 49 bots, ~7 minutes)
+        await self.test_quick_scan(access_token)
+        
+        print()
+        print("📊 Test 5: Scan Status Polling...")
+        
+        # Test 5: Scan Status Polling
+        await self.test_scan_status_polling()
+        
+        print()
+        print("📧 Test 6: Email Notifications...")
+        
+        # Test 6: Email Notifications (check logs)
+        await self.test_email_notifications_logs()
+        
+        # Print summary
+        print()
+        print("=" * 80)
+        print("MULTI-TIERED SCAN TYPES TEST SUMMARY")
+        print("=" * 80)
+        
+        passed = sum(1 for result in self.test_results if result['status'] == 'PASS')
+        failed = sum(1 for result in self.test_results if result['status'] == 'FAIL')
+        partial = sum(1 for result in self.test_results if result['status'] == 'PARTIAL')
+        manual = sum(1 for result in self.test_results if result['status'] == 'MANUAL')
+        info = sum(1 for result in self.test_results if result['status'] == 'INFO')
+        
+        for result in self.test_results:
+            if result['status'] == 'PASS':
+                status_icon = "✅"
+            elif result['status'] == 'FAIL':
+                status_icon = "❌"
+            elif result['status'] == 'PARTIAL':
+                status_icon = "⚠️"
+            elif result['status'] == 'MANUAL':
+                status_icon = "📋"
+            else:
+                status_icon = "ℹ️"
+            print(f"{status_icon} {result['test']}: {result['details']}")
+        
+        print()
+        print(f"Total Tests: {len(self.test_results)}")
+        print(f"Passed: {passed}")
+        print(f"Partial: {partial}")
+        print(f"Failed: {failed}")
+        print(f"Manual Verification: {manual}")
+        print(f"Info: {info}")
+        
+        # Calculate success rate (PASS + PARTIAL as success)
+        success_rate = ((passed + partial) / len(self.test_results) * 100) if self.test_results else 0
+        print(f"Success Rate: {success_rate:.1f}%")
+
+    async def test_scan_type_validation(self, access_token: str) -> bool:
+        """Test that all 8 scan types are recognized by the API"""
+        try:
+            headers = {"Authorization": f"Bearer {access_token}"}
+            
+            # All 8 scan types from the review request
+            scan_types = [
+                "quick_scan", "focused_scan", "fast_parallel", "full_scan_lite",
+                "heavy_speed_run", "complete_market_scan", "speed_run", "full_scan"
+            ]
+            
+            valid_types = []
+            invalid_types = []
+            
+            for scan_type in scan_types:
+                try:
+                    scan_request = {
+                        "scan_type": scan_type,
+                        "scope": "all",
+                        "filter_scope": "all"
+                    }
+                    
+                    # Just test the API accepts the scan_type, don't wait for completion
+                    async with self.session.post(f"{API_BASE}/scan/run", json=scan_request, headers=headers) as response:
+                        if response.status == 200:
+                            valid_types.append(scan_type)
+                            # Cancel the scan immediately by checking status
+                            await asyncio.sleep(1)
+                        elif response.status == 409:
+                            # Scan already running, which means the scan_type was accepted
+                            valid_types.append(scan_type)
+                        elif response.status == 422:
+                            # Validation error - scan_type not recognized
+                            invalid_types.append(scan_type)
+                        else:
+                            # Other error
+                            error_text = await response.text()
+                            print(f"⚠️ {scan_type}: HTTP {response.status} - {error_text}")
+                            
+                except Exception as e:
+                    print(f"⚠️ {scan_type}: Error - {str(e)}")
+                    invalid_types.append(scan_type)
+                
+                # Small delay between requests
+                await asyncio.sleep(0.5)
+            
+            if len(valid_types) == 8:
+                self.log_test("Scan Type Validation", "PASS", f"All 8 scan types recognized: {', '.join(valid_types)}")
+                return True
+            elif len(valid_types) > 0:
+                self.log_test("Scan Type Validation", "PARTIAL", 
+                             f"{len(valid_types)}/8 scan types valid: {', '.join(valid_types)}. Invalid: {', '.join(invalid_types)}")
+                return True
+            else:
+                self.log_test("Scan Type Validation", "FAIL", f"No scan types recognized. Invalid: {', '.join(invalid_types)}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Scan Type Validation", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def test_speed_run_scan(self, access_token: str) -> Optional[str]:
+        """Test speed_run scan type (Fastest: 40 coins, 25 bots, ~3 minutes)"""
+        try:
+            headers = {"Authorization": f"Bearer {access_token}"}
+            
+            scan_request = {
+                "scan_type": "speed_run",
+                "filter_scope": "all",
+                "scope": "all"
+            }
+            
+            print(f"Starting speed_run scan (expected: 40 coins, 25 bots, ~3 minutes)...")
+            
+            # Start scan
+            async with self.session.post(f"{API_BASE}/scan/run", json=scan_request, headers=headers) as response:
+                if response.status == 409:
+                    self.log_test("Speed Run Scan", "PARTIAL", "Another scan already running - cannot test speed_run")
+                    return None
+                elif response.status != 200:
+                    error_text = await response.text()
+                    self.log_test("Speed Run Scan", "FAIL", f"Failed to start speed_run: HTTP {response.status} - {error_text}")
+                    return None
+                
+                scan_data = await response.json()
+                self.log_test("Speed Run Start", "PASS", f"Speed run scan started: {scan_data.get('status')}")
+            
+            # Wait for completion (max 5 minutes for speed_run)
+            max_wait = 300  # 5 minutes
+            wait_time = 0
+            start_time = time.time()
+            
+            while wait_time < max_wait:
+                await asyncio.sleep(10)  # Check every 10 seconds
+                wait_time += 10
+                
+                async with self.session.get(f"{API_BASE}/scan/status") as response:
+                    if response.status == 200:
+                        status_data = await response.json()
+                        is_running = status_data.get('is_running', True)
+                        
+                        if not is_running:
+                            recent_run = status_data.get('recent_run')
+                            if recent_run and recent_run.get('status') == 'completed':
+                                run_id = recent_run.get('id')
+                                completion_time = int(time.time() - start_time)
+                                
+                                # Verify completion time is reasonable for speed_run (~3 minutes)
+                                if completion_time <= 240:  # 4 minutes tolerance
+                                    self.log_test("Speed Run Completion", "PASS", 
+                                                 f"Speed run completed in {completion_time}s (within 4min limit), run_id: {run_id}")
+                                else:
+                                    self.log_test("Speed Run Completion", "PARTIAL", 
+                                                 f"Speed run completed in {completion_time}s (exceeded 4min), run_id: {run_id}")
+                                
+                                # Verify recommendations were generated
+                                await self.verify_scan_recommendations(run_id, "speed_run")
+                                return run_id
+                            else:
+                                self.log_test("Speed Run Completion", "FAIL", "Speed run failed or incomplete")
+                                return None
+                        else:
+                            print(f"Speed run still running... ({wait_time}s elapsed)")
+            
+            self.log_test("Speed Run Completion", "FAIL", "Speed run timeout after 5 minutes")
+            return None
+            
+        except Exception as e:
+            self.log_test("Speed Run Scan", "FAIL", f"Error: {str(e)}")
+            return None
+
+    async def test_quick_scan(self, access_token: str) -> Optional[str]:
+        """Test quick_scan scan type (Popular: 45 coins, 49 bots, ~7 minutes)"""
+        try:
+            headers = {"Authorization": f"Bearer {access_token}"}
+            
+            scan_request = {
+                "scan_type": "quick_scan",
+                "filter_scope": "all",
+                "scope": "all"
+            }
+            
+            print(f"Starting quick_scan (expected: 45 coins, 49 bots, ~7 minutes)...")
+            
+            # Start scan
+            async with self.session.post(f"{API_BASE}/scan/run", json=scan_request, headers=headers) as response:
+                if response.status == 409:
+                    self.log_test("Quick Scan", "PARTIAL", "Another scan already running - cannot test quick_scan")
+                    return None
+                elif response.status != 200:
+                    error_text = await response.text()
+                    self.log_test("Quick Scan", "FAIL", f"Failed to start quick_scan: HTTP {response.status} - {error_text}")
+                    return None
+                
+                scan_data = await response.json()
+                self.log_test("Quick Scan Start", "PASS", f"Quick scan started: {scan_data.get('status')}")
+            
+            # Wait for completion (max 10 minutes for quick_scan)
+            max_wait = 600  # 10 minutes
+            wait_time = 0
+            start_time = time.time()
+            
+            while wait_time < max_wait:
+                await asyncio.sleep(15)  # Check every 15 seconds for longer scan
+                wait_time += 15
+                
+                async with self.session.get(f"{API_BASE}/scan/status") as response:
+                    if response.status == 200:
+                        status_data = await response.json()
+                        is_running = status_data.get('is_running', True)
+                        
+                        if not is_running:
+                            recent_run = status_data.get('recent_run')
+                            if recent_run and recent_run.get('status') == 'completed':
+                                run_id = recent_run.get('id')
+                                completion_time = int(time.time() - start_time)
+                                
+                                # Verify completion time is reasonable for quick_scan (~7 minutes)
+                                if completion_time <= 480:  # 8 minutes tolerance
+                                    self.log_test("Quick Scan Completion", "PASS", 
+                                                 f"Quick scan completed in {completion_time}s (within 8min limit), run_id: {run_id}")
+                                else:
+                                    self.log_test("Quick Scan Completion", "PARTIAL", 
+                                                 f"Quick scan completed in {completion_time}s (exceeded 8min), run_id: {run_id}")
+                                
+                                # Verify recommendations were generated
+                                await self.verify_scan_recommendations(run_id, "quick_scan")
+                                return run_id
+                            else:
+                                self.log_test("Quick Scan Completion", "FAIL", "Quick scan failed or incomplete")
+                                return None
+                        else:
+                            print(f"Quick scan still running... ({wait_time}s elapsed)")
+            
+            self.log_test("Quick Scan Completion", "FAIL", "Quick scan timeout after 10 minutes")
+            return None
+            
+        except Exception as e:
+            self.log_test("Quick Scan", "FAIL", f"Error: {str(e)}")
+            return None
+
+    async def verify_scan_recommendations(self, run_id: str, scan_type: str) -> bool:
+        """Verify that scan generated recommendations and check basic metrics"""
+        try:
+            async with self.session.get(f"{API_BASE}/recommendations/top5?run_id={run_id}") as response:
+                if response.status == 404:
+                    self.log_test(f"{scan_type.title()} Recommendations", "PARTIAL", "No recommendations generated")
+                    return True
+                elif response.status != 200:
+                    self.log_test(f"{scan_type.title()} Recommendations", "FAIL", f"Failed to get recommendations: HTTP {response.status}")
+                    return False
+                
+                data = await response.json()
+                
+                # Check if recommendations exist
+                recommendations = data.get('recommendations', [])
+                top_confidence = data.get('top_confidence', [])
+                top_percent = data.get('top_percent_movers', [])
+                top_dollar = data.get('top_dollar_movers', [])
+                
+                total_recs = len(recommendations)
+                categories_populated = sum([
+                    len(top_confidence) > 0,
+                    len(top_percent) > 0,
+                    len(top_dollar) > 0
+                ])
+                
+                if total_recs > 0:
+                    self.log_test(f"{scan_type.title()} Recommendations", "PASS", 
+                                 f"Generated {total_recs} recommendations, {categories_populated}/3 categories populated")
+                    
+                    # Check bot count in first recommendation
+                    if recommendations:
+                        first_rec = recommendations[0]
+                        bot_count = first_rec.get('bot_count', 0)
+                        coin_symbol = first_rec.get('ticker', 'Unknown')
+                        
+                        if scan_type == "speed_run" and bot_count >= 20:  # Expected ~25 bots
+                            self.log_test(f"{scan_type.title()} Bot Count", "PASS", f"{coin_symbol}: {bot_count} bots (expected ~25)")
+                        elif scan_type == "quick_scan" and bot_count >= 40:  # Expected ~49 bots
+                            self.log_test(f"{scan_type.title()} Bot Count", "PASS", f"{coin_symbol}: {bot_count} bots (expected ~49)")
+                        else:
+                            self.log_test(f"{scan_type.title()} Bot Count", "PARTIAL", f"{coin_symbol}: {bot_count} bots")
+                    
+                    return True
+                else:
+                    self.log_test(f"{scan_type.title()} Recommendations", "PARTIAL", "No recommendations generated")
+                    return True
+                
+        except Exception as e:
+            self.log_test(f"{scan_type.title()} Recommendations", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def test_scan_status_polling(self) -> bool:
+        """Test scan status polling endpoint"""
+        try:
+            async with self.session.get(f"{API_BASE}/scan/status") as response:
+                if response.status != 200:
+                    self.log_test("Scan Status Polling", "FAIL", f"HTTP {response.status}")
+                    return False
+                
+                data = await response.json()
+                
+                # Verify response structure
+                required_fields = ['is_running', 'recent_run', 'coins_analyzed', 'total_available_coins']
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if missing_fields:
+                    self.log_test("Scan Status Polling", "FAIL", f"Missing fields: {missing_fields}")
+                    return False
+                
+                is_running = data.get('is_running')
+                recent_run = data.get('recent_run')
+                coins_analyzed = data.get('coins_analyzed', 0)
+                
+                status_info = f"Running: {is_running}, Coins analyzed: {coins_analyzed}"
+                if recent_run:
+                    run_status = recent_run.get('status', 'unknown')
+                    run_id = recent_run.get('id', 'unknown')
+                    status_info += f", Recent run: {run_status} ({run_id[:8]}...)"
+                
+                self.log_test("Scan Status Polling", "PASS", status_info)
+                return True
+                
+        except Exception as e:
+            self.log_test("Scan Status Polling", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def test_email_notifications_logs(self) -> bool:
+        """Test email notifications by checking if they would be sent (log verification)"""
+        try:
+            # Check email configuration
+            async with self.session.get(f"{API_BASE}/config/integrations") as response:
+                if response.status == 200:
+                    config = await response.json()
+                    smtp_configured = config.get('smtp_host') and config.get('smtp_user')
+                    
+                    if smtp_configured:
+                        self.log_test("Email Configuration", "PASS", "SMTP configuration available")
+                    else:
+                        self.log_test("Email Configuration", "PARTIAL", "SMTP configuration incomplete")
+                else:
+                    self.log_test("Email Configuration", "FAIL", f"Failed to get email config: HTTP {response.status}")
+                    return False
+            
+            # Manual verification step for email logs
+            self.log_test("Email Notifications", "MANUAL", 
+                         "Manual verification required: Check backend logs at /var/log/supervisor/backend.*.log for email notification flow")
+            
+            return True
+            
+        except Exception as e:
+            self.log_test("Email Notifications", "FAIL", f"Error: {str(e)}")
+            return False
+
     async def run_all_tests(self):
         """Run all test suites"""
         print("=" * 60)
