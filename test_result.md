@@ -288,6 +288,71 @@ test_plan:
 agent_communication:
   - agent: "main"
     message: |
+      TRIPLE-LAYER LLM INTEGRATION + 49 BOT EXPANSION COMPLETE:
+      
+      📊 PHASE 1: BOT ARMY EXPANSION (21 → 49 bots)
+      - Original 21 bots maintained
+      - Added 28 new unique strategies:
+        * Trend Following: EMA Cross, ADX Trend, Parabolic SAR, SuperTrend
+        * Mean Reversion: Williams%R, CCI, Keltner Channel, Donchian Channel  
+        * Momentum: ROC, MFI, Acc/Dist, Volume Price Trend
+        * Pattern Recognition: Fibonacci, Pivot Points, Ichimoku
+        * Statistical: Z-Score, Linear Regression
+        * Multi-Indicator: Triple MA, Heikin-Ashi, Envelope, Chaikin, Aroon, DeMarker, Ultimate Oscillator, Elder Ray, KST, Vortex
+      - AIAnalystBot: ChatGPT-5 powered bot (Layer 2)
+      - Total: 49 truly unique strategies
+      
+      🔮 PHASE 2: TRIPLE-LAYER CHATGPT-5 INTEGRATION (Option A - All ChatGPT-5)
+      
+      **Layer 1: Pre-Analysis Sentiment & Fundamentals**
+      - File: backend/services/sentiment_analysis_service.py
+      - Uses: OpenAI ChatGPT-5 via Emergent LLM key
+      - Function: Analyzes market sentiment, fundamentals, risk level BEFORE bot analysis
+      - Output: sentiment_score (1-10), sentiment_text, fundamental_notes, risk_level
+      - Integration: Enriches features dict for all bots to use
+      
+      **Layer 2: AI Analyst Bot (one of 49 bots)**
+      - File: backend/bots/bot_strategies.py (AIAnalystBot class)
+      - Uses: OpenAI ChatGPT-5 via Emergent LLM key
+      - Function: Comprehensive analysis using ALL technical indicators + sentiment
+      - Output: direction, confidence, entry/TP/SL, predictions, AI-generated rationale
+      - Fallback: Simple technical analysis if LLM unavailable
+      
+      **Layer 3: Enhanced Synthesis**
+      - File: backend/services/llm_synthesis_service.py
+      - Upgraded: Claude Sonnet-4 → OpenAI ChatGPT-5
+      - Function: Synthesizes all 49 bot opinions + sentiment into superior final rationale
+      - Enhanced: Confidence calibration considering sentiment alignment
+      - Output: 2-3 sentence comprehensive analysis highlighting consensus, signals, risks
+      
+      🔧 INTEGRATION:
+      - scan_orchestrator.py updated with Triple-Layer flow:
+        1. Layer 1: Sentiment analysis enriches features
+        2. Layer 2: All 49 bots analyze (including AIAnalystBot)
+        3. Layer 3: ChatGPT-5 synthesizes final rationale
+      - Added comprehensive logging with emojis (🔮, 🤖, 📝)
+      - EMERGENT_LLM_KEY added to .env
+      - emergentintegrations library already installed
+      
+      ⏱️ EXPECTED PERFORMANCE:
+      - Scan time: ~60-90 seconds (up from 40-60s due to LLM calls)
+      - Bot count display: Will show 49 active bots
+      - Confidence quality: Significantly improved (more diverse + AI analysis)
+      - Rationale quality: Much better (ChatGPT-5 synthesis)
+      
+      🧪 TESTING REQUIRED:
+      1. Verify bot count shows 49 (not 21)
+      2. Run authenticated scan with small scope (min_price: 50, max_price: 500)
+      3. Check backend logs for Layer 1, 2, 3 completion messages
+      4. Verify recommendations include enhanced rationales
+      5. Test that scan completes within 60-120 seconds
+      6. Verify email notifications still work
+      7. Check bot details endpoint returns 49 bot results per coin
+      
+      📝 NOTE FOR USER:
+      - Deep Research integration deferred to post-implementation discussion
+      - Will present Deep Research use cases after testing completes
+      
       Implementation complete for all 3 phases + Dual-source architecture upgrade:
       
       Phase 1 - Bot Details Popup: ✅ WORKING
