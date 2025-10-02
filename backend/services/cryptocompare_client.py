@@ -17,7 +17,10 @@ class CryptoCompareClient:
     
     async def _get_session(self):
         if self.session is None or self.session.closed:
-            self.session = aiohttp.ClientSession()
+            headers = {}
+            if self.api_key:
+                headers['authorization'] = f'Apikey {self.api_key}'
+            self.session = aiohttp.ClientSession(headers=headers)
         return self.session
     
     async def close(self):
