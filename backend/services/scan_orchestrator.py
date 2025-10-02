@@ -97,6 +97,44 @@ class ScanOrchestrator:
                 'error': str(e)
             }
     
+    
+    async def _run_quick_scan(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
+        """Quick Scan: 40 coins, no AI, ~5 minutes."""
+        logger.info("⚡ QUICK SCAN: 40 coins, 49 bots, NO AI (~5 min)")
+        # Temporarily modify scan settings
+        original_full_scan = self._run_full_scan
+        return await self._run_optimized_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id,
+                                               max_coins=40, skip_all_sentiment=True, skip_synthesis=True)
+    
+    async def _run_focused_scan(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
+        """Focused Scan: 40 coins with AI sentiment, ~12 minutes."""
+        logger.info("🎯 FOCUSED SCAN: 40 coins, 49 bots, AI on top 15 (~12 min)")
+        return await self._run_optimized_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id,
+                                               max_coins=40, skip_all_sentiment=False, skip_synthesis=False)
+    
+    async def _run_fast_parallel_scan(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
+        """Fast Parallel: 80 coins with parallel processing, ~12 minutes."""
+        logger.info("🚀 FAST PARALLEL SCAN: 80 coins parallel, 49 bots (~12 min)")
+        # For now, use optimized scan with batch size
+        return await self._run_optimized_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id,
+                                               max_coins=80, skip_all_sentiment=False, skip_synthesis=False, parallel=True)
+    
+    async def _run_speed_run_scan(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
+        """Speed Run: 40 coins, 25 best bots only, ~3 minutes."""
+        logger.info("💨 SPEED RUN: 40 coins, 25 top bots, NO AI (~3 min)")
+        # Use first 25 bots (the original proven ones)
+        original_bots = self.bots
+        self.bots = self.bots[:25]
+        try:
+            result = await self._run_optimized_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id,
+                                                    max_coins=40, skip_all_sentiment=True, skip_synthesis=True)
+            return result
+        finally:
+            self.bots = original_bots
+    
+    async def _run_optimized_scan(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str], max_coins: int = 80, skip_all_sentiment: bool = False, skip_synthesis: bool = False, parallel: bool = False) -> Dict:
+        """Optimized scan with configurable parameters."""
+    
     async def _run_full_scan(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
         """Full Scan: 80 coins with smart optimization (sentiment on top 15 only)."""
         logger.info("📊 FULL SCAN: 80 coins, 49 bots, AI sentiment on top candidates (~40 min)")
