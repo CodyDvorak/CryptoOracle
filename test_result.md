@@ -787,16 +787,19 @@ frontend:
         comment: "Added Scan Type dropdown to scheduler configuration with all 12 scan types. Shows first line of tooltip as helper text. Persists selected scan type to backend."
 
 metadata:
-  test_sequence: 2
+  test_sequence: 3
 
 test_plan:
   current_focus:
-    - "All In scan types (4 new scans with pagination)"
-    - "Scheduler scan type selection"
-    - "Scrollable scan type dropdown"
+    - "Comprehensive End-to-End Testing"
+    - "Authentication & Session Persistence"
+    - "Scan Execution & Bot Predictions"
+    - "Bot Performance Dashboard"
+    - "History Tracking"
+    - "Scheduler Functionality"
   stuck_tasks: []
-  test_all: false
-  test_priority: "high_first"
+  test_all: true
+  test_priority: "critical_first"
 
 agent_communication:
   - agent: "main"
