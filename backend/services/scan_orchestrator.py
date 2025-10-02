@@ -56,7 +56,7 @@ class ScanOrchestrator:
             status='running'
         )
         await self.db.scan_runs.insert_one(scan_run.dict())
-        logger.info(f"Starting scan run {scan_run.id} with scope={filter_scope}, custom_symbols={custom_symbols}, min_price={min_price}, max_price={max_price}")
+        logger.info(f"🚀 Starting SMART SCAN (Option C) run {scan_run.id} - Two-pass approach: Fast bots → Sentiment on top candidates")
         
         try:
             # 1. Fetch coins from CryptoCompare (primary data source)
