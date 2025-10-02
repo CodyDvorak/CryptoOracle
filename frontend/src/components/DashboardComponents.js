@@ -57,7 +57,7 @@ export const CoinRecommendationCard = ({ recommendation, rank, runId }) => {
   
   return (
     <Card 
-      className="group hover:shadow-[var(--shadow-deep)] transition-shadow duration-200 hover:-translate-y-1"
+      className="group hover:shadow-[var(--shadow-deep)] transition-shadow duration-200 hover:-translate-y-1 min-h-[520px] flex flex-col"
       data-testid="coin-card"
     >
       <CardHeader className="pb-3">
