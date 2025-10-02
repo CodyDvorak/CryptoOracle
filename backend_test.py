@@ -4630,8 +4630,8 @@ async def main():
             else:
                 await test_suite.run_all_tests()
         else:
-            # Default: run multi-provider fallback system tests (as requested in review)
-            await test_suite.test_multi_provider_fallback_system()
+            # Default: run critical data format fix test (as requested in review)
+            await test_suite.test_data_format_fix_critical()
 
 if __name__ == "__main__":
     asyncio.run(main())
