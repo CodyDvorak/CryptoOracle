@@ -43,7 +43,8 @@ class AggregationEngine:
             return {}
     
     async def aggregate_coin_results(self, coin: str, bot_results: List[Dict], current_price: float) -> Dict:
-        """Aggregate results from all bots for a single coin.
+    async def aggregate_coin_results(self, coin: str, bot_results: List[Dict], current_price: float) -> Dict:
+        """Aggregate results from all bots for a single coin WITH PERFORMANCE WEIGHTING.
         
         Args:
             coin: Coin symbol
@@ -56,23 +57,47 @@ class AggregationEngine:
         if not bot_results:
             return None
         
-        # Separate by direction
-        long_results = [r for r in bot_results if r.get('direction') == 'long']
-        short_results = [r for r in bot_results if r.get('direction') == 'short']
+        # Get bot performance weights
+        bot_weights = await self.get_bot_weights()
         
-        # Determine consensus direction (majority vote)
-        consensus_direction = 'long' if len(long_results) >= len(short_results) else 'short'
+        # Apply weights to bot results
+        weighted_results = []
+        for r in bot_results:
+            bot_name = r.get('bot_name', 'Unknown')
+            weight = bot_weights.get(bot_name, 1.0)
+            
+            # Create weighted copy
+            weighted_r = r.copy()
+            weighted_r['weight'] = weight
+            weighted_r['weighted_confidence'] = r.get('confidence', 5) * weight
+            weighted_results.append(weighted_r)
+        
+        # Separate by direction
+        long_results = [r for r in weighted_results if r.get('direction') == 'long']
+        short_results = [r for r in weighted_results if r.get('direction') == 'short']
+        
+        # Weighted consensus: sum of weights (better bots have more influence)
+        long_weight = sum(r.get('weight', 1.0) for r in long_results)
+        short_weight = sum(r.get('weight', 1.0) for r in short_results)
+        
+        consensus_direction = 'long' if long_weight >= short_weight else 'short'
         
         # Get results matching consensus
         consensus_results = long_results if consensus_direction == 'long' else short_results
         
         if not consensus_results:
             # Fallback: use all results
-            consensus_results = bot_results
+            consensus_results = weighted_results
         
-        # Calculate averages
-        confidences = [r.get('confidence', 5) for r in bot_results]
-        avg_confidence = statistics.mean(confidences)
+        # Calculate WEIGHTED averages (better bots contribute more)
+        total_weight = sum(r.get('weight', 1.0) for r in weighted_results)
+        
+        if total_weight > 0:
+            # Weighted confidence average
+            weighted_confidences = sum(r.get('weighted_confidence', 5) for r in weighted_results)
+            avg_confidence = weighted_confidences / total_weight
+        else:
+            avg_confidence = statistics.mean([r.get('confidence', 5) for r in bot_results])
         
         # For TP/SL, use median of consensus bots to reduce outlier impact
         consensus_tps = [r.get('take_profit', 0) for r in consensus_results if r.get('take_profit', 0) > 0]
@@ -83,17 +108,28 @@ class AggregationEngine:
         avg_sl = statistics.median(consensus_sls) if consensus_sls else 0
         avg_entry = statistics.median(consensus_entries) if consensus_entries else current_price
         
-        # Calculate average predicted prices from ALL bots
-        pred_24h_values = [r.get('predicted_24h', current_price) for r in bot_results if r.get('predicted_24h')]
-        pred_48h_values = [r.get('predicted_48h', current_price) for r in bot_results if r.get('predicted_48h')]
-        pred_7d_values = [r.get('predicted_7d', current_price) for r in bot_results if r.get('predicted_7d')]
+        # Calculate weighted average predicted prices
+        def weighted_avg(values_with_weights):
+            if not values_with_weights:
+                return current_price
+            total_w = sum(w for v, w in values_with_weights)
+            if total_w == 0:
+                return statistics.mean([v for v, w in values_with_weights])
+            return sum(v * w for v, w in values_with_weights) / total_w
         
-        avg_pred_24h = statistics.mean(pred_24h_values) if pred_24h_values else current_price
-        avg_pred_48h = statistics.mean(pred_48h_values) if pred_48h_values else current_price
-        avg_pred_7d = statistics.mean(pred_7d_values) if pred_7d_values else current_price
+        pred_24h_weighted = [(r.get('predicted_24h', current_price), r.get('weight', 1.0)) 
+                             for r in weighted_results if r.get('predicted_24h')]
+        pred_48h_weighted = [(r.get('predicted_48h', current_price), r.get('weight', 1.0)) 
+                             for r in weighted_results if r.get('predicted_48h')]
+        pred_7d_weighted = [(r.get('predicted_7d', current_price), r.get('weight', 1.0)) 
+                            for r in weighted_results if r.get('predicted_7d')]
+        
+        avg_pred_24h = weighted_avg(pred_24h_weighted)
+        avg_pred_48h = weighted_avg(pred_48h_weighted)
+        avg_pred_7d = weighted_avg(pred_7d_weighted)
         
         # Calculate leverage statistics
-        leverages = [r.get('recommended_leverage', 5.0) for r in bot_results if r.get('recommended_leverage')]
+        leverages = [r.get('recommended_leverage', 5.0) for r in weighted_results if r.get('recommended_leverage')]
         avg_leverage = statistics.mean(leverages) if leverages else 5.0
         min_leverage = min(leverages) if leverages else 1.0
         max_leverage = max(leverages) if leverages else 10.0
@@ -102,23 +138,25 @@ class AggregationEngine:
             'coin': coin,
             'current_price': current_price,
             'consensus_direction': consensus_direction,
-            'avg_confidence': avg_confidence,
+            'avg_confidence': avg_confidence,  # NOW WEIGHTED!
             'avg_take_profit': avg_tp,
             'avg_stop_loss': avg_sl,
             'avg_entry': avg_entry,
-            'avg_predicted_24h': avg_pred_24h,
-            'avg_predicted_48h': avg_pred_48h,
-            'avg_predicted_7d': avg_pred_7d,
+            'avg_predicted_24h': avg_pred_24h,  # NOW WEIGHTED!
+            'avg_predicted_48h': avg_pred_48h,  # NOW WEIGHTED!
+            'avg_predicted_7d': avg_pred_7d,    # NOW WEIGHTED!
             'avg_leverage': round(avg_leverage, 1),
             'min_leverage': round(min_leverage, 1),
             'max_leverage': round(max_leverage, 1),
             'bot_count': len(bot_results),
             'long_count': len(long_results),
-            'short_count': len(short_results)
+            'short_count': len(short_results),
+            'long_weight': round(long_weight, 2),
+            'short_weight': round(short_weight, 2)
         }
     
     @staticmethod
-    def get_top_n(aggregated_results: List[Dict], n: int = 5) -> List[Dict]:
+    def get_top_n(aggregated_results: List[Dict], n: int = 8) -> List[Dict]:
         """Get top N coins by average confidence.
         
         Args:
