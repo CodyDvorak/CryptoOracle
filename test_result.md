@@ -276,12 +276,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Bot count expansion (21 → 49 unique strategies)"
-    - "Layer 1: Pre-Analysis Sentiment Service (ChatGPT-5)"
-    - "Layer 2: AI Analyst Bot (ChatGPT-5)"
-    - "Layer 3: Enhanced Synthesis (ChatGPT-5)"
-    - "Scan orchestrator integration (Triple-Layer)"
-  stuck_tasks: []
+    - "Layer 2: AI Analyst Bot (ChatGPT-5)" # Async event loop issue needs fixing
+  stuck_tasks:
+    - "Layer 2: AI Analyst Bot (ChatGPT-5)" # Async conflict preventing full ChatGPT-5 analysis
   test_all: false
   test_priority: "high_first"
 
