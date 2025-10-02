@@ -38,6 +38,8 @@ class BotPerformanceService:
             Market regime: 'bull_market', 'bear_market', 'high_volatility', 'sideways'
         """
         try:
+            btc_historical = None
+            
             # If BTC data not provided, fetch it
             if btc_price_change_7d is None:
                 btc_historical = await self.crypto_client.get_historical_data('BTC', days=7)
@@ -52,6 +54,12 @@ class BotPerformanceService:
                     if btc_data:
                         # Estimate based on current price (rough approximation)
                         btc_price_change_7d = 0.0  # Default to sideways if can't determine
+                    else:
+                        btc_price_change_7d = 0.0
+            
+            # Ensure btc_price_change_7d has a value
+            if btc_price_change_7d is None:
+                btc_price_change_7d = 0.0
             
             # Calculate volatility if not provided (using historical data)
             if volatility is None and btc_historical:
