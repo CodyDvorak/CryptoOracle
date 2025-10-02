@@ -77,6 +77,18 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
+  // Close scan menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showScanMenu && !event.target.closest('.relative')) {
+        setShowScanMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showScanMenu]);
+
 
   const fetchRecommendations = async () => {
     try {
