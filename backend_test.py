@@ -3292,11 +3292,13 @@ async def main():
                 await test_suite.test_triple_layer_llm_integration()
             elif sys.argv[1] == "--multi-tier":
                 await test_suite.test_multi_tiered_scan_types()
+            elif sys.argv[1] == "--analytics":
+                await test_suite.test_analytics_endpoints()
             else:
                 await test_suite.run_all_tests()
         else:
-            # Default: run Comprehensive End-to-End tests (as requested in review)
-            await test_suite.test_comprehensive_end_to_end()
+            # Default: run Analytics endpoints testing (as requested in review)
+            await test_suite.test_analytics_endpoints()
 
 if __name__ == "__main__":
     asyncio.run(main())
