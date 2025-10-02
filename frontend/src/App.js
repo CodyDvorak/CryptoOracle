@@ -1194,7 +1194,7 @@ function App() {
         <section>
           <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
             <Activity className="w-6 h-6 text-[var(--primary)]" />
-            Bot Status ({bots.length})
+            Bot Status ({stats.activeBots} Active / {bots.length} Total)
           </h2>
           <BotStatusGrid bots={bots} />
         </section>
