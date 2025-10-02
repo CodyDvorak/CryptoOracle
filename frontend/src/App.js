@@ -597,19 +597,19 @@ function App() {
                 onClick={() => runScan(selectedScanType)}
                 disabled={loading || scanStatus.is_running}
                 data-testid="refresh-button"
-                className="gap-2"
+                className="gap-2 min-w-[160px] whitespace-nowrap"
               >
                 {loading || scanStatus.is_running ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span className="hidden sm:inline">
+                    <span className="hidden sm:inline truncate">
                       Scanning... {scanStartTime && `(${formatElapsedTime(scanElapsedTime)})`}
                     </span>
                   </>
                 ) : (
                   <>
                     <span className="text-lg">{scanTypes[selectedScanType].icon}</span>
-                    <span className="hidden sm:inline">{scanTypes[selectedScanType].label}</span>
+                    <span className="hidden sm:inline truncate">{scanTypes[selectedScanType].label}</span>
                   </>
                 )}
               </Button>
