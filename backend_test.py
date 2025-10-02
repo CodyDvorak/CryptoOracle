@@ -4204,7 +4204,9 @@ async def main():
     async with CryptoOracleTestSuite() as test_suite:
         # Check if we should run specific test suites
         if len(sys.argv) > 1:
-            if sys.argv[1] == "--bug-fixes":
+            if sys.argv[1] == "--multi-provider":
+                await test_suite.test_multi_provider_fallback_system()
+            elif sys.argv[1] == "--bug-fixes":
                 await test_suite.run_bug_fix_tests()
             elif sys.argv[1] == "--triple-layer":
                 await test_suite.test_triple_layer_llm_integration()
@@ -4217,8 +4219,8 @@ async def main():
             else:
                 await test_suite.run_all_tests()
         else:
-            # Default: run comprehensive health check (as requested in review)
-            await test_suite.run_comprehensive_health_check()
+            # Default: run multi-provider fallback system tests (as requested in review)
+            await test_suite.test_multi_provider_fallback_system()
 
 if __name__ == "__main__":
     asyncio.run(main())
