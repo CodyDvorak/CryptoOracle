@@ -123,6 +123,7 @@ class CoinGeckoClient:
                     data = await response.json()
                     
                     # CoinGecko OHLC format: [[timestamp, open, high, low, close], ...]
+                    # Convert to dictionary format compatible with CryptoCompare
                     historical_data = []
                     for candle in data:
                         timestamp = candle[0] / 1000  # Convert ms to seconds
@@ -131,7 +132,14 @@ class CoinGeckoClient:
                         low_price = candle[3]
                         close_price = candle[4]
                         
-                        historical_data.append((timestamp, close_price, high_price, low_price, open_price))
+                        # Return as dictionary to match CryptoCompare format
+                        historical_data.append({
+                            'time': int(timestamp),
+                            'close': close_price,
+                            'high': high_price,
+                            'low': low_price,
+                            'open': open_price
+                        })
                     
                     logger.info(f"CoinGecko: Fetched {len(historical_data)} candles for {symbol}")
                     return historical_data
