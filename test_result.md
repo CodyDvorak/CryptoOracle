@@ -874,8 +874,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Multi-tiered scan types (8 types)"
-    - "CryptoCompare API coin limits investigation"
+    - "Data Format Fix Critical Testing"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
