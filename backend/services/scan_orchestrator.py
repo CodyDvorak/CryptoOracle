@@ -212,8 +212,8 @@ class ScanOrchestrator:
         
         try:
             # 1. Fetch coins from CryptoCompare (primary data source)
-            logger.info("Fetching coins and prices from CryptoCompare...")
-            all_coins = await self.crypto_client.get_all_coins()
+            logger.info(f"Fetching up to {max_coins} coins and prices from CryptoCompare...")
+            all_coins = await self.crypto_client.get_all_coins(max_coins=max_coins)
             
             if not all_coins:
                 raise Exception("No coins fetched from CryptoCompare")
