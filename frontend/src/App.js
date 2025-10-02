@@ -275,6 +275,7 @@ function App() {
     if (loading) return;
     
     setLoading(true);
+    setScanStartTime(Date.now()); // Start timer
     toast.info('Starting scan... This may take a few minutes.');
     
     try {
