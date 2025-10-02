@@ -44,10 +44,11 @@ class ScanRun(BaseModel):
     filter_scope: str = 'all'  # 'all' or 'alt'
     min_price: Optional[float] = None  # Optional minimum price filter
     max_price: Optional[float] = None  # Optional maximum price filter
+    scan_type: str = 'full_scan'  # 'quick_scan', 'focused_scan', 'fast_parallel', 'full_scan', 'speed_run'
     status: str = 'running'  # 'running', 'completed', 'failed'
     total_coins: int = 0  # Number of coins analyzed
     total_available_coins: int = 0  # Total coins available from source
-    total_bots: int = 20
+    total_bots: int = 49
     error_message: Optional[str] = None
 
 class BotResult(BaseModel):
