@@ -981,6 +981,24 @@ function App() {
                   </Select>
                 </div>
                 
+                <div>
+                  <Label>Scan Type</Label>
+                  <Select 
+                    value={scheduledScanType}
+                    onValueChange={setScheduledScanType}
+                    className="mt-1"
+                  >
+                    {Object.entries(scanTypes).map(([key, config]) => (
+                      <SelectOption key={key} value={key}>
+                        {config.label}
+                      </SelectOption>
+                    ))}
+                  </Select>
+                  <p className="text-xs text-[var(--muted)] mt-1">
+                    {scanTypes[scheduledScanType]?.tooltip.split('\n')[0]}
+                  </p>
+                </div>
+                
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Label>Min Price ($)</Label>
