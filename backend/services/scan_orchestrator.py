@@ -99,23 +99,22 @@ class ScanOrchestrator:
     
     
     async def _run_quick_scan(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
-        """Quick Scan: 40 coins, no AI, ~5 minutes."""
-        logger.info("⚡ QUICK SCAN: 40 coins, 49 bots, NO AI (~5 min)")
+        """Quick Scan: 40 coins, no AI, ~6 minutes."""
+        logger.info("⚡ QUICK SCAN: 40 coins, 49 bots, NO AI (~6 min)")
         return await self._run_scan_with_config(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id,
                                                max_coins=40, skip_sentiment=True)
     
     async def _run_focused_scan(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
-        """Focused Scan: 40 coins with AI sentiment, ~12 minutes."""
-        logger.info("🎯 FOCUSED SCAN: 40 coins, 49 bots, AI on top 15 (~12 min)")
+        """Focused Scan: 20 top coins, no AI, ~15 minutes."""
+        logger.info("🎯 FOCUSED SCAN: 20 top coins, 49 bots, NO AI (~15 min)")
         return await self._run_scan_with_config(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id,
-                                               max_coins=40, skip_sentiment=False)
+                                               max_coins=20, skip_sentiment=True)
     
     async def _run_fast_parallel_scan(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
-        """Fast Parallel: 80 coins with parallel processing, ~12 minutes."""
-        logger.info("🚀 FAST PARALLEL SCAN: 80 coins, 49 bots (~12 min)")
-        # For MVP, same as focused but with 80 coins
+        """Fast Parallel: 40 coins with parallel processing (5 concurrent), ~10 minutes."""
+        logger.info("🚀 FAST PARALLEL SCAN: 40 coins (5 concurrent), 49 bots, NO AI (~10 min)")
         return await self._run_scan_with_config(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id,
-                                               max_coins=80, skip_sentiment=False)
+                                               max_coins=40, skip_sentiment=True, parallel=True, batch_size=5)
     
     async def _run_speed_run_scan(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
         """Speed Run: 40 coins, 25 best bots only, ~3 minutes."""
@@ -131,13 +130,13 @@ class ScanOrchestrator:
             self.bots = original_bots
     
     async def _run_full_scan(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
-        """Full Scan: 80 coins with smart optimization (sentiment on top 15 only)."""
-        logger.info("📊 FULL SCAN: 80 coins, 49 bots, AI sentiment on top candidates (~40 min)")
+        """Full Scan: 80 coins with smart optimization (sentiment on top 15 only), ~60 minutes."""
+        logger.info("📊 FULL SCAN: 80 coins, 49 bots, AI sentiment on top candidates (~60 min)")
         return await self._run_scan_with_config(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id,
                                                max_coins=80, skip_sentiment=False)
     
-    async def _run_scan_with_config(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str], max_coins: int = 80, skip_sentiment: bool = False) -> Dict:
-        """Core scan logic with configurable parameters."""
+    async def _run_scan_with_config(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str], max_coins: int = 80, skip_sentiment: bool = False, parallel: bool = False, batch_size: int = 1) -> Dict:
+        """Core scan logic with configurable parameters including parallel processing."""
         
         try:
             # 1. Fetch coins from CryptoCompare (primary data source)
