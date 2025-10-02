@@ -670,7 +670,12 @@ class ScanOrchestrator:
             return None
     
     async def _analyze_coin_with_cryptocompare(self, symbol: str, display_name: str, current_price: float, run_id: str) -> Optional[Dict]:
-        """Analyze a single coin with CryptoCompare historical data.
+        """Analyze a single coin with CryptoCompare historical data + Triple-Layer LLM Integration.
+        
+        Triple-Layer Integration:
+        - Layer 1 (Pre-Analysis): ChatGPT-5 sentiment and fundamentals
+        - Layer 2 (Bot Analysis): 50 bots including AIAnalystBot (ChatGPT-5)
+        - Layer 3 (Synthesis): ChatGPT-5 final rationale
         
         Args:
             symbol: Coin symbol (e.g., 'BTC')
