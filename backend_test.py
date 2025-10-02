@@ -3896,8 +3896,8 @@ async def main():
             else:
                 await test_suite.run_all_tests()
         else:
-            # Default: run Analytics endpoints testing (as requested in review)
-            await test_suite.test_analytics_endpoints()
+            # Default: run comprehensive health check (as requested in review)
+            await test_suite.run_comprehensive_health_check()
 
 if __name__ == "__main__":
     asyncio.run(main())
