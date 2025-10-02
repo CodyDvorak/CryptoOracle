@@ -464,7 +464,7 @@ class ScanOrchestrator:
             saved_predictions = await self.bot_performance_service.save_bot_predictions(
                 run_id=scan_run.id,
                 user_id=user_id,
-                bot_results=all_aggregated_results
+                bot_results=all_individual_bot_results  # Use collected individual bot results
             )
             logger.info(f"✅ Saved {saved_predictions} bot predictions for learning")
             
