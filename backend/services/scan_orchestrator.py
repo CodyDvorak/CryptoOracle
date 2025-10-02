@@ -1111,7 +1111,12 @@ class ScanOrchestrator:
                 aggregated['rationale'] = f"{len(bot_results)} bots analyzed"
             
             logger.info(f"✓ {symbol}: {len(bot_results)} bots, confidence={aggregated.get('avg_confidence', 0):.1f}, price=${current_price:.6f}")
-            return aggregated
+            
+            # Return both aggregated and individual bot results
+            return {
+                'aggregated': aggregated,
+                'bot_results': bot_results  # Include individual bot predictions
+            }
             
         except Exception as e:
             logger.error(f"Critical error analyzing {symbol}: {e}", exc_info=True)
