@@ -1094,7 +1094,15 @@ class ScanOrchestrator:
                             predicted_7d=result.get('predicted_7d')
                         )
                         await self.db.bot_results.insert_one(bot_result.dict())
-                        bot_results.append(result)
+                        
+                        # Add bot name and coin info for prediction tracking
+                        result_with_context = result.copy()
+                        result_with_context['bot_name'] = bot.name
+                        result_with_context['ticker'] = symbol
+                        result_with_context['coin'] = display_name
+                        result_with_context['current_price'] = current_price
+                        
+                        bot_results.append(result_with_context)
                 except Exception as e:
                     logger.error(f"Bot {bot.name} failed for {symbol}: {e}", exc_info=True)
             
