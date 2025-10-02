@@ -37,6 +37,7 @@ function App() {
   const [minPrice, setMinPrice] = useState('');  // Minimum price filter
   const [maxPrice, setMaxPrice] = useState('');  // Maximum price filter
   const [scheduleInterval, setScheduleInterval] = useState('12h');
+  const [scheduledScanType, setScheduledScanType] = useState('quick_scan'); // Scan type for scheduled runs
   const [loading, setLoading] = useState(false);
   const [customSymbols, setCustomSymbols] = useState('');  // Comma-separated custom symbols
   
