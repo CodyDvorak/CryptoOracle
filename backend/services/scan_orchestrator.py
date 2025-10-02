@@ -25,7 +25,7 @@ class ScanOrchestrator:
     
     def __init__(self, db):
         self.db = db
-        self.crypto_client = CryptoCompareClient()
+        self.crypto_client = MultiProviderClient()
         self.indicator_engine = IndicatorEngine()
         self.llm_service = LLMSynthesisService()  # Layer 3
         self.sentiment_service = SentimentAnalysisService()  # Layer 1
