@@ -11,14 +11,49 @@ export const AuthProvider = ({ children }) => {
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || import.meta.env?.REACT_APP_BACKEND_URL || '';
   const API = `${BACKEND_URL}/api`;
 
+  // Set up axios interceptor to automatically add token to all requests
   useEffect(() => {
-    if (token) {
+    const requestInterceptor = axios.interceptors.request.use(
+      (config) => {
+        const storedToken = localStorage.getItem('token');
+        if (storedToken && config.url?.includes('/api/')) {
+          config.headers.Authorization = `Bearer ${storedToken}`;
+        }
+        return config;
+      },
+      (error) => Promise.reject(error)
+    );
+
+    const responseInterceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          // Token expired or invalid
+          localStorage.removeItem('token');
+          setToken(null);
+          setUser(null);
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      axios.interceptors.request.eject(requestInterceptor);
+      axios.interceptors.response.eject(responseInterceptor);
+    };
+  }, []);
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    
+    if (storedToken) {
       // Verify token and get user info
       axios.get(`${API}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${storedToken}` }
       })
       .then(response => {
         setUser(response.data);
+        setToken(storedToken);
         setLoading(false);
       })
       .catch(() => {
@@ -31,7 +66,7 @@ export const AuthProvider = ({ children }) => {
     } else {
       setLoading(false);
     }
-  }, [token, API]);
+  }, [API]);
 
   const login = async (username, password) => {
     try {
@@ -80,7 +115,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const getAuthHeader = () => {
-    return token ? { Authorization: `Bearer ${token}` } : {};
+    const storedToken = localStorage.getItem('token');
+    return storedToken ? { Authorization: `Bearer ${storedToken}` } : {};
   };
 
   return (
