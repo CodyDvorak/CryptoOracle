@@ -511,7 +511,7 @@ function App() {
             )}
             
             {/* Scan Type Dropdown */}
-            <div className="relative">
+            <div className="relative pt-1">
               <Button 
                 onClick={() => runScan(selectedScanType)}
                 disabled={loading || scanStatus.is_running}
