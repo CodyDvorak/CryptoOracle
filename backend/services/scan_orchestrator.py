@@ -226,8 +226,12 @@ class ScanOrchestrator:
         return await self._run_scan_with_config(scan_run, filter_scope, min_price, 5.0, custom_symbols, user_id,
                                                max_coins=300, skip_sentiment=False, parallel=True, batch_size=8, ai_top_n=20)
     
-    async def _run_scan_with_config(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str], max_coins: int = 80, skip_sentiment: bool = False, parallel: bool = False, batch_size: int = 1) -> Dict:
-        """Core scan logic with configurable parameters including parallel processing."""
+    async def _run_scan_with_config(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str], max_coins: int = 80, skip_sentiment: bool = False, parallel: bool = False, batch_size: int = 1, ai_top_n: int = 15) -> Dict:
+        """Core scan logic with configurable parameters including parallel processing.
+        
+        Args:
+            ai_top_n: Number of top coins to apply AI sentiment analysis (default 15)
+        """
         
         try:
             # 1. Fetch coins from CryptoCompare (primary data source)
