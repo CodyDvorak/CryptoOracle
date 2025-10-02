@@ -10,6 +10,7 @@ from services.sentiment_analysis_service import SentimentAnalysisService  # Laye
 from services.aggregation_engine import AggregationEngine
 from services.email_service import EmailService
 from services.google_sheets_service import GoogleSheetsService
+from services.bot_performance_service import BotPerformanceService
 from bots.bot_strategies import get_all_bots
 from models.models import ScanRun, BotResult, Recommendation
 
