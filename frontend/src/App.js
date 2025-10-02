@@ -66,6 +66,8 @@ function App() {
   // Scan type states
   const [selectedScanType, setSelectedScanType] = useState('quick_scan');
   const [showScanMenu, setShowScanMenu] = useState(false);
+  const [scanStartTime, setScanStartTime] = useState(null);
+  const [scanElapsedTime, setScanElapsedTime] = useState(0);
   
   // Scan type configurations
   const scanTypes = {
