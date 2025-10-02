@@ -730,7 +730,7 @@ function App() {
                 </div>
                 
                 <Button 
-                  onClick={() => runScan(true)}
+                  onClick={() => runScan(selectedScanType, true)}
                   disabled={loading || scanStatus.is_running || !customSymbols.trim()}
                   className="w-full gap-2"
                   data-testid="run-custom-scan-button"
