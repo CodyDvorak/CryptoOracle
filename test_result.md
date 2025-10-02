@@ -103,10 +103,12 @@
 #====================================================================================================
 
 user_problem_statement: |
-  Implement 3 phases for Crypto Oracle:
-  Phase 1: Bot Details Popup - Show individual bot confidence scores when clicking a recommendation
-  Phase 2: Dynamic Confidence Score Validation - Ensure confidence scores are truly dynamic averages
-  Phase 3: Custom Scan UI - Allow users to scan specific coins via UI input
+  ENHANCEMENT REQUEST: Improve recommendation accuracy by:
+  1. Increasing bot count from 21 to 50 with unique strategies
+  2. Integrating OpenAI ChatGPT-5 for enhanced analysis in 3 layers:
+     - Layer 1 (Pre-Analysis): Sentiment & fundamental analysis
+     - Layer 2 (AI Analyst Bot): One bot powered by ChatGPT-5
+     - Layer 3 (Enhanced Synthesis): Superior final rationale generation
 
 backend:
   - task: "User Registration API"
