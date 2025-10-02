@@ -60,18 +60,20 @@ export const CoinRecommendationCard = ({ recommendation, rank, runId }) => {
       className="group hover:shadow-[var(--shadow-deep)] transition-shadow duration-200 hover:-translate-y-1"
       data-testid="coin-card"
     >
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col gap-1">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-col gap-1 min-w-0 flex-1">
             <CardTitle className="flex items-center gap-2">
-              <span className="text-[var(--primary)]">
+              <span className="text-[var(--primary)] flex-shrink-0">
                 #{rank}
               </span>
-              <span data-testid="coin-symbol">{displayName}</span>
+              <span className="truncate" data-testid="coin-symbol" title={displayName}>
+                {displayName}
+              </span>
             </CardTitle>
             {/* AI Insights */}
             {(trader_grade > 0 || investor_grade > 0) && (
-              <div className="flex gap-2 text-xs">
+              <div className="flex gap-2 text-xs flex-wrap">
                 {trader_grade > 0 && (
                   <div className="flex items-center gap-1 text-[var(--muted)]">
                     <span className="text-[var(--accent)]">T:</span>
@@ -97,7 +99,7 @@ export const CoinRecommendationCard = ({ recommendation, rank, runId }) => {
             )}
           </div>
           <span 
-            className={`px-3 py-1 rounded-md text-xs font-bold ${
+            className={`px-3 py-1 rounded-md text-xs font-bold flex-shrink-0 ${
               isLong 
                 ? 'bg-[var(--chart-green)] text-black' 
                 : 'bg-[var(--chart-red)] text-white'
