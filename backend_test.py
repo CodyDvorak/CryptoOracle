@@ -1505,7 +1505,7 @@ class CryptoOracleTestSuite:
                     
                     # Verify prediction structure
                     sample_prediction = predictions[0]
-                    required_fields = ['bot_name', 'coin_symbol', 'direction', 'confidence']
+                    required_fields = ['bot_name', 'coin_symbol', 'position_direction', 'confidence_score']
                     missing_fields = [field for field in required_fields if field not in sample_prediction]
                     
                     if missing_fields:
