@@ -413,19 +413,19 @@ class ScanOrchestrator:
             
             logger.info(f"✅ PASS 2 Complete: Sentiment analysis done for top {len(top_candidates)} candidates")
             
-            # Final top 5 lists (now with enhanced analysis on top coins)
-            top_5_confidence = self.aggregation_engine.get_top_n(all_aggregated_results, n=5)
-            top_5_percent = self.aggregation_engine.get_top_percent_movers(all_aggregated_results, n=5)
-            top_5_dollar = self.aggregation_engine.get_top_dollar_movers(all_aggregated_results, n=5)
+            # Final top 8 lists (now with enhanced analysis on top coins)
+            top_8_confidence = self.aggregation_engine.get_top_n(all_aggregated_results, n=8)
+            top_8_percent = self.aggregation_engine.get_top_percent_movers(all_aggregated_results, n=8)
+            top_8_dollar = self.aggregation_engine.get_top_dollar_movers(all_aggregated_results, n=8)
             
             # Combine all unique recommendations
             all_top_recommendations = []
             seen_coins = set()
             
             for rec_list, category in [
-                (top_5_confidence, 'confidence'),
-                (top_5_percent, 'percent_mover'),
-                (top_5_dollar, 'dollar_mover')
+                (top_8_confidence, 'confidence'),
+                (top_8_percent, 'percent_mover'),
+                (top_8_dollar, 'dollar_mover')
             ]:
                 for rec_data in rec_list:
                     coin_name = rec_data.get('coin')
@@ -452,7 +452,7 @@ class ScanOrchestrator:
             )
             
             logger.info(f"🎉 SMART SCAN {scan_run.id} completed! Total recommendations: {len(all_top_recommendations)}")
-            logger.info(f"📊 Top 5 confidence: {[r['coin'] for r in top_5_confidence[:5]]}")
+            logger.info(f"📊 Top 8 confidence: {[r['coin'] for r in top_8_confidence[:8]]}")
             logger.info(f"⚡ Smart optimization: Sentiment ran on {len(top_candidates)} top candidates only")
             
             # Auto-send email notification if user is logged in
