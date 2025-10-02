@@ -37,11 +37,14 @@ class ScanOrchestrator:
         """Execute a scan with the specified strategy.
         
         Scan Types:
-        - quick_scan: 40 coins, no AI, ~5 min
-        - focused_scan: 40 coins, with AI sentiment, ~12 min
-        - fast_parallel: 80 coins parallel processing, ~12 min
-        - full_scan: 80 coins smart optimization (default), ~40 min
+        - quick_scan: 45 coins, no AI, ~7 min
+        - focused_scan: 20 coins, no AI, ~15 min
+        - fast_parallel: 45 coins parallel processing, ~11 min
+        - full_scan_lite: 86 coins parallel, no AI, ~14 min
+        - heavy_speed_run: 86 coins, 25 best bots, ~7 min
+        - complete_market_scan: 86 coins, 49 bots, optimized, ~9 min
         - speed_run: 40 coins, 25 best bots only, ~3 min
+        - full_scan: 86 coins smart optimization (default), ~65 min
         
         Args:
             filter_scope: 'all' or 'alt' (exclude major coins) or 'custom'
