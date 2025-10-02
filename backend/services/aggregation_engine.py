@@ -58,6 +58,12 @@ class AggregationEngine:
         avg_pred_48h = statistics.mean(pred_48h_values) if pred_48h_values else current_price
         avg_pred_7d = statistics.mean(pred_7d_values) if pred_7d_values else current_price
         
+        # Calculate leverage statistics
+        leverages = [r.get('recommended_leverage', 5.0) for r in bot_results if r.get('recommended_leverage')]
+        avg_leverage = statistics.mean(leverages) if leverages else 5.0
+        min_leverage = min(leverages) if leverages else 1.0
+        max_leverage = max(leverages) if leverages else 10.0
+        
         return {
             'coin': coin,
             'current_price': current_price,
@@ -69,6 +75,9 @@ class AggregationEngine:
             'avg_predicted_24h': avg_pred_24h,
             'avg_predicted_48h': avg_pred_48h,
             'avg_predicted_7d': avg_pred_7d,
+            'avg_leverage': round(avg_leverage, 1),
+            'min_leverage': round(min_leverage, 1),
+            'max_leverage': round(max_leverage, 1),
             'bot_count': len(bot_results),
             'long_count': len(long_results),
             'short_count': len(short_results)
