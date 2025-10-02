@@ -766,7 +766,7 @@ function App() {
                 <div className="mb-2 text-sm text-[var(--muted)]">
                   Biggest predicted dollar moves - Highest absolute value changes
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
                   {topDollar.map((rec, index) => (
                     <CoinRecommendationCard 
                       key={rec.id || index}
