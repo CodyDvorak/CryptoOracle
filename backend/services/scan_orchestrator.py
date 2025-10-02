@@ -321,9 +321,15 @@ class ScanOrchestrator:
                             symbol = batch[idx][0]
                             logger.error(f"Error analyzing {symbol}: {result}")
                             continue
-                        if result:
-                            result['ticker'] = batch[idx][0]
-                            all_aggregated_results.append(result)
+                        if result and isinstance(result, dict):
+                            # Extract aggregated and individual bot results
+                            aggregated = result.get('aggregated')
+                            bot_results = result.get('bot_results', [])
+                            
+                            if aggregated:
+                                aggregated['ticker'] = batch[idx][0]
+                                all_aggregated_results.append(aggregated)
+                                all_individual_bot_results.extend(bot_results)  # Collect all bot predictions
                     
                     logger.debug(f"Batch {i//batch_size + 1}/{(len(selected_tokens) + batch_size - 1)//batch_size} complete")
             else:
