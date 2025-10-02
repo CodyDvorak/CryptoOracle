@@ -64,6 +64,9 @@ function App() {
     totalAvailable: 0  // Total available coins from CryptoCompare
   });
   
+  // Page navigation
+  const [currentPage, setCurrentPage] = useState('dashboard'); // 'dashboard', 'configuration', 'history', 'bot-performance'
+  
   // Scan type states
   const [selectedScanType, setSelectedScanType] = useState('quick_scan');
   const [showScanMenu, setShowScanMenu] = useState(false);
