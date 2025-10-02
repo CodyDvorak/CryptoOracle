@@ -169,3 +169,74 @@ class UpdateScheduleRequest(BaseModel):
     filter_scope: str = 'all'
     min_price: Optional[float] = None
     max_price: Optional[float] = None
+
+
+# Bot Learning & Performance Tracking Models
+
+class BotPrediction(BaseModel):
+    """Individual bot prediction for tracking and learning."""
+    id: str = Field(default_factory=uuid_str)
+    run_id: str  # Link to scan run
+    user_id: Optional[str] = None
+    bot_name: str  # Name of the bot that made this prediction
+    coin_symbol: str
+    coin_name: str
+    entry_price: float  # Price at time of prediction
+    target_price: float  # Bot's price target
+    stop_loss: Optional[float] = None  # Optional stop loss
+    position_direction: str  # 'long' or 'short'
+    confidence_score: float  # Bot's confidence (0-100)
+    leverage: Optional[float] = None
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    
+    # Outcome tracking (filled by background job)
+    outcome_checked_at: Optional[datetime] = None
+    outcome_price: Optional[float] = None  # Price when outcome was checked
+    outcome_status: Optional[str] = None  # 'pending', 'win', 'loss', 'neutral'
+    profit_loss_percent: Optional[float] = None  # Actual % gain/loss
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "bot_name": "MACDBot",
+                "coin_symbol": "BTC",
+                "entry_price": 50000.0,
+                "target_price": 55000.0,
+                "position_direction": "long",
+                "confidence_score": 85.0
+            }
+        }
+
+class BotPerformance(BaseModel):
+    """Aggregate performance statistics for each bot."""
+    id: str = Field(default_factory=uuid_str)
+    bot_name: str  # Unique identifier for the bot
+    
+    # Performance metrics
+    total_predictions: int = 0
+    successful_predictions: int = 0  # Predictions that hit target
+    failed_predictions: int = 0  # Predictions that hit stop loss or went wrong direction
+    pending_predictions: int = 0  # Still being tracked
+    
+    accuracy_rate: float = 0.0  # % of successful predictions
+    avg_profit_loss: float = 0.0  # Average % gain/loss across all closed predictions
+    
+    # Weighting for aggregation
+    performance_weight: float = 1.0  # Default 1.0, adjusted based on accuracy
+    
+    # Timestamps
+    first_prediction_at: Optional[datetime] = None
+    last_prediction_at: Optional[datetime] = None
+    last_updated: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "bot_name": "MACDBot",
+                "total_predictions": 100,
+                "successful_predictions": 65,
+                "accuracy_rate": 65.0,
+                "avg_profit_loss": 8.5,
+                "performance_weight": 1.3
+            }
+        }
