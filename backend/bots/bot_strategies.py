@@ -2235,6 +2235,7 @@ class VortexBot(BotStrategy):
 
 # Bot Registry
 ALL_BOTS = [
+    # Original 21 bots
     SMA_CrossBot(),
     RSI_Bot(),
     MACD_Bot(),
@@ -2256,6 +2257,34 @@ ALL_BOTS = [
     VolatilityBreakoutBot(),
     MultiTimeframeBot(),
     ConservativeBot(),
+    # New 29 bots (total: 50)
+    EMA_CrossBot(),
+    ADX_TrendBot(),
+    WilliamsRBot(),
+    CCI_Bot(),
+    ParabolicSARBot(),
+    SuperTrendBot(),
+    KeltnerChannelBot(),
+    DonchianChannelBot(),
+    ROC_Bot(),
+    MFI_Bot(),
+    AccDistBot(),
+    VolumePriceTrendBot(),
+    FibonacciBot(),
+    PivotPointBot(),
+    IchimokuBot(),
+    ZScoreBot(),
+    LinearRegressionBot(),
+    TripleMABot(),
+    HeikinAshiBot(),
+    EnvelopeBot(),
+    ChaikinOscillatorBot(),
+    AroonBot(),
+    DeMarkerBot(),
+    UltimateOscillatorBot(),
+    ElderRayBot(),
+    KSTBot(),
+    VortexBot(),
 ]
 
 def get_all_bots():
