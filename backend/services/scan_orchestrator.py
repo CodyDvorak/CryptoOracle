@@ -284,7 +284,7 @@ class ScanOrchestrator:
                 logger.info(f"📊 Top {len(top_candidates)} candidates identified: {list(top_candidates)}")
                 logger.info(f"⚡ PASS 2: Enhanced analysis with sentiment for {len(top_candidates)} top candidates")
             else:
-                logger.info(f"⚡ PASS 2: SKIPPED (speed mode - no AI sentiment)")
+                logger.info("⚡ PASS 2: SKIPPED (speed mode - no AI sentiment)")
                 top_candidates = set()
             
             for result in all_aggregated_results:
