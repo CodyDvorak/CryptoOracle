@@ -189,6 +189,9 @@ class BotPrediction(BaseModel):
     leverage: Optional[float] = None
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     
+    # Market regime at time of prediction
+    market_regime: Optional[str] = None  # 'bull_market', 'bear_market', 'high_volatility', 'sideways'
+    
     # Outcome tracking (filled by background job)
     outcome_checked_at: Optional[datetime] = None
     outcome_price: Optional[float] = None  # Price when outcome was checked
@@ -203,7 +206,8 @@ class BotPrediction(BaseModel):
                 "entry_price": 50000.0,
                 "target_price": 55000.0,
                 "position_direction": "long",
-                "confidence_score": 85.0
+                "confidence_score": 85.0,
+                "market_regime": "bull_market"
             }
         }
 
