@@ -27,6 +27,66 @@ class BotPerformanceService:
         self.crypto_client = crypto_client
         logger.info("🤖 Bot Performance Service initialized")
     
+    async def classify_market_regime(self, btc_price_change_7d: float = None, volatility: float = None) -> str:
+        """Classify current market regime based on BTC behavior.
+        
+        Args:
+            btc_price_change_7d: 7-day % change in BTC price (if available)
+            volatility: Market volatility metric (if available)
+            
+        Returns:
+            Market regime: 'bull_market', 'bear_market', 'high_volatility', 'sideways'
+        """
+        try:
+            # If BTC data not provided, fetch it
+            if btc_price_change_7d is None:
+                btc_historical = await self.crypto_client.get_historical_data('BTC', days=7)
+                if btc_historical and len(btc_historical) >= 7:
+                    first_price = btc_historical[0][1]  # (timestamp, close)
+                    last_price = btc_historical[-1][1]
+                    btc_price_change_7d = ((last_price - first_price) / first_price) * 100
+                else:
+                    # Fallback: use current vs historical
+                    all_coins = await self.crypto_client.get_all_coins(max_coins=200)
+                    btc_data = next((coin for coin in all_coins if coin[0] == 'BTC'), None)
+                    if btc_data:
+                        # Estimate based on current price (rough approximation)
+                        btc_price_change_7d = 0.0  # Default to sideways if can't determine
+            
+            # Calculate volatility if not provided (using historical data)
+            if volatility is None and btc_historical:
+                prices = [candle[1] for candle in btc_historical]
+                if len(prices) > 1:
+                    # Simple volatility: standard deviation / mean
+                    import statistics
+                    mean_price = statistics.mean(prices)
+                    std_dev = statistics.stdev(prices)
+                    volatility = (std_dev / mean_price) if mean_price > 0 else 0
+                else:
+                    volatility = 0.0
+            elif volatility is None:
+                volatility = 0.0
+            
+            # Classify regime
+            # High volatility takes precedence
+            if volatility > 0.10:  # > 10% volatility
+                return "high_volatility"
+            
+            # Bull market: BTC up > 5% in 7 days with low volatility
+            if btc_price_change_7d > 5 and volatility < 0.08:
+                return "bull_market"
+            
+            # Bear market: BTC down > 5% in 7 days with low volatility
+            if btc_price_change_7d < -5 and volatility < 0.08:
+                return "bear_market"
+            
+            # Everything else is sideways
+            return "sideways"
+            
+        except Exception as e:
+            logger.error(f"Error classifying market regime: {e}")
+            return "sideways"  # Default to sideways on error
+    
     async def save_bot_predictions(self, run_id: str, user_id: Optional[str], bot_results: List[Dict]) -> int:
         """Save individual bot predictions for a scan.
         
