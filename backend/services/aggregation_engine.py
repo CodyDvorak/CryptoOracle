@@ -18,7 +18,7 @@ class AggregationEngine:
         Returns:
             Dict mapping bot_name to performance_weight
         """
-        if not self.db:
+        if self.db is None:
             return {}
         
         # Check cache first
