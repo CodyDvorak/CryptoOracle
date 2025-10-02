@@ -339,14 +339,21 @@ class ScanOrchestrator:
                         coin_result = await self._analyze_coin_with_cryptocompare(
                             symbol, display_name, current_price, scan_run.id, skip_sentiment=True
                         )
-                        if coin_result:
-                            coin_result['ticker'] = symbol
-                            all_aggregated_results.append(coin_result)
+                        if coin_result and isinstance(coin_result, dict):
+                            # Extract aggregated and individual bot results
+                            aggregated = coin_result.get('aggregated')
+                            bot_results = coin_result.get('bot_results', [])
+                            
+                            if aggregated:
+                                aggregated['ticker'] = symbol
+                                all_aggregated_results.append(aggregated)
+                                all_individual_bot_results.extend(bot_results)  # Collect all bot predictions
                     except Exception as e:
                         logger.error(f"Error analyzing {symbol}: {e}")
                         continue
             
             logger.info(f"✅ PASS 1 Complete: {len(all_aggregated_results)} coins analyzed with {len(self.bots)} bots")
+            logger.info(f"📊 Collected {len(all_individual_bot_results)} individual bot predictions")
             
             # 🎯 Identify top candidates for sentiment analysis
             logger.info("🎯 Identifying top candidates for sentiment analysis...")
