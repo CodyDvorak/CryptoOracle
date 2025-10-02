@@ -5,6 +5,7 @@ import App from './App';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import History from './pages/History';
+import BotPerformanceDashboard from './components/BotPerformanceDashboard';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -31,6 +32,14 @@ const AppRouter = () => {
         element={
           <ProtectedRoute>
             <History />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/bot-performance"
+        element={
+          <ProtectedRoute>
+            <BotPerformanceDashboard />
           </ProtectedRoute>
         }
       />
