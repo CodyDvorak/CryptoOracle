@@ -244,3 +244,51 @@ class BotPerformance(BaseModel):
                 "performance_weight": 1.3
             }
         }
+
+
+class ParameterSnapshot(BaseModel):
+    """Snapshot of bot parameters at time of prediction for future optimization."""
+    id: str = Field(default_factory=uuid_str)
+    bot_name: str
+    prediction_id: str  # Link to the specific prediction
+    run_id: str
+    coin_symbol: str
+    parameters: Dict[str, Any]  # Bot-specific parameters (e.g., {'rsi_threshold': 30, 'period': 14})
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class SystemHealthResponse(BaseModel):
+    """System-wide health metrics."""
+    months_of_data: float  # How many months of data collected
+    total_evaluated_predictions: int
+    total_pending_predictions: int
+    system_accuracy: float  # Weighted average accuracy across all bots
+    accuracy_trend: str  # 'improving', 'stable', 'declining'
+    trend_change_percent: float  # % change in last period
+    data_readiness_status: str  # 'not_ready', 'collecting', 'ready_for_optimization'
+    readiness_percent: float
+    
+    
+class BotRegimePerformance(BaseModel):
+    """Bot performance broken down by market regime."""
+    bot_name: str
+    bull_market_accuracy: Optional[float] = None
+    bull_market_predictions: int = 0
+    bear_market_accuracy: Optional[float] = None
+    bear_market_predictions: int = 0
+    high_volatility_accuracy: Optional[float] = None
+    high_volatility_predictions: int = 0
+    sideways_accuracy: Optional[float] = None
+    sideways_predictions: int = 0
+    best_regime: Optional[str] = None  # Which regime this bot performs best in
+
+
+class BotDegradationAlert(BaseModel):
+    """Alert for bots showing performance degradation."""
+    bot_name: str
+    severity: str  # 'critical', 'warning', 'info'
+    current_accuracy: float
+    previous_accuracy: float
+    change_percent: float
+    total_predictions: int
+    message: str
