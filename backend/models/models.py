@@ -80,6 +80,10 @@ class Recommendation(BaseModel):
     avg_stop_loss: float
     avg_entry: float
     avg_predicted_24h: float
+    # Leverage recommendations
+    avg_leverage: float = 5.0  # Average recommended leverage from all bots
+    min_leverage: float = 1.0  # Minimum leverage suggested by any bot
+    max_leverage: float = 10.0  # Maximum leverage suggested by any bot
     # Fields for tracking actual outcomes (for success rate)
     actual_price_24h: Optional[float] = None
     actual_price_48h: Optional[float] = None
