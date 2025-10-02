@@ -123,7 +123,33 @@ function App() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showScanMenu]);
-
+  
+  // Scan timer effect
+  useEffect(() => {
+    let interval;
+    
+    if (scanStatus.is_running && scanStartTime) {
+      // Update timer every second
+      interval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - scanStartTime) / 1000);
+        setScanElapsedTime(elapsed);
+      }, 1000);
+    } else {
+      // Reset timer when scan stops
+      setScanElapsedTime(0);
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [scanStatus.is_running, scanStartTime]);
+  
+  // Format elapsed time as MM:SS
+  const formatElapsedTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const fetchRecommendations = async () => {
     try {
