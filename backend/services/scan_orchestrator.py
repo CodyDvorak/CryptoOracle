@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from services.cryptocompare_client import CryptoCompareClient
 from services.indicator_engine import IndicatorEngine
 from services.llm_synthesis_service import LLMSynthesisService
+from services.sentiment_analysis_service import SentimentAnalysisService  # Layer 1
 from services.aggregation_engine import AggregationEngine
 from services.email_service import EmailService
 from services.google_sheets_service import GoogleSheetsService
@@ -15,15 +16,22 @@ from models.models import ScanRun, BotResult, Recommendation
 logger = logging.getLogger(__name__)
 
 class ScanOrchestrator:
-    """Orchestrates the entire scanning process: data fetch -> bot analysis -> aggregation."""
+    """Orchestrates the entire scanning process with Triple-Layer LLM Integration:
+    - Layer 1: Pre-Analysis Sentiment (ChatGPT-5)
+    - Layer 2: AI Analyst Bot (ChatGPT-5, one of 50 bots)
+    - Layer 3: Enhanced Synthesis (ChatGPT-5)
+    """
     
     def __init__(self, db):
         self.db = db
-        self.crypto_client = CryptoCompareClient()  # Data source for coins and historical data
+        self.crypto_client = CryptoCompareClient()
         self.indicator_engine = IndicatorEngine()
-        self.llm_service = LLMSynthesisService()
+        self.llm_service = LLMSynthesisService()  # Layer 3
+        self.sentiment_service = SentimentAnalysisService()  # Layer 1
         self.aggregation_engine = AggregationEngine()
-        self.bots = get_all_bots()
+        self.bots = get_all_bots()  # Now includes 50 bots (Layer 2 includes AIAnalystBot)
+        
+        logger.info(f"🤖 Scan Orchestrator initialized with {len(self.bots)} bots (including AI Analyst)")
         
     async def run_scan(self, filter_scope: str = 'all', min_price: Optional[float] = None, max_price: Optional[float] = None, custom_symbols: Optional[List[str]] = None, run_id: Optional[str] = None, user_id: Optional[str] = None) -> Dict:
         """Execute a full scan of all coins.
