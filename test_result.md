@@ -276,8 +276,11 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Auto-refresh after scan completion"
-    - "Email notification after scan completion"
+    - "Bot count expansion (21 → 49 unique strategies)"
+    - "Layer 1: Pre-Analysis Sentiment Service (ChatGPT-5)"
+    - "Layer 2: AI Analyst Bot (ChatGPT-5)"
+    - "Layer 3: Enhanced Synthesis (ChatGPT-5)"
+    - "Scan orchestrator integration (Triple-Layer)"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
