@@ -681,7 +681,88 @@ backend:
         agent: "testing"
         comment: "PASS - Scheduler running correctly. Backend logs show 'Scheduler started' and 'Scheduler configured: 12h intervals starting at 07:00 America/Denver, next run: 2025-10-02 07:00:00-06:00'. Email notifications working (sent to codydvorakwork@gmail.com during test scan)."
 
+backend:
+  - task: "Multi-tiered scan types (8 types)"
+    implemented: true
+    working: "NA"
+    file: "backend/services/scan_orchestrator.py, backend/models/models.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "8 scan types implemented: quick_scan (45 coins, 7 min), focused_scan (20 coins, 15 min), fast_parallel (45 coins, 11 min), full_scan_lite (86 coins, 14 min), heavy_speed_run (86 coins, 7 min), complete_market_scan (86 coins, 9 min), speed_run (40 coins, 3 min), full_scan (86 coins with AI, 65 min). User wants to test these before adding more."
+
+  - task: "CryptoCompare API coin limits investigation"
+    implemented: true
+    working: "NA"
+    file: "backend/services/cryptocompare_client.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Current limit is 100 coins from CryptoCompare API (line 36: 'limit': 100). The app currently processes 86 coins typically. This limit can be increased up to 100, or we could paginate to fetch more coins if needed. Need to report findings to user after testing existing scans."
+
+frontend:
+  - task: "Multi-tiered scan dropdown UI"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Scan dropdown with 8 scan types, each with tooltips showing: coin count, bot count, AI usage, estimated time, and best use case. UI needs testing to ensure all scan types trigger correctly."
+
+metadata:
+  test_sequence: 1
+
+test_plan:
+  current_focus:
+    - "Multi-tiered scan types (8 types)"
+    - "CryptoCompare API coin limits investigation"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
 agent_communication:
+  - agent: "main"
+    message: |
+      STEP 1: TESTING EXISTING SCAN TYPES
+      
+      User requested to:
+      1. Test existing scan types first
+      2. Investigate API limits for going beyond 86 coins
+      3. Wait for findings before implementing "All In" scan
+      
+      CURRENT STATE:
+      - 8 scan types implemented with varying speeds (3 min to 65 min)
+      - Frontend dropdown UI with all 8 types + tooltips
+      - CryptoCompare API currently set to fetch top 100 coins (limit parameter)
+      - App typically processes 86 coins in full scans
+      
+      API INVESTIGATION FINDINGS:
+      - File: backend/services/cryptocompare_client.py
+      - Current API call: /data/top/mktcapfull with limit=100 (line 36)
+      - CryptoCompare allows fetching up to 100 coins in a single request
+      - For more coins, we would need to either:
+        a) Use multiple API calls with pagination (tsym parameter)
+        b) Use a different endpoint (e.g., /data/all/coinlist for ALL coins)
+      - The 86 number likely comes from the actual coins returned that meet criteria (price > 0, valid data)
+      
+      TESTING REQUEST:
+      Please test 2-3 representative scan types to verify they're working:
+      1. speed_run (fastest: 40 coins, 25 bots, ~3 min)
+      2. complete_market_scan (86 coins, 49 bots, parallel, ~9 min)
+      3. Verify all scan types are accessible via API
+      
+      After testing, I will report findings to user about API limits and options for "All In" scan.
+  
   - agent: "main"
     message: |
       FIXES IMPLEMENTED FOR TWO CRITICAL BUGS:
