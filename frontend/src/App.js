@@ -400,7 +400,7 @@ function App() {
       
       {/* Top Navigation */}
       <nav className="sticky top-0 z-40 backdrop-blur-sm bg-black/40 border-b border-[var(--card-border)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 py-2 flex items-center justify-between">
           <button 
             onClick={() => navigate('/')}
             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
