@@ -110,6 +110,26 @@ function App() {
       label: '💨 Speed Run',
       icon: '💨',
       tooltip: '40 coins, 25 best bots, NO AI\n~3 minutes\nBest for: Maximum speed'
+    },
+    all_in: {
+      label: '🚀💎 All In',
+      icon: '🚀💎',
+      tooltip: '200-300 coins (pagination), 49 bots\n~20 minutes\nBest for: Maximum coverage'
+    },
+    all_in_under_5: {
+      label: '🚀💰 All In <$5',
+      icon: '🚀💰',
+      tooltip: '200-300 coins under $5, 49 bots\n~12 minutes\nBest for: Low-price coverage'
+    },
+    all_in_lite: {
+      label: '⚡💎 All In Lite',
+      icon: '⚡💎',
+      tooltip: '100 coins (no pagination), 49 bots\n~9-11 minutes\nBest for: Quick max coverage'
+    },
+    all_in_under_5_lite: {
+      label: '⚡💰 All In <$5 Lite',
+      icon: '⚡💰',
+      tooltip: '100 coins under $5, 49 bots\n~5-7 minutes\nBest for: Quick low-price scan'
     }
   };
 
