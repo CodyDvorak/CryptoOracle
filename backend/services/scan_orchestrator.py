@@ -39,6 +39,7 @@ class ScanOrchestrator:
         Scan Types:
         - quick_scan: 45 coins, no AI, ~7 min
         - focused_scan: 20 coins, no AI, ~15 min
+        - focused_ai: 20 coins, AI on all 20, ~25-28 min
         - fast_parallel: 45 coins parallel processing, ~11 min
         - full_scan_lite: 86 coins parallel, no AI, ~14 min
         - heavy_speed_run: 86 coins, 25 best bots, ~7 min
