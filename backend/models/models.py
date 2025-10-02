@@ -120,6 +120,7 @@ class Settings(BaseModel):
     id: str = Field(default_factory=uuid_str)
     schedule_enabled: bool = False
     schedule_interval: str = '12h'  # '6h', '12h', or '24h'
+    scan_type: str = 'quick_scan'  # Scan type to run on schedule
     schedule_start_time: Optional[str] = None  # HH:MM format (e.g., "09:00")
     timezone: str = 'UTC'  # Timezone for schedule_start_time (e.g., "America/New_York", "Europe/London")
     filter_scope: str = 'all'  # 'all' or 'alt'
