@@ -100,6 +100,10 @@ class ScanOrchestrator:
                 return await self._run_all_in_lite_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id)
             elif scan_type == 'all_in_under_5_lite':
                 return await self._run_all_in_under_5_lite_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id)
+            elif scan_type == 'all_in_ai':
+                return await self._run_all_in_ai_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id)
+            elif scan_type == 'all_in_under_5_ai':
+                return await self._run_all_in_under_5_ai_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id)
             else:  # full_scan (default)
                 return await self._run_full_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id)
         except Exception as e:
