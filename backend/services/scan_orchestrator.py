@@ -295,6 +295,7 @@ class ScanOrchestrator:
                 logger.info(f"⚡ PASS 1: Fast analysis of {len(selected_tokens)} coins (AI on top candidates)")
             
             all_aggregated_results = []
+            all_individual_bot_results = []  # NEW: Track individual bot predictions
             
             # Parallel processing if enabled
             if parallel and batch_size > 1:
