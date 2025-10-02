@@ -1301,11 +1301,17 @@ async def main():
     import sys
     
     async with CryptoOracleTestSuite() as test_suite:
-        # Check if we should run bug fix tests specifically
-        if len(sys.argv) > 1 and sys.argv[1] == "--bug-fixes":
-            await test_suite.run_bug_fix_tests()
+        # Check if we should run specific test suites
+        if len(sys.argv) > 1:
+            if sys.argv[1] == "--bug-fixes":
+                await test_suite.run_bug_fix_tests()
+            elif sys.argv[1] == "--triple-layer":
+                await test_suite.test_triple_layer_llm_integration()
+            else:
+                await test_suite.run_all_tests()
         else:
-            await test_suite.run_all_tests()
+            # Default: run Triple-Layer LLM Integration tests
+            await test_suite.test_triple_layer_llm_integration()
 
 if __name__ == "__main__":
     asyncio.run(main())
