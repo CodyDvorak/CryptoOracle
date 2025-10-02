@@ -187,22 +187,53 @@ class ScanOrchestrator:
                 logger.info(f"⚡ PASS 1: Fast analysis of {len(selected_tokens)} coins (NO AI - speed mode)")
             else:
                 logger.info(f"⚡ PASS 1: Fast analysis of {len(selected_tokens)} coins (AI on top candidates)")
+            
             all_aggregated_results = []
             
-            for symbol, display_name, current_price in selected_tokens:
-                try:
-                    # Analyze with skip_sentiment=True for speed
-                    coin_result = await self._analyze_coin_with_cryptocompare(
-                        symbol, display_name, current_price, scan_run.id, skip_sentiment=True
-                    )
-                    if coin_result:
-                        coin_result['ticker'] = symbol
-                        all_aggregated_results.append(coin_result)
-                except Exception as e:
-                    logger.error(f"Error analyzing {symbol}: {e}")
-                    continue
+            # Parallel processing if enabled
+            if parallel and batch_size > 1:
+                logger.info(f"🔀 Using parallel processing: {batch_size} coins at a time")
+                
+                # Process coins in batches
+                for i in range(0, len(selected_tokens), batch_size):
+                    batch = selected_tokens[i:i + batch_size]
+                    batch_tasks = []
+                    
+                    for symbol, display_name, current_price in batch:
+                        task = self._analyze_coin_with_cryptocompare(
+                            symbol, display_name, current_price, scan_run.id, skip_sentiment=True
+                        )
+                        batch_tasks.append(task)
+                    
+                    # Execute batch concurrently
+                    batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
+                    
+                    # Process results
+                    for idx, result in enumerate(batch_results):
+                        if isinstance(result, Exception):
+                            symbol = batch[idx][0]
+                            logger.error(f"Error analyzing {symbol}: {result}")
+                            continue
+                        if result:
+                            result['ticker'] = batch[idx][0]
+                            all_aggregated_results.append(result)
+                    
+                    logger.debug(f"Batch {i//batch_size + 1}/{(len(selected_tokens) + batch_size - 1)//batch_size} complete")
+            else:
+                # Sequential processing (original)
+                for symbol, display_name, current_price in selected_tokens:
+                    try:
+                        coin_result = await self._analyze_coin_with_cryptocompare(
+                            symbol, display_name, current_price, scan_run.id, skip_sentiment=True
+                        )
+                        if coin_result:
+                            coin_result['ticker'] = symbol
+                            all_aggregated_results.append(coin_result)
+                    except Exception as e:
+                        logger.error(f"Error analyzing {symbol}: {e}")
+                        continue
             
-            logger.info(f"✅ PASS 1 Complete: {len(all_aggregated_results)} coins analyzed with 49 bots")
+            logger.info(f"✅ PASS 1 Complete: {len(all_aggregated_results)} coins analyzed with {len(self.bots)} bots")
             
             # 🎯 Identify top candidates for sentiment analysis
             logger.info("🎯 Identifying top candidates for sentiment analysis...")
