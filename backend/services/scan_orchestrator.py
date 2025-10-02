@@ -133,6 +133,25 @@ class ScanOrchestrator:
         finally:
             self.bots = original_bots
     
+    async def _run_full_scan_lite(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
+        """Full Scan Lite: 80 coins with parallel processing, no AI, ~12 minutes."""
+        logger.info("📈 FULL SCAN LITE: 80 coins (5 concurrent), 49 bots, NO AI (~12 min)")
+        return await self._run_scan_with_config(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id,
+                                               max_coins=80, skip_sentiment=True, parallel=True, batch_size=5)
+    
+    async def _run_heavy_speed_run(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
+        """Heavy Speed Run: 80 coins, 25 best bots, parallel processing, ~6 minutes."""
+        logger.info("⚡💨 HEAVY SPEED RUN: 80 coins (5 concurrent), 25 top bots, NO AI (~6 min)")
+        # Use first 25 bots
+        original_bots = self.bots
+        self.bots = self.bots[:25]
+        try:
+            result = await self._run_scan_with_config(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id,
+                                                    max_coins=80, skip_sentiment=True, parallel=True, batch_size=5)
+            return result
+        finally:
+            self.bots = original_bots
+    
     async def _run_full_scan(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
         """Full Scan: 80 coins with smart optimization (sentiment on top 15 only), ~60 minutes."""
         logger.info("📊 FULL SCAN: 80 coins, 49 bots, AI sentiment on top candidates (~60 min)")
