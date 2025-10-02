@@ -240,7 +240,8 @@ function App() {
       const requestBody = { 
         scope: isCustomScan ? 'custom' : filter,
         min_price: isCustomScan ? null : (minPrice ? parseFloat(minPrice) : null),
-        max_price: isCustomScan ? null : (maxPrice ? parseFloat(maxPrice) : null)
+        max_price: isCustomScan ? null : (maxPrice ? parseFloat(maxPrice) : null),
+        scan_type: scanType
       };
       
       // Add custom symbols if custom scan
