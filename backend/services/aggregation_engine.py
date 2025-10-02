@@ -43,7 +43,6 @@ class AggregationEngine:
             return {}
     
     async def aggregate_coin_results(self, coin: str, bot_results: List[Dict], current_price: float) -> Dict:
-    async def aggregate_coin_results(self, coin: str, bot_results: List[Dict], current_price: float) -> Dict:
         """Aggregate results from all bots for a single coin WITH PERFORMANCE WEIGHTING.
         
         Args:
