@@ -966,15 +966,16 @@ async def startup_event():
     if settings and settings.get('schedule_enabled'):
         await restart_scheduler(settings)
     
-    # Schedule outcome tracking to run every 15 minutes
+    # Schedule bot prediction evaluation to run daily at 2 AM UTC
     scheduler.add_job(
-        track_outcomes_job,
-        'interval',
-        minutes=15,
-        id='outcome_tracker',
+        evaluate_bot_predictions_job,
+        'cron',
+        hour=2,
+        minute=0,
+        id='bot_evaluation',
         replace_existing=True
     )
-    logger.info("Outcome tracking scheduled to run every 15 minutes")
+    logger.info("Bot prediction evaluation scheduled to run daily at 2 AM UTC")
     
     logger.info("Application startup complete")
 
