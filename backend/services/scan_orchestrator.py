@@ -669,19 +669,19 @@ class ScanOrchestrator:
             logger.error(f"Error in AI-only analysis for {symbol}: {e}")
             return None
     
-    async def _analyze_coin_with_cryptocompare(self, symbol: str, display_name: str, current_price: float, run_id: str) -> Optional[Dict]:
-        """Analyze a single coin with CryptoCompare historical data + Triple-Layer LLM Integration.
+    async def _analyze_coin_with_cryptocompare(self, symbol: str, display_name: str, current_price: float, run_id: str, skip_sentiment: bool = False) -> Optional[Dict]:
+        """Analyze a single coin with CryptoCompare historical data + Smart LLM Integration.
         
-        Triple-Layer Integration:
-        - Layer 1 (Pre-Analysis): ChatGPT-5 sentiment and fundamentals
-        - Layer 2 (Bot Analysis): 50 bots including AIAnalystBot (ChatGPT-5)
-        - Layer 3 (Synthesis): ChatGPT-5 final rationale
+        Smart Integration (Option C):
+        - skip_sentiment=True: Fast analysis with 49 bots only (Pass 1)
+        - skip_sentiment=False: Full analysis with sentiment + synthesis (Pass 2 for top coins)
         
         Args:
             symbol: Coin symbol (e.g., 'BTC')
             display_name: Display name for results
             current_price: Real-time current price
             run_id: Scan run ID
+            skip_sentiment: If True, skip Layer 1 sentiment analysis for speed
         
         Returns:
             Aggregated result dict or None if insufficient data
@@ -710,21 +710,23 @@ class ScanOrchestrator:
             # Ensure current price is accurate
             features['current_price'] = current_price
             
-            # 🔮 LAYER 1: Pre-Analysis Sentiment & Fundamentals (ChatGPT-5)
-            try:
-                logger.debug(f"🔮 Layer 1: Running sentiment analysis for {symbol}...")
-                sentiment_data = await self.sentiment_service.analyze_market_sentiment(
-                    symbol=symbol,
-                    coin_name=display_name,
-                    current_price=current_price
-                )
-                features = self.sentiment_service.enrich_features(features, sentiment_data)
-                logger.info(f"✨ Layer 1 complete for {symbol}: {sentiment_data.get('sentiment_text', 'neutral')} (score: {sentiment_data.get('sentiment_score', 5)})")
-            except Exception as e:
-                logger.warning(f"Layer 1 sentiment analysis skipped for {symbol}: {e}")
-                # Continue without sentiment data
+            # 🔮 LAYER 1: Pre-Analysis Sentiment (CONDITIONAL - Skip in Pass 1)
+            if not skip_sentiment:
+                try:
+                    logger.debug(f"🔮 Layer 1: Running sentiment analysis for {symbol}...")
+                    sentiment_data = await self.sentiment_service.analyze_market_sentiment(
+                        symbol=symbol,
+                        coin_name=display_name,
+                        current_price=current_price
+                    )
+                    features = self.sentiment_service.enrich_features(features, sentiment_data)
+                    logger.info(f"✨ Layer 1 complete for {symbol}: {sentiment_data.get('sentiment_text', 'neutral')} (score: {sentiment_data.get('sentiment_score', 5)})")
+                except Exception as e:
+                    logger.warning(f"Layer 1 sentiment analysis skipped for {symbol}: {e}")
+            else:
+                logger.debug(f"⚡ Skipping sentiment for {symbol} (Pass 1 - speed optimization)")
             
-            # 🤖 LAYER 2: Run all 50 bots (including AIAnalystBot with ChatGPT-5)
+            # 🤖 LAYER 2: Run all 49 bots
             bot_results = []
             
             for bot in self.bots:
@@ -763,12 +765,33 @@ class ScanOrchestrator:
                 logger.warning(f"No bot results for {symbol}")
                 return None
             
-            logger.info(f"🤖 Layer 2 complete for {symbol}: {len(bot_results)}/50 bots analyzed")
+            logger.info(f"🤖 Layer 2 complete for {symbol}: {len(bot_results)}/49 bots analyzed")
             
             # 5. Aggregate results
             aggregated = self.aggregation_engine.aggregate_coin_results(display_name, bot_results, current_price)
             
-            # 📝 LAYER 3: LLM Synthesis (ChatGPT-5)
+            # 📝 LAYER 3: LLM Synthesis (CONDITIONAL - Basic for Pass 1, Enhanced for Pass 2)
+            try:
+                if not skip_sentiment:
+                    # Full synthesis with sentiment (Pass 2 - top coins)
+                    enhanced_rationale = await self.llm_service.synthesize_recommendations(display_name, bot_results, features)
+                    aggregated['rationale'] = enhanced_rationale
+                else:
+                    # Simple synthesis without sentiment (Pass 1 - all coins)
+                    consensus = 'LONG' if aggregated.get('consensus_direction') == 'long' else 'SHORT'
+                    bot_count = len(bot_results)
+                    confidence = aggregated.get('avg_confidence', 5)
+                    aggregated['rationale'] = f"{bot_count} bots analyzed: {consensus} consensus (confidence: {confidence:.1f}/10)"
+            except Exception as e:
+                logger.warning(f"LLM synthesis skipped for {symbol}: {e}")
+                aggregated['rationale'] = f"{len(bot_results)} bots analyzed"
+            
+            logger.info(f"✓ {symbol}: {len(bot_results)} bots, confidence={aggregated.get('avg_confidence', 0):.1f}, price=${current_price:.6f}")
+            return aggregated
+            
+        except Exception as e:
+            logger.error(f"Critical error analyzing {symbol}: {e}", exc_info=True)
+            return None
             try:
                 enhanced_rationale = await self.llm_service.synthesize_recommendations(display_name, bot_results, features)
                 aggregated['rationale'] = enhanced_rationale
