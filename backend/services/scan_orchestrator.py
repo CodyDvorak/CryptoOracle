@@ -103,24 +103,100 @@ class ScanOrchestrator:
             
             scan_run.total_coins = len(selected_tokens)
             
-            # 4. Analyze each token with bots using CryptoCompare data
+            # 🚀 PASS 1: Fast bot analysis (NO SENTIMENT) for ALL coins
+            logger.info(f"⚡ PASS 1: Fast analysis of {len(selected_tokens)} coins (NO sentiment - speed optimization)")
             all_aggregated_results = []
             
             for symbol, display_name, current_price in selected_tokens:
                 try:
-                    # Analyze with CryptoCompare data
+                    # Analyze with skip_sentiment=True for speed
                     coin_result = await self._analyze_coin_with_cryptocompare(
-                        symbol, display_name, current_price, scan_run.id
+                        symbol, display_name, current_price, scan_run.id, skip_sentiment=True
                     )
                     if coin_result:
-                        # Add ticker symbol to result
                         coin_result['ticker'] = symbol
                         all_aggregated_results.append(coin_result)
                 except Exception as e:
                     logger.error(f"Error analyzing {symbol}: {e}")
                     continue
             
-            # 4. Get multiple Top 5 lists
+            logger.info(f"✅ PASS 1 Complete: {len(all_aggregated_results)} coins analyzed with 49 bots")
+            
+            # 🎯 Identify top candidates for sentiment analysis
+            logger.info("🎯 Identifying top candidates for sentiment analysis...")
+            
+            # Get preliminary top 5 lists
+            top_5_confidence = self.aggregation_engine.get_top_n(all_aggregated_results, n=5)
+            top_5_percent = self.aggregation_engine.get_top_percent_movers(all_aggregated_results, n=5)
+            top_5_dollar = self.aggregation_engine.get_top_dollar_movers(all_aggregated_results, n=5)
+            
+            # Collect unique top candidates
+            top_candidates = set()
+            for rec in top_5_confidence + top_5_percent + top_5_dollar:
+                top_candidates.add(rec.get('coin'))
+            
+            logger.info(f"📊 Top {len(top_candidates)} candidates identified: {list(top_candidates)}")
+            
+            # 🔮 PASS 2: Sentiment analysis ONLY on top candidates
+            logger.info(f"⚡ PASS 2: Enhanced analysis with sentiment for {len(top_candidates)} top candidates")
+            
+            for result in all_aggregated_results:
+                coin_name = result.get('coin')
+                if coin_name in top_candidates:
+                    try:
+                        ticker = result.get('ticker')
+                        current_price = result.get('current_price', 0)
+                        
+                        logger.info(f"🔮 Running sentiment + enhanced synthesis for: {coin_name}")
+                        
+                        # Run sentiment analysis
+                        sentiment_data = await self.sentiment_service.analyze_market_sentiment(
+                            symbol=ticker,
+                            coin_name=coin_name,
+                            current_price=current_price
+                        )
+                        
+                        # Re-fetch features for synthesis
+                        candles = await self.crypto_client.get_historical_data(ticker, days=365)
+                        if candles and len(candles) >= 30:
+                            features = self.indicator_engine.compute_all_indicators(candles)
+                            if features:
+                                features['current_price'] = current_price
+                                features = self.sentiment_service.enrich_features(features, sentiment_data)
+                                
+                                # Re-fetch bot results from DB
+                                bot_results_docs = await self.db.bot_results.find({
+                                    'run_id': scan_run.id,
+                                    'coin': coin_name
+                                }).to_list(100)
+                                
+                                bot_results = [{
+                                    'direction': br['direction'],
+                                    'confidence': br['confidence'],
+                                    'entry': br['entry_price'],
+                                    'take_profit': br['take_profit'],
+                                    'stop_loss': br['stop_loss'],
+                                    'rationale': br['rationale']
+                                } for br in bot_results_docs]
+                                
+                                # Enhanced synthesis with sentiment
+                                enhanced_rationale = await self.llm_service.synthesize_recommendations(
+                                    coin_name, bot_results, features
+                                )
+                                
+                                # Update result with sentiment-enhanced data
+                                result['rationale'] = enhanced_rationale
+                                result['sentiment_score'] = sentiment_data.get('sentiment_score', 5)
+                                result['sentiment_text'] = sentiment_data.get('sentiment_text', 'neutral')
+                                
+                                logger.info(f"✨ Enhanced analysis complete for {coin_name}")
+                    
+                    except Exception as e:
+                        logger.warning(f"Sentiment enhancement failed for {coin_name}: {e}")
+            
+            logger.info(f"✅ PASS 2 Complete: Sentiment analysis done for top {len(top_candidates)} candidates")
+            
+            # Final top 5 lists (now with enhanced analysis on top coins)
             top_5_confidence = self.aggregation_engine.get_top_n(all_aggregated_results, n=5)
             top_5_percent = self.aggregation_engine.get_top_percent_movers(all_aggregated_results, n=5)
             top_5_dollar = self.aggregation_engine.get_top_dollar_movers(all_aggregated_results, n=5)
@@ -158,8 +234,9 @@ class ScanOrchestrator:
                 {'$set': scan_run.dict()}
             )
             
-            logger.info(f"Scan run {scan_run.id} completed. Total recommendations: {len(all_top_recommendations)}")
-            logger.info(f"Top 5 confidence: {[r['coin'] for r in top_5_confidence[:5]]}")
+            logger.info(f"🎉 SMART SCAN {scan_run.id} completed! Total recommendations: {len(all_top_recommendations)}")
+            logger.info(f"📊 Top 5 confidence: {[r['coin'] for r in top_5_confidence[:5]]}")
+            logger.info(f"⚡ Smart optimization: Sentiment ran on {len(top_candidates)} top candidates only")
             
             # Auto-send email notification if user is logged in
             if user_id:
