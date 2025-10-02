@@ -33,8 +33,15 @@ class ScanOrchestrator:
         
         logger.info(f"🤖 Scan Orchestrator initialized with {len(self.bots)} bots (including AI Analyst)")
         
-    async def run_scan(self, filter_scope: str = 'all', min_price: Optional[float] = None, max_price: Optional[float] = None, custom_symbols: Optional[List[str]] = None, run_id: Optional[str] = None, user_id: Optional[str] = None) -> Dict:
-        """Execute a full scan of all coins.
+    async def run_scan(self, filter_scope: str = 'all', min_price: Optional[float] = None, max_price: Optional[float] = None, custom_symbols: Optional[List[str]] = None, run_id: Optional[str] = None, user_id: Optional[str] = None, scan_type: str = 'full_scan') -> Dict:
+        """Execute a scan with the specified strategy.
+        
+        Scan Types:
+        - quick_scan: 40 coins, no AI, ~5 min
+        - focused_scan: 40 coins, with AI sentiment, ~12 min
+        - fast_parallel: 80 coins parallel processing, ~12 min
+        - full_scan: 80 coins smart optimization (default), ~40 min
+        - speed_run: 40 coins, 25 best bots only, ~3 min
         
         Args:
             filter_scope: 'all' or 'alt' (exclude major coins) or 'custom'
@@ -42,6 +49,8 @@ class ScanOrchestrator:
             max_price: Optional maximum price filter
             custom_symbols: Optional list of specific symbols to scan
             run_id: Optional run ID (generated if not provided)
+            user_id: Optional user ID for authenticated scans
+            scan_type: Type of scan strategy to use
         
         Returns:
             Dict with run_id, status, recommendations
@@ -53,10 +62,44 @@ class ScanOrchestrator:
             filter_scope=filter_scope,
             min_price=min_price,
             max_price=max_price,
+            scan_type=scan_type,
             status='running'
         )
         await self.db.scan_runs.insert_one(scan_run.dict())
-        logger.info(f"🚀 Starting SMART SCAN (Option C) run {scan_run.id} - Two-pass approach: Fast bots → Sentiment on top candidates")
+        
+        # Route to appropriate scan strategy
+        logger.info(f"🚀 Starting {scan_type.upper()} run {scan_run.id}")
+        
+        try:
+            if scan_type == 'quick_scan':
+                return await self._run_quick_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id)
+            elif scan_type == 'focused_scan':
+                return await self._run_focused_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id)
+            elif scan_type == 'fast_parallel':
+                return await self._run_fast_parallel_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id)
+            elif scan_type == 'speed_run':
+                return await self._run_speed_run_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id)
+            else:  # full_scan (default)
+                return await self._run_full_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id)
+        except Exception as e:
+            logger.error(f"Scan run {scan_run.id} failed: {e}")
+            scan_run.status = 'failed'
+            scan_run.error_message = str(e)
+            scan_run.completed_at = datetime.now(timezone.utc)
+            await self.db.scan_runs.update_one(
+                {'id': scan_run.id},
+                {'$set': scan_run.dict()}
+            )
+            
+            return {
+                'run_id': scan_run.id,
+                'status': 'failed',
+                'error': str(e)
+            }
+    
+    async def _run_full_scan(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
+        """Full Scan: 80 coins with smart optimization (sentiment on top 15 only)."""
+        logger.info("📊 FULL SCAN: 80 coins, 49 bots, AI sentiment on top candidates (~40 min)")
         
         try:
             # 1. Fetch coins from CryptoCompare (primary data source)
