@@ -90,6 +90,10 @@ const BotPerformanceDashboard = () => {
           <p className="text-[var(--muted)] mt-1">Track and analyze bot prediction accuracy over time</p>
         </div>
         <div className="flex gap-3">
+          <Button onClick={() => navigate('/')} variant="outline">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Return to Scanner
+          </Button>
           <Button onClick={fetchPerformances} disabled={loading}>
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
