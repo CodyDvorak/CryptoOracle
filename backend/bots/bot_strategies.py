@@ -14,7 +14,7 @@ class BotStrategy:
         
         Returns:
             Dict with keys: direction, entry, take_profit, stop_loss, confidence, rationale,
-                          predicted_24h, predicted_48h, predicted_7d
+                          predicted_24h, predicted_48h, predicted_7d, recommended_leverage
             or None if no signal
         """
         raise NotImplementedError
@@ -49,6 +49,66 @@ class BotStrategy:
             'predicted_48h': pred_48h,
             'predicted_7d': pred_7d
         }
+    
+    def _calculate_leverage(self, confidence: float, entry: float, stop_loss: float, 
+                           volatility: float = 0.02, sentiment_score: float = 5) -> float:
+        """Calculate recommended leverage (1x-20x) based on risk factors.
+        
+        Args:
+            confidence: Bot confidence (1-10)
+            entry: Entry price
+            stop_loss: Stop loss price
+            volatility: Market volatility (default 2%)
+            sentiment_score: Market sentiment (1-10, default 5 neutral)
+        
+        Returns:
+            Recommended leverage (1.0 - 20.0)
+        """
+        # Base leverage from confidence (1-10 confidence -> 1-10x base leverage)
+        base_leverage = confidence
+        
+        # Adjust for stop loss distance (risk management)
+        sl_distance = abs(entry - stop_loss) / entry
+        if sl_distance < 0.02:  # Very tight SL (< 2%)
+            sl_factor = 0.5  # Reduce leverage significantly
+        elif sl_distance < 0.05:  # Tight SL (< 5%)
+            sl_factor = 0.8
+        elif sl_distance < 0.10:  # Normal SL (< 10%)
+            sl_factor = 1.0
+        else:  # Wide SL (> 10%)
+            sl_factor = 0.7  # Reduce leverage for wide SL
+        
+        # Adjust for volatility (lower volatility = safer for higher leverage)
+        if volatility < 0.02:  # Low volatility
+            vol_factor = 1.3
+        elif volatility < 0.05:  # Normal volatility
+            vol_factor = 1.0
+        elif volatility < 0.08:  # High volatility
+            vol_factor = 0.7
+        else:  # Very high volatility
+            vol_factor = 0.5
+        
+        # Adjust for sentiment (stronger sentiment = slightly higher leverage)
+        if sentiment_score >= 8:  # Very bullish
+            sentiment_factor = 1.2
+        elif sentiment_score >= 6:  # Bullish
+            sentiment_factor = 1.1
+        elif sentiment_score <= 2:  # Very bearish
+            sentiment_factor = 0.8
+        elif sentiment_score <= 4:  # Bearish
+            sentiment_factor = 0.9
+        else:  # Neutral
+            sentiment_factor = 1.0
+        
+        # Calculate final leverage
+        recommended_leverage = base_leverage * sl_factor * vol_factor * sentiment_factor
+        
+        # Clamp to range [1, 20]
+        recommended_leverage = max(1.0, min(20.0, recommended_leverage))
+        
+        # Round to 1 decimal place
+        return round(recommended_leverage, 1)
+
 
 
 class SMA_CrossBot(BotStrategy):
