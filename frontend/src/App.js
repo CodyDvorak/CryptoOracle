@@ -345,7 +345,11 @@ function App() {
               setTopDollar(recsResponse.data.top_dollar_movers || []);
               setCurrentRunId(recsResponse.data.run_id || null);
               
-              toast.success('✨ Scan completed! Recommendations loaded automatically!');
+              // Stop timer and show final time
+              const finalTime = scanElapsedTime;
+              setScanStartTime(null);
+              
+              toast.success(`✨ Scan completed in ${formatElapsedTime(finalTime)}! Recommendations loaded automatically!`);
               console.log('✅ AUTO-REFRESH COMPLETE! Check the recommendations above.');
             } catch (err) {
               console.error('[AUTO-REFRESH] Error fetching recommendations:', err);
