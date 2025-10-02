@@ -434,6 +434,66 @@ agent_communication:
       - Bot details feature working perfectly with individual bot results
 
 backend:
+  - task: "Bot count expansion (21 → 49 unique strategies)"
+    implemented: true
+    working: "NA"
+    file: "backend/bots/bot_strategies.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Expanded from 21 to 49 bots with unique strategies across Trend Following (10), Mean Reversion (8), Momentum (8), Volatility (6), Pattern Recognition (6), Volume Analysis (5), Multi-Indicator (5), Statistical (2). Includes AIAnalystBot powered by ChatGPT-5 as one of the 49."
+  
+  - task: "Layer 1: Pre-Analysis Sentiment Service (ChatGPT-5)"
+    implemented: true
+    working: "NA"
+    file: "backend/services/sentiment_analysis_service.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Created SentimentAnalysisService using OpenAI ChatGPT-5 via Emergent LLM key. Analyzes market sentiment, fundamentals, and risk level before bot analysis. Enriches features dict with sentiment data for bots to use."
+  
+  - task: "Layer 2: AI Analyst Bot (ChatGPT-5)"
+    implemented: true
+    working: "NA"
+    file: "backend/bots/bot_strategies.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Created AIAnalystBot as one of the 49 bots. Uses ChatGPT-5 to analyze all technical indicators + sentiment data. Provides comprehensive AI-powered trading recommendations with confidence scores and price predictions."
+  
+  - task: "Layer 3: Enhanced Synthesis (ChatGPT-5)"
+    implemented: true
+    working: "NA"
+    file: "backend/services/llm_synthesis_service.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Upgraded LLMSynthesisService from Claude to ChatGPT-5. Synthesizes all 49 bot opinions + sentiment data into superior final rationale. Enhanced confidence calibration considering sentiment alignment."
+  
+  - task: "Scan orchestrator integration (Triple-Layer)"
+    implemented: true
+    working: "NA"
+    file: "backend/services/scan_orchestrator.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Integrated all 3 layers into scan flow: Layer 1 (sentiment) → Layer 2 (49 bots) → Layer 3 (synthesis). Added comprehensive logging with emojis for each layer. Scan orchestrator initialized with 49 bots including AI Analyst."
+  
   - task: "Auto-refresh after scan completion"
     implemented: true
     working: true
