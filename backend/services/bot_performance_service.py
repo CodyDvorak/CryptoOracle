@@ -43,19 +43,37 @@ class BotPerformanceService:
             
             for bot_result in bot_results:
                 # Only save if bot made a prediction (not neutral)
-                if bot_result.get('signal') in ['long', 'short']:
+                direction = bot_result.get('direction', bot_result.get('signal', 'neutral'))
+                
+                if direction in ['long', 'short']:
+                    # Extract coin info - might be in different fields
+                    coin_symbol = bot_result.get('ticker', bot_result.get('coin', 'UNKNOWN'))
+                    coin_name = bot_result.get('coin_name', bot_result.get('coin', coin_symbol))
+                    
+                    # Bot name might be nested
+                    bot_name = bot_result.get('bot_name', 'Unknown')
+                    
+                    # Price info
+                    current_price = bot_result.get('current_price', bot_result.get('entry_price', bot_result.get('entry', 0.0)))
+                    target_price = bot_result.get('target_price', bot_result.get('take_profit', 0.0))
+                    stop_loss = bot_result.get('stop_loss')
+                    
+                    # Skip if we don't have essential data
+                    if not coin_symbol or current_price == 0:
+                        continue
+                    
                     prediction = BotPrediction(
                         run_id=run_id,
                         user_id=user_id,
-                        bot_name=bot_result.get('bot_name', 'Unknown'),
-                        coin_symbol=bot_result.get('ticker', 'UNKNOWN'),
-                        coin_name=bot_result.get('coin_name', bot_result.get('ticker', 'UNKNOWN')),
-                        entry_price=bot_result.get('current_price', 0.0),
-                        target_price=bot_result.get('target_price', 0.0),
-                        stop_loss=bot_result.get('stop_loss'),
-                        position_direction=bot_result.get('signal', 'neutral'),
+                        bot_name=bot_name,
+                        coin_symbol=coin_symbol,
+                        coin_name=coin_name,
+                        entry_price=current_price,
+                        target_price=target_price,
+                        stop_loss=stop_loss,
+                        position_direction=direction,
                         confidence_score=bot_result.get('confidence', 0.0),
-                        leverage=bot_result.get('leverage'),
+                        leverage=bot_result.get('leverage', bot_result.get('recommended_leverage')),
                         outcome_status='pending'
                     )
                     predictions.append(prediction.dict())
@@ -66,6 +84,9 @@ class BotPerformanceService:
                 
                 # Update bot performance records with new prediction counts
                 await self._update_prediction_counts(predictions)
+                
+            else:
+                logger.warning(f"⚠️ No valid predictions to save for run {run_id}")
                 
             return len(predictions)
             
