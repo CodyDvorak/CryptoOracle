@@ -81,6 +81,8 @@ class ScanOrchestrator:
                 return await self._run_full_scan_lite(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id)
             elif scan_type == 'heavy_speed_run':
                 return await self._run_heavy_speed_run(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id)
+            elif scan_type == 'complete_market_scan':
+                return await self._run_complete_market_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id)
             elif scan_type == 'speed_run':
                 return await self._run_speed_run_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id)
             else:  # full_scan (default)
