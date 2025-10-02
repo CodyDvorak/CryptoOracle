@@ -379,7 +379,7 @@ async def get_scan_status():
 
 @api_router.get("/recommendations/top5")
 async def get_top5_recommendations(run_id: Optional[str] = None, current_user: Optional[dict] = Depends(get_current_user)):
-    """Get Top 5 recommendations categorized by confidence, % movers, and $ movers.
+    """Get Top 8 recommendations categorized by confidence, % movers, and $ movers.
     
     If run_id is not provided, returns from the most recent completed run for the user (or global if not authenticated).
     """
@@ -413,10 +413,10 @@ async def get_top5_recommendations(run_id: Optional[str] = None, current_user: O
         if '_id' in rec:
             rec['_id'] = str(rec['_id'])
     
-    # Categorize recommendations
-    top_confidence = [r for r in all_recs if r.get('category') == 'confidence'][:5]
-    top_percent = [r for r in all_recs if r.get('category') == 'percent_mover'][:5]
-    top_dollar = [r for r in all_recs if r.get('category') == 'dollar_mover'][:5]
+    # Categorize recommendations - now returning top 8 instead of 5
+    top_confidence = [r for r in all_recs if r.get('category') == 'confidence'][:8]
+    top_percent = [r for r in all_recs if r.get('category') == 'percent_mover'][:8]
+    top_dollar = [r for r in all_recs if r.get('category') == 'dollar_mover'][:8]
     
     # Get scan info
     scan_run = await db.scan_runs.find_one({'id': run_id})
