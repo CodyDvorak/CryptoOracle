@@ -134,11 +134,12 @@ class CoinGeckoClient:
                         
                         # Return as dictionary to match CryptoCompare format
                         historical_data.append({
-                            'time': int(timestamp),
-                            'close': close_price,
-                            'high': high_price,
-                            'low': low_price,
-                            'open': open_price
+                            'timestamp': int(timestamp),
+                            'close': float(close_price),
+                            'high': float(high_price),
+                            'low': float(low_price),
+                            'open': float(open_price),
+                            'volume': 0.0  # CoinGecko OHLC endpoint doesn't include volume
                         })
                     
                     logger.info(f"CoinGecko: Fetched {len(historical_data)} candles for {symbol}")
