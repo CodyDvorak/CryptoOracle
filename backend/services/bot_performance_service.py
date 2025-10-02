@@ -140,6 +140,7 @@ class BotPerformanceService:
                         position_direction=direction,
                         confidence_score=bot_result.get('confidence', 0.0),
                         leverage=bot_result.get('leverage', bot_result.get('recommended_leverage')),
+                        market_regime=market_regime,
                         outcome_status='pending'
                     )
                     predictions.append(prediction.dict())
