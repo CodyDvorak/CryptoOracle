@@ -450,6 +450,7 @@ function App() {
       await axios.put(`${API}/config/schedule`, {
         schedule_enabled: scheduleEnabled,
         schedule_interval: scheduleInterval,
+        scan_type: scheduledScanType,
         schedule_start_time: scheduleStartTime || null,
         timezone: scheduleTimezone,
         filter_scope: filter,
