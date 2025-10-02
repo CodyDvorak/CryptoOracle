@@ -623,7 +623,7 @@ function App() {
                 {loading || scanStatus.is_running ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span className="hidden sm:inline truncate">
+                    <span className="truncate">
                       Scanning... {scanStartTime && `(${formatElapsedTime(scanElapsedTime)})`}
                     </span>
                   </>
