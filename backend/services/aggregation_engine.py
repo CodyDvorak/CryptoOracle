@@ -5,10 +5,44 @@ import logging
 logger = logging.getLogger(__name__)
 
 class AggregationEngine:
-    """Aggregate bot results and compute Top 5 recommendations."""
+    """Aggregate bot results and compute Top 8 recommendations."""
     
-    @staticmethod
-    def aggregate_coin_results(coin: str, bot_results: List[Dict], current_price: float) -> Dict:
+    def __init__(self, db=None):
+        """Initialize with optional database for performance weight lookup."""
+        self.db = db
+        self._bot_weights = {}  # Cache for bot weights
+    
+    async def get_bot_weights(self) -> Dict[str, float]:
+        """Fetch bot performance weights from database.
+        
+        Returns:
+            Dict mapping bot_name to performance_weight
+        """
+        if not self.db:
+            return {}
+        
+        # Check cache first
+        if self._bot_weights:
+            return self._bot_weights
+        
+        try:
+            bot_performances = await self.db.bot_performance.find({}).to_list(1000)
+            
+            weights = {}
+            for perf in bot_performances:
+                bot_name = perf.get('bot_name')
+                weight = perf.get('performance_weight', 1.0)
+                weights[bot_name] = weight
+            
+            self._bot_weights = weights
+            logger.info(f"📊 Loaded performance weights for {len(weights)} bots")
+            return weights
+            
+        except Exception as e:
+            logger.warning(f"Could not load bot weights: {e}")
+            return {}
+    
+    async def aggregate_coin_results(self, coin: str, bot_results: List[Dict], current_price: float) -> Dict:
         """Aggregate results from all bots for a single coin.
         
         Args:
