@@ -296,6 +296,7 @@ function App() {
       const response = await axios.get(`${API}/config/schedule`);
       setScheduleEnabled(response.data.schedule_enabled || false);
       setScheduleInterval(response.data.schedule_interval || '12h');
+      setScheduledScanType(response.data.scan_type || 'quick_scan');
       setScheduleStartTime(response.data.schedule_start_time || '');
       setScheduleTimezone(response.data.timezone || 'UTC');
       setNextRunTime(response.data.next_run_time);
