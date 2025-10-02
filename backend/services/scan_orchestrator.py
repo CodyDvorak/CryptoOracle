@@ -49,6 +49,8 @@ class ScanOrchestrator:
         - all_in_under_5: 200-300 coins under $5, 49 bots, parallel, ~12 min
         - all_in_lite: 100 coins, 49 bots, parallel, ~9-11 min
         - all_in_under_5_lite: 100 coins under $5, 49 bots, parallel, ~5-7 min
+        - all_in_ai: 200-300 coins, AI on top 20, ~30-35 min
+        - all_in_under_5_ai: 200-300 coins under $5, AI on top 20, ~25-30 min
         
         Args:
             filter_scope: 'all' or 'alt' (exclude major coins) or 'custom'
