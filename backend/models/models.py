@@ -163,6 +163,7 @@ class UpdateIntegrationsRequest(BaseModel):
 class UpdateScheduleRequest(BaseModel):
     schedule_enabled: bool
     schedule_interval: str  # '6h', '12h', '24h'
+    scan_type: str = 'quick_scan'  # Scan type to run on schedule
     schedule_start_time: Optional[str] = None  # HH:MM format
     timezone: str = 'UTC'  # Timezone string (e.g., "America/New_York")
     filter_scope: str = 'all'
