@@ -131,6 +131,16 @@ function App() {
       label: '⚡💰 All In <$5 Lite',
       icon: '⚡💰',
       tooltip: '100 coins under $5, 49 bots\n~5-7 minutes\nBest for: Quick low-price scan'
+    },
+    all_in_ai: {
+      label: '🚀💎🤖 All In + AI',
+      icon: '🚀💎🤖',
+      tooltip: '200-300 coins, AI on top 20\n~30-35 minutes\nBest for: Max coverage + AI insights'
+    },
+    all_in_under_5_ai: {
+      label: '🚀💰🤖 All In <$5 + AI',
+      icon: '🚀💰🤖',
+      tooltip: '200-300 coins under $5, AI on top 20\n~25-30 minutes\nBest for: Low-price + AI insights'
     }
   };
 
