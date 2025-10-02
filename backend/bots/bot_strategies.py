@@ -1063,6 +1063,1176 @@ class ConservativeBot(BotStrategy):
         }
 
 
+class EMA_CrossBot(BotStrategy):
+    """Exponential Moving Average Crossover (faster than SMA)."""
+    
+    def __init__(self):
+        super().__init__("EMA_CrossBot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['ema_12', 'ema_26', 'current_price']):
+            return None
+        
+        ema_12 = features['ema_12']
+        ema_26 = features['ema_26']
+        price = features['current_price']
+        
+        if ema_12 > ema_26:
+            direction = 'long'
+            confidence = min(10, int(6 + ((ema_12 - ema_26) / ema_26) * 150))
+        else:
+            direction = 'short'
+            confidence = min(10, int(6 + ((ema_26 - ema_12) / ema_26) * 150))
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, 0.025, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': price * 1.04 if direction == 'long' else price * 0.96,
+            'stop_loss': price * 0.98 if direction == 'long' else price * 1.02,
+            'confidence': confidence,
+            'rationale': f"EMA12/26 crossover indicating {direction} momentum",
+            **predictions
+        }
+
+
+class ADX_TrendBot(BotStrategy):
+    """Average Directional Index for trend strength."""
+    
+    def __init__(self):
+        super().__init__("ADX_TrendBot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['adx', 'current_price']):
+            return None
+        
+        adx = features['adx']
+        price = features['current_price']
+        
+        # ADX > 25 indicates strong trend
+        if adx > 40:
+            confidence = 9
+            direction = 'long'  # Trend follower
+            rationale = "Very strong trend detected (ADX > 40)"
+        elif adx > 25:
+            confidence = 7
+            direction = 'long'
+            rationale = "Strong trend detected (ADX > 25)"
+        else:
+            confidence = 4
+            direction = 'long'
+            rationale = "Weak trend, low confidence"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, 0.03, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': price * 1.05 if direction == 'long' else price * 0.95,
+            'stop_loss': price * 0.97 if direction == 'long' else price * 1.03,
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
+class WilliamsRBot(BotStrategy):
+    """Williams %R oscillator (momentum indicator)."""
+    
+    def __init__(self):
+        super().__init__("WilliamsRBot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        # Williams %R similar to Stochastic but inverted
+        if not all(k in features for k in ['stoch_k', 'current_price']):
+            return None
+        
+        # Use stoch_k as proxy (invert it for Williams %R)
+        williams_r = -100 + features['stoch_k']
+        price = features['current_price']
+        
+        if williams_r < -80:  # Oversold
+            direction = 'long'
+            confidence = 8
+            rationale = "Williams %R oversold, expecting bounce"
+        elif williams_r > -20:  # Overbought
+            direction = 'short'
+            confidence = 8
+            rationale = "Williams %R overbought, expecting pullback"
+        else:
+            direction = 'long'
+            confidence = 5
+            rationale = "Williams %R neutral zone"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, 0.02, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': price * 1.03 if direction == 'long' else price * 0.97,
+            'stop_loss': price * 0.985 if direction == 'long' else price * 1.015,
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
+class CCI_Bot(BotStrategy):
+    """Commodity Channel Index for mean reversion."""
+    
+    def __init__(self):
+        super().__init__("CCI_Bot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['rsi_14', 'current_price']):
+            return None
+        
+        # Use RSI as proxy for CCI-like behavior
+        rsi = features['rsi_14']
+        price = features['current_price']
+        cci_proxy = (rsi - 50) * 4  # Scale to CCI range
+        
+        if cci_proxy < -100:
+            direction = 'long'
+            confidence = 8
+            rationale = "CCI oversold (<-100), mean reversion expected"
+        elif cci_proxy > 100:
+            direction = 'short'
+            confidence = 8
+            rationale = "CCI overbought (>100), mean reversion expected"
+        else:
+            direction = 'long'
+            confidence = 5
+            rationale = "CCI in normal range"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, 0.025, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': price * 1.035 if direction == 'long' else price * 0.965,
+            'stop_loss': price * 0.98 if direction == 'long' else price * 1.02,
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
+class ParabolicSARBot(BotStrategy):
+    """Parabolic SAR for stop and reverse signals."""
+    
+    def __init__(self):
+        super().__init__("ParabolicSARBot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['sma_20', 'current_price']):
+            return None
+        
+        price = features['current_price']
+        sma_20 = features['sma_20']
+        
+        # Price above SMA = bullish SAR below price
+        if price > sma_20:
+            direction = 'long'
+            distance = (price - sma_20) / price
+            confidence = min(10, int(6 + distance * 200))
+            rationale = "PSAR below price, bullish trend"
+        else:
+            direction = 'short'
+            distance = (sma_20 - price) / price
+            confidence = min(10, int(6 + distance * 200))
+            rationale = "PSAR above price, bearish trend"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, 0.02, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': price * 1.04 if direction == 'long' else price * 0.96,
+            'stop_loss': sma_20,  # Use SMA as trailing stop
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
+class SuperTrendBot(BotStrategy):
+    """SuperTrend indicator combining ATR and price action."""
+    
+    def __init__(self):
+        super().__init__("SuperTrendBot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['sma_20', 'atr', 'current_price']):
+            return None
+        
+        price = features['current_price']
+        sma = features['sma_20']
+        atr = features['atr']
+        
+        # SuperTrend calculation
+        multiplier = 3
+        upper_band = sma + (multiplier * atr)
+        lower_band = sma - (multiplier * atr)
+        
+        if price > upper_band:
+            direction = 'long'
+            confidence = 9
+            rationale = "Price above SuperTrend, strong uptrend"
+        elif price < lower_band:
+            direction = 'short'
+            confidence = 9
+            rationale = "Price below SuperTrend, strong downtrend"
+        else:
+            direction = 'long'
+            confidence = 5
+            rationale = "Price within SuperTrend bands"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, atr/price, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': price * 1.05 if direction == 'long' else price * 0.95,
+            'stop_loss': lower_band if direction == 'long' else upper_band,
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
+class KeltnerChannelBot(BotStrategy):
+    """Keltner Channels for volatility breakouts."""
+    
+    def __init__(self):
+        super().__init__("KeltnerChannelBot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['ema_20', 'atr', 'current_price']):
+            return None
+        
+        price = features['current_price']
+        ema = features['ema_20']
+        atr = features['atr']
+        
+        upper = ema + (2 * atr)
+        lower = ema - (2 * atr)
+        
+        if price > upper:
+            direction = 'long'
+            confidence = 8
+            rationale = "Price broke above Keltner upper, strong momentum"
+        elif price < lower:
+            direction = 'short'
+            confidence = 8
+            rationale = "Price broke below Keltner lower, strong weakness"
+        else:
+            direction = 'long'
+            confidence = 5
+            rationale = "Price within Keltner channels"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, atr/price * 2, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': price * 1.04 if direction == 'long' else price * 0.96,
+            'stop_loss': ema if direction == 'long' else ema,
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
+class DonchianChannelBot(BotStrategy):
+    """Donchian Channels for breakout trading."""
+    
+    def __init__(self):
+        super().__init__("DonchianChannelBot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['sma_20', 'sma_50', 'current_price']):
+            return None
+        
+        price = features['current_price']
+        high_20 = features['sma_20'] * 1.05  # Approximate high
+        low_20 = features['sma_20'] * 0.95   # Approximate low
+        
+        if price >= high_20:
+            direction = 'long'
+            confidence = 9
+            rationale = "Donchian breakout above 20-period high"
+        elif price <= low_20:
+            direction = 'short'
+            confidence = 9
+            rationale = "Donchian breakdown below 20-period low"
+        else:
+            direction = 'long'
+            confidence = 5
+            rationale = "Price within Donchian channel"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, 0.03, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': price * 1.06 if direction == 'long' else price * 0.94,
+            'stop_loss': low_20 if direction == 'long' else high_20,
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
+class ROC_Bot(BotStrategy):
+    """Rate of Change momentum indicator."""
+    
+    def __init__(self):
+        super().__init__("ROC_Bot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['sma_20', 'sma_50', 'current_price']):
+            return None
+        
+        price = features['current_price']
+        sma_20 = features['sma_20']
+        sma_50 = features['sma_50']
+        
+        # Rate of change proxy
+        roc = ((sma_20 - sma_50) / sma_50) * 100
+        
+        if roc > 5:
+            direction = 'long'
+            confidence = min(10, int(6 + abs(roc) / 2))
+            rationale = f"Strong positive ROC ({roc:.1f}%), momentum building"
+        elif roc < -5:
+            direction = 'short'
+            confidence = min(10, int(6 + abs(roc) / 2))
+            rationale = f"Strong negative ROC ({roc:.1f}%), downward momentum"
+        else:
+            direction = 'long'
+            confidence = 5
+            rationale = "Weak ROC, low momentum"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, abs(roc) / 100, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': price * 1.045 if direction == 'long' else price * 0.955,
+            'stop_loss': price * 0.975 if direction == 'long' else price * 1.025,
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
+class MFI_Bot(BotStrategy):
+    """Money Flow Index (volume-weighted RSI)."""
+    
+    def __init__(self):
+        super().__init__("MFI_Bot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['rsi_14', 'current_price']):
+            return None
+        
+        # Use RSI as proxy for MFI
+        mfi = features['rsi_14']
+        price = features['current_price']
+        
+        if mfi < 20:
+            direction = 'long'
+            confidence = 9
+            rationale = "MFI oversold (<20), buying pressure expected"
+        elif mfi > 80:
+            direction = 'short'
+            confidence = 9
+            rationale = "MFI overbought (>80), selling pressure expected"
+        elif mfi < 35:
+            direction = 'long'
+            confidence = 7
+            rationale = "MFI showing accumulation"
+        elif mfi > 65:
+            direction = 'short'
+            confidence = 7
+            rationale = "MFI showing distribution"
+        else:
+            direction = 'long'
+            confidence = 5
+            rationale = "MFI neutral"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, 0.025, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': price * 1.04 if direction == 'long' else price * 0.96,
+            'stop_loss': price * 0.98 if direction == 'long' else price * 1.02,
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
+class AccDistBot(BotStrategy):
+    """Accumulation/Distribution indicator."""
+    
+    def __init__(self):
+        super().__init__("AccDistBot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['obv', 'current_price']):
+            return None
+        
+        # Use OBV as proxy for Acc/Dist
+        obv = features['obv']
+        price = features['current_price']
+        
+        # Positive OBV = accumulation
+        if obv > 0:
+            direction = 'long'
+            confidence = min(10, int(6 + abs(obv) / 1000))
+            rationale = "Accumulation detected (buying pressure)"
+        else:
+            direction = 'short'
+            confidence = min(10, int(6 + abs(obv) / 1000))
+            rationale = "Distribution detected (selling pressure)"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, 0.02, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': price * 1.035 if direction == 'long' else price * 0.965,
+            'stop_loss': price * 0.98 if direction == 'long' else price * 1.02,
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
+class VolumePriceTrendBot(BotStrategy):
+    """Volume Price Trend indicator."""
+    
+    def __init__(self):
+        super().__init__("VolumePriceTrendBot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['sma_20', 'sma_50', 'obv', 'current_price']):
+            return None
+        
+        price = features['current_price']
+        sma_20 = features['sma_20']
+        sma_50 = features['sma_50']
+        obv = features['obv']
+        
+        # Price trend + volume confirmation
+        price_rising = sma_20 > sma_50
+        volume_confirming = obv > 0
+        
+        if price_rising and volume_confirming:
+            direction = 'long'
+            confidence = 9
+            rationale = "Price uptrend confirmed by volume"
+        elif not price_rising and not volume_confirming:
+            direction = 'short'
+            confidence = 9
+            rationale = "Price downtrend confirmed by volume"
+        else:
+            direction = 'long'
+            confidence = 5
+            rationale = "Price and volume diverging"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, 0.025, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': price * 1.045 if direction == 'long' else price * 0.955,
+            'stop_loss': price * 0.975 if direction == 'long' else price * 1.025,
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
+class FibonacciBot(BotStrategy):
+    """Fibonacci retracement levels."""
+    
+    def __init__(self):
+        super().__init__("FibonacciBot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['sma_20', 'sma_50', 'current_price']):
+            return None
+        
+        price = features['current_price']
+        high = features['sma_20'] * 1.1  # Approximate recent high
+        low = features['sma_50'] * 0.9   # Approximate recent low
+        
+        # Fibonacci levels
+        fib_618 = low + (high - low) * 0.618
+        fib_382 = low + (high - low) * 0.382
+        
+        if price <= fib_382:
+            direction = 'long'
+            confidence = 8
+            rationale = "Price at 38.2% Fibonacci support, bullish rebound"
+        elif price >= fib_618:
+            direction = 'long'
+            confidence = 7
+            rationale = "Price above 61.8% Fibonacci, continuation likely"
+        else:
+            direction = 'long'
+            confidence = 5
+            rationale = "Price between Fibonacci levels"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, 0.03, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': fib_618 if price < fib_618 else high,
+            'stop_loss': fib_382 * 0.97 if direction == 'long' else fib_618 * 1.03,
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
+class PivotPointBot(BotStrategy):
+    """Pivot Points for support/resistance."""
+    
+    def __init__(self):
+        super().__init__("PivotPointBot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['sma_20', 'current_price']):
+            return None
+        
+        price = features['current_price']
+        pivot = features['sma_20']  # Use SMA as pivot proxy
+        
+        # Pivot point calculations
+        r1 = pivot * 1.02
+        s1 = pivot * 0.98
+        
+        if price < s1:
+            direction = 'long'
+            confidence = 8
+            rationale = "Price below S1, oversold bounce expected"
+        elif price > r1:
+            direction = 'short'
+            confidence = 7
+            rationale = "Price above R1, resistance likely"
+        elif price < pivot:
+            direction = 'long'
+            confidence = 6
+            rationale = "Price below pivot, targeting pivot"
+        else:
+            direction = 'long'
+            confidence = 6
+            rationale = "Price above pivot, bullish"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, 0.02, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': r1 if direction == 'long' else s1,
+            'stop_loss': s1 * 0.98 if direction == 'long' else r1 * 1.02,
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
+class IchimokuBot(BotStrategy):
+    """Ichimoku Cloud comprehensive strategy."""
+    
+    def __init__(self):
+        super().__init__("IchimokuBot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['sma_20', 'sma_50', 'current_price']):
+            return None
+        
+        price = features['current_price']
+        tenkan = features['sma_20']  # Conversion line proxy
+        kijun = features['sma_50']   # Base line proxy
+        
+        if price > tenkan and tenkan > kijun:
+            direction = 'long'
+            confidence = 9
+            rationale = "Ichimoku strong bullish (price > cloud)"
+        elif price < tenkan and tenkan < kijun:
+            direction = 'short'
+            confidence = 9
+            rationale = "Ichimoku strong bearish (price < cloud)"
+        else:
+            direction = 'long'
+            confidence = 5
+            rationale = "Ichimoku mixed signals"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, 0.03, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': price * 1.05 if direction == 'long' else price * 0.95,
+            'stop_loss': kijun if direction == 'long' else kijun,
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
+class ZScoreBot(BotStrategy):
+    """Statistical Z-Score mean reversion."""
+    
+    def __init__(self):
+        super().__init__("ZScoreBot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['sma_20', 'sma_50', 'current_price']):
+            return None
+        
+        price = features['current_price']
+        mean = features['sma_50']
+        
+        # Approximate standard deviation
+        std_dev = abs(features['sma_20'] - features['sma_50'])
+        
+        if std_dev == 0:
+            return None
+        
+        z_score = (price - mean) / std_dev
+        
+        if z_score < -2:
+            direction = 'long'
+            confidence = 9
+            rationale = f"Z-score {z_score:.2f} (extremely oversold)"
+        elif z_score > 2:
+            direction = 'short'
+            confidence = 9
+            rationale = f"Z-score {z_score:.2f} (extremely overbought)"
+        elif z_score < -1:
+            direction = 'long'
+            confidence = 7
+            rationale = f"Z-score {z_score:.2f} (oversold)"
+        elif z_score > 1:
+            direction = 'short'
+            confidence = 7
+            rationale = f"Z-score {z_score:.2f} (overbought)"
+        else:
+            direction = 'long'
+            confidence = 5
+            rationale = "Z-score near mean"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, abs(z_score) * 0.01, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': mean if abs(z_score) > 1.5 else price * 1.02,
+            'stop_loss': price * 0.97 if direction == 'long' else price * 1.03,
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
+class LinearRegressionBot(BotStrategy):
+    """Linear Regression channel strategy."""
+    
+    def __init__(self):
+        super().__init__("LinearRegressionBot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['sma_20', 'sma_50', 'current_price']):
+            return None
+        
+        price = features['current_price']
+        sma_20 = features['sma_20']
+        sma_50 = features['sma_50']
+        
+        # Linear trend
+        slope = (sma_20 - sma_50) / 30  # Approximate slope
+        
+        if slope > 0 and price > sma_20:
+            direction = 'long'
+            confidence = 8
+            rationale = "Price above upward regression line"
+        elif slope < 0 and price < sma_20:
+            direction = 'short'
+            confidence = 8
+            rationale = "Price below downward regression line"
+        else:
+            direction = 'long'
+            confidence = 5
+            rationale = "Price deviating from regression"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, abs(slope) * 10, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': price * 1.04 if direction == 'long' else price * 0.96,
+            'stop_loss': sma_20 * 0.98 if direction == 'long' else sma_20 * 1.02,
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
+class TripleMABot(BotStrategy):
+    """Triple Moving Average crossover system."""
+    
+    def __init__(self):
+        super().__init__("TripleMABot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['sma_20', 'sma_50', 'sma_200', 'current_price']):
+            return None
+        
+        price = features['current_price']
+        sma_20 = features['sma_20']
+        sma_50 = features['sma_50']
+        sma_200 = features['sma_200']
+        
+        # All aligned bullish
+        if sma_20 > sma_50 > sma_200 and price > sma_20:
+            direction = 'long'
+            confidence = 10
+            rationale = "Perfect bullish alignment (20>50>200)"
+        # All aligned bearish
+        elif sma_20 < sma_50 < sma_200 and price < sma_20:
+            direction = 'short'
+            confidence = 10
+            rationale = "Perfect bearish alignment (20<50<200)"
+        else:
+            direction = 'long'
+            confidence = 5
+            rationale = "Mixed MA alignment"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, 0.03, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': price * 1.06 if direction == 'long' else price * 0.94,
+            'stop_loss': sma_50 if direction == 'long' else sma_50,
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
+class HeikinAshiBot(BotStrategy):
+    """Heikin-Ashi candle analysis."""
+    
+    def __init__(self):
+        super().__init__("HeikinAshiBot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['sma_20', 'current_price']):
+            return None
+        
+        price = features['current_price']
+        sma = features['sma_20']
+        
+        # Simplified Heikin-Ashi logic: consecutive moves
+        if price > sma * 1.02:
+            direction = 'long'
+            confidence = 8
+            rationale = "Heikin-Ashi showing bullish momentum"
+        elif price < sma * 0.98:
+            direction = 'short'
+            confidence = 8
+            rationale = "Heikin-Ashi showing bearish momentum"
+        else:
+            direction = 'long'
+            confidence = 5
+            rationale = "Heikin-Ashi consolidation"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, 0.02, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': price * 1.035 if direction == 'long' else price * 0.965,
+            'stop_loss': sma if direction == 'long' else sma,
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
+class EnvelopeBot(BotStrategy):
+    """Moving Average Envelopes."""
+    
+    def __init__(self):
+        super().__init__("EnvelopeBot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['sma_20', 'current_price']):
+            return None
+        
+        price = features['current_price']
+        sma = features['sma_20']
+        
+        # Envelope bands
+        upper = sma * 1.05
+        lower = sma * 0.95
+        
+        if price < lower:
+            direction = 'long'
+            confidence = 8
+            rationale = "Price below lower envelope, bounce expected"
+        elif price > upper:
+            direction = 'short'
+            confidence = 7
+            rationale = "Price above upper envelope, reversion expected"
+        else:
+            direction = 'long'
+            confidence = 5
+            rationale = "Price within envelopes"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, 0.025, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': sma if abs(price - sma) / sma > 0.03 else price * 1.02,
+            'stop_loss': price * 0.97 if direction == 'long' else price * 1.03,
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
+class ChaikinOscillatorBot(BotStrategy):
+    """Chaikin Oscillator (Acc/Dist derivative)."""
+    
+    def __init__(self):
+        super().__init__("ChaikinOscillatorBot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['obv', 'current_price']):
+            return None
+        
+        obv = features['obv']
+        price = features['current_price']
+        
+        # Chaikin proxy: OBV momentum
+        if obv > 1000:
+            direction = 'long'
+            confidence = 8
+            rationale = "Chaikin Oscillator positive, buying pressure"
+        elif obv < -1000:
+            direction = 'short'
+            confidence = 8
+            rationale = "Chaikin Oscillator negative, selling pressure"
+        else:
+            direction = 'long'
+            confidence = 5
+            rationale = "Chaikin Oscillator neutral"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, 0.02, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': price * 1.035 if direction == 'long' else price * 0.965,
+            'stop_loss': price * 0.98 if direction == 'long' else price * 1.02,
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
+class AroonBot(BotStrategy):
+    """Aroon indicator for trend identification."""
+    
+    def __init__(self):
+        super().__init__("AroonBot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['sma_20', 'sma_50', 'current_price']):
+            return None
+        
+        price = features['current_price']
+        sma_20 = features['sma_20']
+        sma_50 = features['sma_50']
+        
+        # Aroon Up/Down proxy
+        if sma_20 > sma_50 * 1.03:
+            direction = 'long'
+            confidence = 9
+            rationale = "Aroon Up strong (recent highs), uptrend"
+        elif sma_20 < sma_50 * 0.97:
+            direction = 'short'
+            confidence = 9
+            rationale = "Aroon Down strong (recent lows), downtrend"
+        else:
+            direction = 'long'
+            confidence = 5
+            rationale = "Aroon neutral"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, 0.03, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': price * 1.045 if direction == 'long' else price * 0.955,
+            'stop_loss': price * 0.975 if direction == 'long' else price * 1.025,
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
+class DeMarkerBot(BotStrategy):
+    """DeMarker indicator for exhaustion."""
+    
+    def __init__(self):
+        super().__init__("DeMarkerBot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['rsi_14', 'current_price']):
+            return None
+        
+        # Use RSI as DeMarker proxy
+        demarker = features['rsi_14'] / 100
+        price = features['current_price']
+        
+        if demarker < 0.3:
+            direction = 'long'
+            confidence = 8
+            rationale = "DeMarker showing exhaustion, reversal up expected"
+        elif demarker > 0.7:
+            direction = 'short'
+            confidence = 8
+            rationale = "DeMarker overbought, reversal down expected"
+        else:
+            direction = 'long'
+            confidence = 5
+            rationale = "DeMarker neutral zone"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, 0.025, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': price * 1.035 if direction == 'long' else price * 0.965,
+            'stop_loss': price * 0.98 if direction == 'long' else price * 1.02,
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
+class UltimateOscillatorBot(BotStrategy):
+    """Ultimate Oscillator (multi-timeframe momentum)."""
+    
+    def __init__(self):
+        super().__init__("UltimateOscillatorBot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['rsi_14', 'stoch_k', 'current_price']):
+            return None
+        
+        # Combine multiple oscillators
+        rsi = features['rsi_14']
+        stoch = features['stoch_k']
+        price = features['current_price']
+        
+        ultimate = (rsi + stoch) / 2
+        
+        if ultimate < 30:
+            direction = 'long'
+            confidence = 9
+            rationale = "Ultimate Oscillator oversold, strong buy"
+        elif ultimate > 70:
+            direction = 'short'
+            confidence = 9
+            rationale = "Ultimate Oscillator overbought, strong sell"
+        else:
+            direction = 'long'
+            confidence = 5
+            rationale = "Ultimate Oscillator neutral"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, 0.025, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': price * 1.04 if direction == 'long' else price * 0.96,
+            'stop_loss': price * 0.98 if direction == 'long' else price * 1.02,
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
+class ElderRayBot(BotStrategy):
+    """Elder Ray Index (Bull/Bear Power)."""
+    
+    def __init__(self):
+        super().__init__("ElderRayBot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['ema_13', 'current_price']):
+            return None
+        
+        price = features['current_price']
+        ema = features['ema_13']
+        
+        # Bull Power = High - EMA
+        # Bear Power = Low - EMA
+        bull_power = (price * 1.01) - ema  # Approximate high
+        bear_power = (price * 0.99) - ema  # Approximate low
+        
+        if bull_power > 0 and bear_power > 0:
+            direction = 'long'
+            confidence = 9
+            rationale = "Elder Ray: Both bull and bear power positive"
+        elif bull_power < 0 and bear_power < 0:
+            direction = 'short'
+            confidence = 9
+            rationale = "Elder Ray: Both bull and bear power negative"
+        else:
+            direction = 'long'
+            confidence = 5
+            rationale = "Elder Ray: Mixed signals"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, 0.02, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': price * 1.04 if direction == 'long' else price * 0.96,
+            'stop_loss': ema if direction == 'long' else ema,
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
+class KSTBot(BotStrategy):
+    """Know Sure Thing (KST) momentum oscillator."""
+    
+    def __init__(self):
+        super().__init__("KSTBot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['sma_20', 'sma_50', 'sma_200', 'current_price']):
+            return None
+        
+        price = features['current_price']
+        
+        # KST proxy: weighted ROC combination
+        roc_20 = (features['sma_20'] / price - 1) * 100
+        roc_50 = (features['sma_50'] / price - 1) * 100
+        roc_200 = (features['sma_200'] / price - 1) * 100
+        
+        kst = (roc_20 * 1) + (roc_50 * 2) + (roc_200 * 3)
+        
+        if kst > 5:
+            direction = 'long'
+            confidence = 8
+            rationale = "KST positive, bullish momentum across timeframes"
+        elif kst < -5:
+            direction = 'short'
+            confidence = 8
+            rationale = "KST negative, bearish momentum across timeframes"
+        else:
+            direction = 'long'
+            confidence = 5
+            rationale = "KST neutral"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, abs(kst) / 100, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': price * 1.04 if direction == 'long' else price * 0.96,
+            'stop_loss': price * 0.975 if direction == 'long' else price * 1.025,
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
+class VortexBot(BotStrategy):
+    """Vortex Indicator for trend direction."""
+    
+    def __init__(self):
+        super().__init__("VortexBot")
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        if not all(k in features for k in ['sma_20', 'atr', 'current_price']):
+            return None
+        
+        price = features['current_price']
+        sma = features['sma_20']
+        atr = features['atr']
+        
+        # Vortex proxy: price movement vs ATR
+        vi_plus = abs(price - sma * 0.99) / atr if atr > 0 else 1
+        vi_minus = abs(price - sma * 1.01) / atr if atr > 0 else 1
+        
+        if vi_plus > vi_minus:
+            direction = 'long'
+            confidence = min(10, int(6 + (vi_plus - vi_minus) * 2))
+            rationale = "Vortex indicator bullish (VI+ > VI-)"
+        else:
+            direction = 'short'
+            confidence = min(10, int(6 + (vi_minus - vi_plus) * 2))
+            rationale = "Vortex indicator bearish (VI- > VI+)"
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, atr/price * 2, strength)
+        
+        return {
+            'direction': direction,
+            'entry': price,
+            'take_profit': price * 1.04 if direction == 'long' else price * 0.96,
+            'stop_loss': price * 0.98 if direction == 'long' else price * 1.02,
+            'confidence': confidence,
+            'rationale': rationale,
+            **predictions
+        }
+
+
 # Bot Registry
 ALL_BOTS = [
     SMA_CrossBot(),
