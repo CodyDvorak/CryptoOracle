@@ -7,7 +7,7 @@ import asyncio
 import aiohttp
 import json
 
-API_BASE = "https://smarttrade-ai-42.preview.emergentagent.com/api"
+API_BASE = "https://crypto-oracle-27.preview.emergentagent.com/api"
 
 async def test_invalid_scan_type():
     async with aiohttp.ClientSession() as session:

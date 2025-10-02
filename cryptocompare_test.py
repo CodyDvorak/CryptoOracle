@@ -13,7 +13,7 @@ from pathlib import Path
 
 # Get backend URL from environment
 frontend_env_path = Path(__file__).parent / "frontend" / ".env"
-backend_url = "https://smarttrade-ai-42.preview.emergentagent.com"
+backend_url = "https://crypto-oracle-27.preview.emergentagent.com"
 
 if frontend_env_path.exists():
     with open(frontend_env_path, 'r') as f:

@@ -1,79 +1,82 @@
 <analysis>
-The trajectory details the evolution of the Crypto Oracle application, a full-stack AI trading recommendation tool. The development process began by resolving two critical user-reported bugs: a faulty frontend auto-refresh mechanism and a failing backend email notification system. These were addressed by correcting authentication headers in frontend API calls and refining the notification logic in the backend.
+The trajectory documents the evolution of the Crypto Oracle application, a full-stack AI trading recommendation tool. The development process began by resolving initial user-reported bugs related to frontend auto-refresh and backend email notifications.
 
-Following the bug fixes, the project underwent a massive feature expansion phase driven by user requests. The analytical core was upgraded by increasing the number of trading bots from 21 to 49 and integrating a triple-layer OpenAI (GPT-5) architecture for sentiment analysis, deep coin analysis, and result synthesis. This enhancement introduced significant performance overhead, leading to prolonged scan times.
+Following the bug fixes, the project underwent a significant feature expansion. The core scanning functionality was enhanced by increasing the number of trading bots from 21 to 49. User requests led to the creation of a multi-tiered scanning system, offering a wide array of scan types with varying speeds, depths, and coin counts (from a Quick Scan to All In scans using API pagination). This required a major refactoring of the backend scan orchestrator and a complete UI overhaul, replacing a single scan button with a dynamic, scrollable dropdown menu.
 
-To address the performance degradation, a Smart Scan optimization was implemented, which prioritized analysis and selectively applied the time-intensive AI sentiment layer. Further user feedback led to the development of a multi-tiered scanning system, offering users five distinct scan types with varying speed, depth, and coin counts. This required a major refactoring of the backend scan orchestrator and a complete overhaul of the frontend UI to replace a single scan button with a dynamic dropdown menu. The final interactions involved adding even more scan types, adjusting coin limits, and beginning the implementation of a scheduler update and an all coins scan option.
+Further feature development introduced a scheduler UI allowing users to select a specific scan type for automated runs. A major architectural addition was the implementation of a bot performance tracking system. This system saves individual bot predictions, evaluates their success against market outcomes via a scheduled background job, and uses the resulting performance data to apply weights during recommendation aggregation, creating a self-improving feedback loop. Numerous UI tweaks were made to improve layout, spacing, and readability based on user feedback. The final interactions involved debugging a login issue caused by the new aggregation logic and preparing a detailed analysis for the user on implementing true adaptive intelligence for the bots.
 </analysis>
 
 <product_requirements>
-The Crypto Oracle is a personalized, AI-powered agent designed to provide users with actionable cryptocurrency trading recommendations.
+The Crypto Oracle is a personalized, AI-powered agent providing users with actionable cryptocurrency trading recommendations.
 
-**Core User-Facing Features:**
-*   **Authentication:** Users must register and log in to access the application. All data is user-specific.
-*   **Multi-Tiered Scanning:** Users can choose from several scan types with different performance profiles, from a Quick Scan to a comprehensive Full Scan, each with clear descriptions of what they do.
-*   **AI-Powered Analysis:** The system uses 49 unique AI bots and an integrated OpenAI GPT-5 model to analyze market data from the CryptoCompare API.
-*   **Categorized Results:** After a scan, the app displays the top 5 coins in categories like highest confidence and biggest movers.
-*   **Leverage & Timer:** The UI includes bot-driven leverage recommendations and a real-time timer to track the duration of ongoing scans.
-*   **Automated Notifications:** The system must email a summary of results to the user's registered email after each scan.
-*   **Scan Scheduling & History:** Users can schedule scans to run at intervals and review past scan results on a dedicated history page. The scheduler should allow selecting the desired scan type.
+**Core Features:**
+*   **Authentication:** Users must register and log in to access persistent, user-specific data and settings.
+*   **Multi-Tiered Scanning:** The application offers 15 distinct scan types, ranging from quick scans on a few coins to comprehensive All In scans analyzing over 200 coins via API pagination. Options include variants with and without deep AI analysis and filters for coins under a certain price.
+*   **AI-Powered Analysis:** The system utilizes 49 unique trading bots. Advanced scans integrate an OpenAI GPT-5 model for deep sentiment analysis on top candidates.
+*   **Dynamic Bot Weighting:** A bot performance tracking system monitors the success and failure of each bot's predictions. It dynamically adjusts the weight/influence of each bot in the final recommendation aggregation, allowing the system to learn and improve over time.
+*   **Categorized Results:** After a scan, the app displays the top 8 coins in categories like highest confidence and biggest movers, presented in an improved 4-column card layout.
+*   **Scan Scheduling:** Users can schedule scans to run at set intervals (e.g., 6h, 12h, 24h) and select the desired scan type for each scheduled job.
+*   **Bot Performance Dashboard:** A dedicated page displays the performance metrics of each bot, including accuracy, win/loss ratios, and total predictions made.
 </product_requirements>
 
 <key_technical_concepts>
-- **Backend:** Python (FastAPI), Motor (async MongoDB), APScheduler (scheduling), asyncio (parallel processing).
-- **Frontend:** JavaScript (React), React Context (auth state), Axios (API calls), TailwindCSS.
-- **Database:** MongoDB for user, scan, and recommendation data.
-- **Authentication:** JWT for securing API endpoints.
-- **APIs:** CryptoCompare for market data,  for OpenAI GPT-5 access, SMTP for email.
+- **Backend:** Python (FastAPI), Motor (async MongoDB driver), APScheduler (for background jobs),  (for parallel coin analysis).
+- **Frontend:** JavaScript (React), React Context (for authentication state management), Axios (for API calls), TailwindCSS (for styling).
+- **Database:** MongoDB for storing user data, scan history, recommendations, and bot performance metrics.
+- **Authentication:** JWT for securing API endpoints, with persistence handled via Axios interceptors and localStorage.
+- **APIs:** CryptoCompare for market data,  for OpenAI GPT-5 access.
 </key_technical_concepts>
 
 <code_architecture>
 The application is a monorepo with a React frontend and a FastAPI backend.
 
 
+-   ****
+    -   **Importance:** The core engine of the application. It orchestrates the entire scan lifecycle, from fetching coins to running bots, aggregating results, and now, saving individual bot predictions for the learning system.
+    -   **Summary of Changes:** This file has been massively refactored. It now manages 15 distinct  strategies, handles API pagination to fetch hundreds of coins, and integrates with the new  to collect raw bot results during scans. The  method was made highly configurable to support the various scan permutations (coin count, AI usage, parallelism).
 
 -   ****
-    -   **Importance:** This is the application's core engine. It manages the entire scan lifecycle, from data fetching and filtering to bot execution and result aggregation.
-    -   **Summary of Changes:** This file has been massively refactored. It was modified to handle multiple, distinct  strategies (e.g., , ), each with different parameters for coin count, bot usage, and AI sentiment analysis. Crucially, it was updated to use  to run coin analysis in parallel for faster scan types, significantly improving performance. It also integrates the new .
+    -   **Importance:** The main frontend component, serving as the user dashboard. It manages UI state, user interactions, and API communication for scanning, scheduling, and viewing results.
+    -   **Summary of Changes:** The UI was transformed from a single Run Scan button to a dynamic, scrollable dropdown menu supporting 15 scan types. A scheduler UI was added with a dropdown to select the scan type. The main layout was updated to a 4-column grid for recommendation cards, and numerous CSS classes were adjusted to improve spacing, component sizes, and text wrapping based on user feedback. It now includes navigation to the new Bot Performance Dashboard.
 
 -   ****
-    -   **Importance:** The main and only significant frontend component, serving as the entire user dashboard. It manages all UI state, user interactions, and API communication.
-    -   **Summary of Changes:** The UI was transformed from having a single Run Scan button to a dynamic dropdown menu with tooltips for seven different scan types. State management was added for a real-time scan timer (, ). The initial auto-refresh bug was fixed by ensuring the user's auth token was passed in API headers. Error handling for concurrent scans was also improved to provide clearer user feedback.
+    -   **Importance:** A new service created to implement the bot learning system. It is responsible for saving individual bot predictions, evaluating their outcomes against historical price data, and calculating each bot's performance metrics (accuracy, win/loss ratio).
+    -   **Summary of Changes:** This is a newly created file. It contains the logic to determine if a trade prediction was a success (hit target price) or loss (hit stop loss) and updates the  collection in MongoDB.
 
 -   ****
-    -   **Importance:** Defines the logic for all individual trading analysis bots.
-    -   **Summary of Changes:** The number of bots was expanded from 21 to 49, adding 28 new strategies. A special  was added, which integrates with OpenAI to provide an LLM-based analysis.
+    -   **Importance:** This service aggregates the results from all bots for a single coin to produce a final confidence score and recommendation.
+    -   **Summary of Changes:** This engine was significantly upgraded to be performance-aware. It now fetches the latest performance weights for each bot from the database and uses these weights to calculate a weighted average confidence score, giving more influence to historically accurate bots. The core function  was made  to support this database lookup.
 
 -   ****
-    -   **Importance:** Defines all Pydantic models for API request/response validation and database schemas.
-    -   **Summary of Changes:** The  model was updated to include the new  field, allowing the frontend to specify which scan to run. New  enum values were added as more scan options were created. The  and  models were updated to include a  field.
+    -   **Importance:** Defines all Pydantic models for API validation and database schemas.
+    -   **Summary of Changes:** This file was updated multiple times to support new features. The  enum was expanded to include 15 different scan options.  and  models were updated to include  for the scheduler. Critically, new models like , , and  were added to create the database schema for the bot learning system.
 
 -   ****
-    -   **Importance:** Calculates all technical indicators (e.g., SMA, RSI, MACD) used by the bots.
-    -   **Summary of Changes:** This file was updated to calculate several new indicators (e.g., SMA_200, ADX, EMA_12, EMA_26) that were required by the newly added bot strategies, ensuring all 49 bots could function correctly.
+    -   **Importance:** A new UI component created to display the results of the bot learning system.
+    -   **Summary of Changes:** This new file creates a page that fetches and displays a table of all bots, showing their accuracy, total predictions, wins, and losses. It provides users with transparency into how the system is learning.
 
+-   ****
+    -   **Importance:** A newly created document containing a detailed analysis of implementing true adaptive intelligence for the bots.
+    -   **Summary of Changes:** This file was created at the very end of the trajectory to provide the user with a comprehensive breakdown of options for evolving the bot learning system further, including parameter optimization and reinforcement learning.
 </code_architecture>
 
 <pending_tasks>
-- Add a dropdown selector to the scheduler UI to allow users to select the scan type for scheduled runs.
-- Implement the backend logic to save and execute the chosen scan type for scheduled jobs.
-- Add a new scan type named All In (or similar) that scans all 86 available coins from the API.
-- Ensure email notifications for scheduled scans are working reliably.
+- **Implement Adaptive Intelligence:** The user has been presented with a detailed analysis of adaptive intelligence (e.g., parameter optimization, reinforcement learning). The next step is to get the user's decision on whether to proceed with this advanced feature and, if so, which implementation path to take.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary, the AI engineer was implementing a multi-part user request to enhance the scanning functionality.
+Immediately before this summary request, the AI engineer addressed a critical login issue reported by the user. The investigation revealed a  error caused by a server crash. The crash was traced back to an  in , which was introduced during the recent implementation of the performance-weighting logic.
 
-The user asked to:
-1.  Increase the coin limits for existing scan types.
-2.  Add a new option to scan ALL available coins (86).
-3.  Add a dropdown selector to the scheduler to choose the scan type for automated runs.
+The engineer performed the following actions:
+1.  Identified the  in the backend logs ().
+2.  Located and corrected the faulty code in  by removing a duplicate line.
+3.  Restarted the backend service using backend: stopped
+backend: started.
+4.  Verified that the login endpoint was now responsive, albeit returning an expected Invalid username or password for a test user.
 
-The engineer had just completed the backend work for the first two items. The  file was modified to update the coin limits for existing scan types like Full Scan and Quick Scan. A new scan strategy method, , was added to handle the scan all coins request.
-
-The last action was editing  to add this new method. The next logical steps would be to add this new scan type to the  enum, update  to recognize it, and then begin the frontend work for the new scan button and the scheduler UI update.
+After resolving the critical bug, the engineer was in the process of providing the user with a detailed analysis on implementing Adaptive Intelligence for the bots. A comprehensive document, , was created to outline the benefits, challenges, and implementation options for making the bots themselves learn and adapt their strategies, going beyond the current weight-based system. The last action was creating this file and preparing to present a summary of it to the user.
 </current_work>
 
 <optional_next_step>
-I will add the new scan types, including the All In option, to the  enum in  to ensure the backend API can validate and recognize them.
+Present the summary of the  document and ask the user for a decision on how to proceed with implementing true adaptive intelligence for the bots.
 </optional_next_step>
