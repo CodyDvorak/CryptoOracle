@@ -2467,6 +2467,7 @@ ALL_BOTS = [
     ElderRayBot(),
     KSTBot(),
     VortexBot(),
+    AIAnalystBot(),  # Layer 2: AI-powered bot using ChatGPT-5
 ]
 
 def get_all_bots():
