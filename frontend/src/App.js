@@ -566,6 +566,15 @@ function App() {
                   <span className="hidden sm:inline">History</span>
                 </Button>
                 
+                <Button
+                  onClick={() => navigate('/bot-performance')}
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <Activity className="w-4 h-4" />
+                  <span className="hidden sm:inline">Bot Performance</span>
+                </Button>
+                
                 <div className="relative group">
                   <Button variant="outline" className="gap-2">
                     <User className="w-4 h-4" />
