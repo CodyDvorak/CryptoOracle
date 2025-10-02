@@ -734,7 +734,7 @@ function App() {
                 <div className="mb-2 text-sm text-[var(--muted)]">
                   Highest AI confidence scores - Best overall signal quality
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
                   {topConfidence.map((rec, index) => (
                     <CoinRecommendationCard 
                       key={rec.id || index}
