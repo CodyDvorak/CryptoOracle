@@ -121,9 +121,9 @@ export const CoinRecommendationCard = ({ recommendation, rank, runId }) => {
               padding: 0.01,
               cornerRadius: 2,
               subArcs: [
-                { limit: 3, color: 'var(--danger)' },
-                { limit: 6, color: 'var(--warning)' },
-                { limit: 10, color: 'var(--primary)' }
+                { limit: 30, color: 'var(--danger)' },      // 1-3 = 10-30%
+                { limit: 65, color: 'var(--warning)' },     // 3.1-6.5 = 31-65%
+                { limit: 100, color: 'var(--success)' }     // 6.6-10 = 66-100%
               ]
             }}
             value={(avg_confidence / 10) * 100}
