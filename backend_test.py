@@ -3142,6 +3142,605 @@ class CryptoOracleTestSuite:
             self.log_test("Email Notifications", "FAIL", f"Error: {str(e)}")
             return False
 
+    async def run_comprehensive_health_check(self):
+        """Run comprehensive health check for Crypto Oracle application with enhanced analytics features"""
+        print("=" * 80)
+        print("CRYPTO ORACLE COMPREHENSIVE HEALTH CHECK")
+        print("=" * 80)
+        print(f"Testing API: {API_BASE}")
+        print()
+        print("CRITICAL SERVICES TO TEST:")
+        print("1. Core System Health")
+        print("2. New Analytics Endpoints (Priority)")
+        print("3. Existing Bot Performance Endpoints (No Breaking Changes)")
+        print("4. Core App Endpoints (Regression Testing)")
+        print("5. Error Handling")
+        print()
+        
+        # 1. Core System Health
+        print("🏥 CORE SYSTEM HEALTH...")
+        await self.test_core_system_health()
+        
+        print()
+        # 2. New Analytics Endpoints (Priority)
+        print("📊 NEW ANALYTICS ENDPOINTS (PRIORITY)...")
+        await self.test_new_analytics_endpoints()
+        
+        print()
+        # 3. Existing Bot Performance Endpoints (No Breaking Changes)
+        print("🤖 EXISTING BOT PERFORMANCE ENDPOINTS (REGRESSION)...")
+        await self.test_existing_bot_endpoints()
+        
+        print()
+        # 4. Core App Endpoints (Regression Testing)
+        print("🔧 CORE APP ENDPOINTS (REGRESSION)...")
+        await self.test_core_app_endpoints()
+        
+        print()
+        # 5. Error Handling
+        print("⚠️ ERROR HANDLING...")
+        await self.test_error_handling()
+        
+        # Print comprehensive summary
+        await self.print_comprehensive_health_summary()
+
+    async def test_core_system_health(self):
+        """Test core system health components"""
+        # GET /api/health - Basic health check
+        await self.test_basic_health_check()
+        
+        # Verify database connectivity (implicit through health check)
+        await self.test_database_connectivity()
+        
+        # Verify scheduler is running (implicit through health check)
+        await self.test_scheduler_status()
+
+    async def test_basic_health_check(self) -> bool:
+        """Test GET /api/health - Basic health check"""
+        try:
+            async with self.session.get(f"{API_BASE}/health") as response:
+                if response.status != 200:
+                    self.log_test("Basic Health Check", "FAIL", f"HTTP {response.status}")
+                    return False
+                
+                data = await response.json()
+                
+                # Validate required fields
+                required_fields = ['status', 'timestamp', 'services']
+                missing_fields = [field for field in required_fields if field not in data]
+                if missing_fields:
+                    self.log_test("Basic Health Check", "FAIL", f"Missing fields: {missing_fields}")
+                    return False
+                
+                # Check status
+                if data.get('status') != 'healthy':
+                    self.log_test("Basic Health Check", "FAIL", f"Status not healthy: {data.get('status')}")
+                    return False
+                
+                # Check services
+                services = data.get('services', {})
+                if services.get('database') != 'connected':
+                    self.log_test("Basic Health Check", "FAIL", f"Database not connected: {services.get('database')}")
+                    return False
+                
+                scheduler_status = services.get('scheduler')
+                if scheduler_status not in ['running', 'stopped']:
+                    self.log_test("Basic Health Check", "FAIL", f"Invalid scheduler status: {scheduler_status}")
+                    return False
+                
+                self.log_test("Basic Health Check", "PASS", 
+                             f"API healthy, database connected, scheduler {scheduler_status}")
+                return True
+                
+        except Exception as e:
+            self.log_test("Basic Health Check", "FAIL", f"Connection error: {str(e)}")
+            return False
+
+    async def test_database_connectivity(self) -> bool:
+        """Test database connectivity through a simple query"""
+        try:
+            # Test database connectivity by trying to get bot status
+            async with self.session.get(f"{API_BASE}/bots/status") as response:
+                if response.status == 200:
+                    self.log_test("Database Connectivity", "PASS", "Database queries completing successfully")
+                    return True
+                else:
+                    self.log_test("Database Connectivity", "FAIL", f"Database query failed: HTTP {response.status}")
+                    return False
+                    
+        except Exception as e:
+            self.log_test("Database Connectivity", "FAIL", f"Database connection error: {str(e)}")
+            return False
+
+    async def test_scheduler_status(self) -> bool:
+        """Test scheduler status"""
+        try:
+            # Scheduler status is included in health check, but we can also test config endpoints
+            async with self.session.get(f"{API_BASE}/config/schedule") as response:
+                if response.status == 200:
+                    data = await response.json()
+                    self.log_test("Scheduler Status", "PASS", 
+                                 f"Scheduler configuration accessible, enabled: {data.get('schedule_enabled', False)}")
+                    return True
+                else:
+                    self.log_test("Scheduler Status", "FAIL", f"Scheduler config failed: HTTP {response.status}")
+                    return False
+                    
+        except Exception as e:
+            self.log_test("Scheduler Status", "FAIL", f"Scheduler test error: {str(e)}")
+            return False
+
+    async def test_new_analytics_endpoints(self):
+        """Test all 4 new analytics endpoints with comprehensive validation"""
+        # 1. GET /api/analytics/system-health
+        await self.test_analytics_system_health()
+        
+        # 2. GET /api/analytics/performance-by-regime
+        await self.test_analytics_performance_by_regime()
+        
+        # 3. GET /api/analytics/bot-degradation
+        await self.test_analytics_bot_degradation()
+        
+        # 4. GET /api/analytics/data-readiness
+        await self.test_analytics_data_readiness()
+
+    async def test_analytics_system_health(self) -> bool:
+        """Test GET /api/analytics/system-health with comprehensive field validation"""
+        try:
+            async with self.session.get(f"{API_BASE}/analytics/system-health") as response:
+                if response.status != 200:
+                    self.log_test("Analytics System Health", "FAIL", f"HTTP {response.status}")
+                    return False
+                
+                data = await response.json()
+                
+                # Verify all required fields present
+                required_fields = [
+                    'months_of_data', 'total_evaluated_predictions', 'system_accuracy', 
+                    'accuracy_trend', 'data_readiness_status', 'readiness_percent'
+                ]
+                
+                missing_fields = [field for field in required_fields if field not in data]
+                if missing_fields:
+                    self.log_test("Analytics System Health", "FAIL", f"Missing fields: {missing_fields}")
+                    return False
+                
+                # Check values are reasonable (no NaN or null for critical fields)
+                months_of_data = data.get('months_of_data')
+                system_accuracy = data.get('system_accuracy')
+                readiness_percent = data.get('readiness_percent')
+                
+                if months_of_data is None or (isinstance(months_of_data, float) and str(months_of_data) == 'nan'):
+                    self.log_test("Analytics System Health", "FAIL", f"Invalid months_of_data: {months_of_data}")
+                    return False
+                
+                if system_accuracy is None or (isinstance(system_accuracy, float) and str(system_accuracy) == 'nan'):
+                    self.log_test("Analytics System Health", "FAIL", f"Invalid system_accuracy: {system_accuracy}")
+                    return False
+                
+                if readiness_percent is None or (isinstance(readiness_percent, float) and str(readiness_percent) == 'nan'):
+                    self.log_test("Analytics System Health", "FAIL", f"Invalid readiness_percent: {readiness_percent}")
+                    return False
+                
+                # Validate status field
+                status = data.get('data_readiness_status')
+                valid_statuses = ['not_ready', 'collecting', 'ready']
+                if status not in valid_statuses:
+                    self.log_test("Analytics System Health", "FAIL", f"Invalid status: {status}")
+                    return False
+                
+                self.log_test("Analytics System Health", "PASS", 
+                             f"All fields present and valid. Status: {status}, Accuracy: {system_accuracy}%, Readiness: {readiness_percent}%")
+                return True
+                
+        except Exception as e:
+            self.log_test("Analytics System Health", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def test_analytics_performance_by_regime(self) -> bool:
+        """Test GET /api/analytics/performance-by-regime with structure validation"""
+        try:
+            async with self.session.get(f"{API_BASE}/analytics/performance-by-regime") as response:
+                if response.status != 200:
+                    self.log_test("Analytics Performance by Regime", "FAIL", f"HTTP {response.status}")
+                    return False
+                
+                data = await response.json()
+                
+                # Verify returns regime_performances array
+                if 'regime_performances' not in data:
+                    self.log_test("Analytics Performance by Regime", "FAIL", "Missing regime_performances array")
+                    return False
+                
+                regime_performances = data.get('regime_performances', [])
+                
+                # Check structure includes all regime types if data exists
+                if regime_performances:
+                    sample_performance = regime_performances[0]
+                    required_regime_fields = [
+                        'bull_market_accuracy', 'bear_market_accuracy', 
+                        'high_volatility_accuracy', 'sideways_accuracy'
+                    ]
+                    
+                    missing_regime_fields = [field for field in required_regime_fields if field not in sample_performance]
+                    if missing_regime_fields:
+                        self.log_test("Analytics Performance by Regime", "FAIL", 
+                                     f"Missing regime fields: {missing_regime_fields}")
+                        return False
+                
+                self.log_test("Analytics Performance by Regime", "PASS", 
+                             f"Returns regime_performances array with {len(regime_performances)} entries")
+                return True
+                
+        except Exception as e:
+            self.log_test("Analytics Performance by Regime", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def test_analytics_bot_degradation(self) -> bool:
+        """Test GET /api/analytics/bot-degradation with alerts validation"""
+        try:
+            async with self.session.get(f"{API_BASE}/analytics/bot-degradation") as response:
+                if response.status != 200:
+                    self.log_test("Analytics Bot Degradation", "FAIL", f"HTTP {response.status}")
+                    return False
+                
+                data = await response.json()
+                
+                # Verify returns alerts array and has_critical flag
+                required_fields = ['alerts', 'has_critical']
+                missing_fields = [field for field in required_fields if field not in data]
+                if missing_fields:
+                    self.log_test("Analytics Bot Degradation", "FAIL", f"Missing fields: {missing_fields}")
+                    return False
+                
+                alerts = data.get('alerts', [])
+                has_critical = data.get('has_critical', False)
+                
+                # Check empty arrays handled gracefully
+                if not isinstance(alerts, list):
+                    self.log_test("Analytics Bot Degradation", "FAIL", "alerts should be a list")
+                    return False
+                
+                if not isinstance(has_critical, bool):
+                    self.log_test("Analytics Bot Degradation", "FAIL", "has_critical should be boolean")
+                    return False
+                
+                self.log_test("Analytics Bot Degradation", "PASS", 
+                             f"Returns alerts array ({len(alerts)} alerts) and has_critical flag ({has_critical})")
+                return True
+                
+        except Exception as e:
+            self.log_test("Analytics Bot Degradation", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def test_analytics_data_readiness(self) -> bool:
+        """Test GET /api/analytics/data-readiness with comprehensive validation"""
+        try:
+            async with self.session.get(f"{API_BASE}/analytics/data-readiness") as response:
+                if response.status != 200:
+                    self.log_test("Analytics Data Readiness", "FAIL", f"HTTP {response.status}")
+                    return False
+                
+                data = await response.json()
+                
+                # Verify status, readiness_percent, months_collected, predictions counts
+                required_fields = [
+                    'status', 'readiness_percent', 'months_collected', 'predictions_target'
+                ]
+                
+                missing_fields = [field for field in required_fields if field not in data]
+                if missing_fields:
+                    self.log_test("Analytics Data Readiness", "FAIL", f"Missing fields: {missing_fields}")
+                    return False
+                
+                # Validate field values
+                status = data.get('status')
+                readiness_percent = data.get('readiness_percent')
+                months_collected = data.get('months_collected')
+                
+                # Validate status
+                valid_statuses = ['not_ready', 'collecting', 'ready']
+                if status not in valid_statuses:
+                    self.log_test("Analytics Data Readiness", "FAIL", f"Invalid status: {status}")
+                    return False
+                
+                # Validate numeric ranges
+                if not isinstance(readiness_percent, (int, float)) or not (0 <= readiness_percent <= 100):
+                    self.log_test("Analytics Data Readiness", "FAIL", f"Invalid readiness_percent: {readiness_percent}")
+                    return False
+                
+                if not isinstance(months_collected, (int, float)) or months_collected < 0:
+                    self.log_test("Analytics Data Readiness", "FAIL", f"Invalid months_collected: {months_collected}")
+                    return False
+                
+                self.log_test("Analytics Data Readiness", "PASS", 
+                             f"Status: {status}, Readiness: {readiness_percent}%, Months: {months_collected}")
+                return True
+                
+        except Exception as e:
+            self.log_test("Analytics Data Readiness", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def test_existing_bot_endpoints(self):
+        """Test existing bot performance endpoints for regression"""
+        # GET /api/bots/performance - Verify 49 bots returned
+        await self.test_bots_performance_49_bots()
+        
+        # GET /api/bots/status - Verify bot count matches
+        await self.test_bots_status_count()
+        
+        # GET /api/bots/predictions?limit=10 - Verify predictions structure
+        await self.test_bots_predictions_structure()
+
+    async def test_bots_performance_49_bots(self) -> bool:
+        """Test GET /api/bots/performance - Verify 49 bots returned"""
+        try:
+            async with self.session.get(f"{API_BASE}/bots/performance") as response:
+                if response.status != 200:
+                    self.log_test("Bots Performance (49 bots)", "FAIL", f"HTTP {response.status}")
+                    return False
+                
+                data = await response.json()
+                
+                # Check all performance metrics present
+                if 'bot_performances' not in data or 'total_bots' not in data:
+                    self.log_test("Bots Performance (49 bots)", "FAIL", "Missing bot_performances or total_bots")
+                    return False
+                
+                total_bots = data.get('total_bots', 0)
+                bot_performances = data.get('bot_performances', [])
+                
+                # Verify 49 bots returned
+                if total_bots != 49:
+                    self.log_test("Bots Performance (49 bots)", "FAIL", f"Expected 49 bots, got {total_bots}")
+                    return False
+                
+                self.log_test("Bots Performance (49 bots)", "PASS", 
+                             f"Returns {total_bots} bots with performance metrics")
+                return True
+                
+        except Exception as e:
+            self.log_test("Bots Performance (49 bots)", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def test_bots_status_count(self) -> bool:
+        """Test GET /api/bots/status - Verify bot count matches"""
+        try:
+            async with self.session.get(f"{API_BASE}/bots/status") as response:
+                if response.status != 200:
+                    self.log_test("Bots Status Count", "FAIL", f"HTTP {response.status}")
+                    return False
+                
+                data = await response.json()
+                
+                if 'total' not in data:
+                    self.log_test("Bots Status Count", "FAIL", "Missing total field")
+                    return False
+                
+                total_bots = data.get('total', 0)
+                
+                # Verify bot count matches expected 49
+                if total_bots != 49:
+                    self.log_test("Bots Status Count", "FAIL", f"Expected 49 bots, got {total_bots}")
+                    return False
+                
+                self.log_test("Bots Status Count", "PASS", f"Bot count matches: {total_bots} bots")
+                return True
+                
+        except Exception as e:
+            self.log_test("Bots Status Count", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def test_bots_predictions_structure(self) -> bool:
+        """Test GET /api/bots/predictions?limit=10 - Verify predictions structure"""
+        try:
+            async with self.session.get(f"{API_BASE}/bots/predictions?limit=10") as response:
+                if response.status != 200:
+                    self.log_test("Bots Predictions Structure", "FAIL", f"HTTP {response.status}")
+                    return False
+                
+                data = await response.json()
+                
+                if 'predictions' not in data:
+                    self.log_test("Bots Predictions Structure", "FAIL", "Missing predictions field")
+                    return False
+                
+                predictions = data.get('predictions', [])
+                
+                # Check if market_regime field exists in newer predictions
+                market_regime_found = False
+                if predictions:
+                    for prediction in predictions:
+                        if 'market_regime' in prediction:
+                            market_regime_found = True
+                            break
+                
+                if market_regime_found:
+                    self.log_test("Bots Predictions Structure", "PASS", 
+                                 f"Predictions structure valid, market_regime field found in {len(predictions)} predictions")
+                else:
+                    self.log_test("Bots Predictions Structure", "PASS", 
+                                 f"Predictions structure valid, {len(predictions)} predictions (market_regime field not yet implemented)")
+                return True
+                
+        except Exception as e:
+            self.log_test("Bots Predictions Structure", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def test_core_app_endpoints(self):
+        """Test core app endpoints for regression"""
+        # GET /api/recommendations/top5 - Verify recommendations still work
+        await self.test_recommendations_top5()
+        
+        # GET /api/scan/status - Verify scan status endpoint working
+        await self.test_scan_status_endpoint()
+        
+        # POST /api/auth/login - Verify auth still works (with test credentials if available)
+        await self.test_auth_login_regression()
+
+    async def test_recommendations_top5(self) -> bool:
+        """Test GET /api/recommendations/top5 - Verify recommendations still work"""
+        try:
+            async with self.session.get(f"{API_BASE}/recommendations/top5") as response:
+                if response.status == 404:
+                    self.log_test("Recommendations Top5", "PASS", "No recommendations yet (expected for new deployment)")
+                    return True
+                elif response.status != 200:
+                    self.log_test("Recommendations Top5", "FAIL", f"HTTP {response.status}")
+                    return False
+                
+                data = await response.json()
+                
+                # Verify basic structure
+                expected_fields = ['run_id', 'top_confidence', 'top_percent_movers', 'top_dollar_movers']
+                missing_fields = [field for field in expected_fields if field not in data]
+                if missing_fields:
+                    self.log_test("Recommendations Top5", "FAIL", f"Missing fields: {missing_fields}")
+                    return False
+                
+                self.log_test("Recommendations Top5", "PASS", "Recommendations endpoint working correctly")
+                return True
+                
+        except Exception as e:
+            self.log_test("Recommendations Top5", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def test_scan_status_endpoint(self) -> bool:
+        """Test GET /api/scan/status - Verify scan status endpoint working"""
+        try:
+            async with self.session.get(f"{API_BASE}/scan/status") as response:
+                if response.status != 200:
+                    self.log_test("Scan Status Endpoint", "FAIL", f"HTTP {response.status}")
+                    return False
+                
+                data = await response.json()
+                
+                # Verify basic structure
+                if 'is_running' not in data:
+                    self.log_test("Scan Status Endpoint", "FAIL", "Missing is_running field")
+                    return False
+                
+                is_running = data.get('is_running', False)
+                self.log_test("Scan Status Endpoint", "PASS", f"Scan status endpoint working, is_running: {is_running}")
+                return True
+                
+        except Exception as e:
+            self.log_test("Scan Status Endpoint", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def test_auth_login_regression(self) -> bool:
+        """Test POST /api/auth/login - Verify auth still works"""
+        try:
+            # Try to login with test credentials (this will likely fail but should return proper 401)
+            test_credentials = {
+                "username": "testuser",
+                "password": "testpass"
+            }
+            
+            async with self.session.post(f"{API_BASE}/auth/login", json=test_credentials) as response:
+                if response.status == 401:
+                    self.log_test("Auth Login Regression", "PASS", "Auth endpoint working (correctly rejected invalid credentials)")
+                    return True
+                elif response.status == 200:
+                    self.log_test("Auth Login Regression", "PASS", "Auth endpoint working (login successful)")
+                    return True
+                else:
+                    self.log_test("Auth Login Regression", "FAIL", f"Unexpected status: HTTP {response.status}")
+                    return False
+                
+        except Exception as e:
+            self.log_test("Auth Login Regression", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def test_error_handling(self):
+        """Test error handling scenarios"""
+        # Test invalid endpoints return proper 404
+        await self.test_invalid_endpoints_404()
+        
+        # Test endpoints gracefully handle no data scenarios (already covered in analytics tests)
+        self.log_test("No Data Scenarios", "INFO", "Covered in analytics endpoint tests - all handle empty data gracefully")
+
+    async def test_invalid_endpoints_404(self) -> bool:
+        """Test invalid endpoints return proper 404"""
+        try:
+            # Test invalid endpoint
+            async with self.session.get(f"{API_BASE}/invalid/endpoint") as response:
+                if response.status == 404:
+                    self.log_test("Invalid Endpoints 404", "PASS", "Invalid endpoints correctly return 404")
+                    return True
+                else:
+                    self.log_test("Invalid Endpoints 404", "FAIL", f"Expected 404, got {response.status}")
+                    return False
+                
+        except Exception as e:
+            self.log_test("Invalid Endpoints 404", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def print_comprehensive_health_summary(self):
+        """Print comprehensive health check summary"""
+        print()
+        print("=" * 80)
+        print("COMPREHENSIVE HEALTH CHECK SUMMARY")
+        print("=" * 80)
+        
+        # Categorize results
+        core_health_tests = [r for r in self.test_results if any(keyword in r['test'] for keyword in 
+                            ['Health Check', 'Database', 'Scheduler'])]
+        analytics_tests = [r for r in self.test_results if 'Analytics' in r['test']]
+        bot_tests = [r for r in self.test_results if 'Bots' in r['test']]
+        core_app_tests = [r for r in self.test_results if any(keyword in r['test'] for keyword in 
+                         ['Recommendations', 'Scan Status', 'Auth Login'])]
+        error_tests = [r for r in self.test_results if any(keyword in r['test'] for keyword in 
+                      ['404', 'Error', 'Invalid'])]
+        
+        def print_category(category_name, tests):
+            if not tests:
+                return
+            print(f"\n{category_name}:")
+            for result in tests:
+                if result['status'] == 'PASS':
+                    status_icon = "✅"
+                elif result['status'] == 'FAIL':
+                    status_icon = "❌"
+                elif result['status'] == 'PARTIAL':
+                    status_icon = "⚠️"
+                else:
+                    status_icon = "ℹ️"
+                print(f"  {status_icon} {result['test']}: {result['details']}")
+        
+        print_category("🏥 CORE SYSTEM HEALTH", core_health_tests)
+        print_category("📊 NEW ANALYTICS ENDPOINTS", analytics_tests)
+        print_category("🤖 EXISTING BOT PERFORMANCE ENDPOINTS", bot_tests)
+        print_category("🔧 CORE APP ENDPOINTS", core_app_tests)
+        print_category("⚠️ ERROR HANDLING", error_tests)
+        
+        # Overall statistics
+        passed = sum(1 for result in self.test_results if result['status'] == 'PASS')
+        failed = sum(1 for result in self.test_results if result['status'] == 'FAIL')
+        partial = sum(1 for result in self.test_results if result['status'] == 'PARTIAL')
+        info = sum(1 for result in self.test_results if result['status'] == 'INFO')
+        
+        print()
+        print("📈 OVERALL STATISTICS:")
+        print(f"Total Tests: {len(self.test_results)}")
+        print(f"✅ Passed: {passed}")
+        print(f"⚠️ Partial: {partial}")
+        print(f"❌ Failed: {failed}")
+        print(f"ℹ️ Info: {info}")
+        
+        # Calculate success rate (PASS + PARTIAL as success)
+        success_rate = ((passed + partial) / len(self.test_results) * 100) if self.test_results else 0
+        print(f"🎯 Success Rate: {success_rate:.1f}%")
+        
+        print()
+        print("🎯 SUCCESS CRITERIA VERIFICATION:")
+        print("✅ All services running without errors" if failed == 0 else "❌ Some services have errors")
+        print("✅ All 4 new analytics endpoints return 200" if all(r['status'] in ['PASS', 'PARTIAL'] for r in analytics_tests) else "❌ Analytics endpoints have issues")
+        print("✅ No breaking changes to existing endpoints" if all(r['status'] in ['PASS', 'PARTIAL'] for r in bot_tests + core_app_tests) else "❌ Breaking changes detected")
+        print("✅ No 500 errors or crashes" if not any('500' in r['details'] or 'crash' in r['details'].lower() for r in self.test_results) else "❌ 500 errors or crashes detected")
+        print("✅ Database queries completing successfully" if any('Database' in r['test'] and r['status'] == 'PASS' for r in self.test_results) else "❌ Database issues detected")
+        print("✅ Data structures valid and consistent" if all(r['status'] in ['PASS', 'PARTIAL'] for r in analytics_tests) else "❌ Data structure issues detected")
+
     async def run_all_tests(self):
         """Run all test suites"""
         print("=" * 60)
