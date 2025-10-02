@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { Button } from './ui/button';
-import { RefreshCw, TrendingUp, TrendingDown, Target, Award } from 'lucide-react';
+import { RefreshCw, TrendingUp, TrendingDown, Target, Award, ArrowLeft } from 'lucide-react';
 
 const API = process.env.REACT_APP_BACKEND_URL || '';
 
 const BotPerformanceDashboard = () => {
+  const navigate = useNavigate();
   const [performances, setPerformances] = useState([]);
   const [loading, setLoading] = useState(true);
   const [evaluating, setEvaluating] = useState(false);
