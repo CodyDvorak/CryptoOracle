@@ -171,21 +171,23 @@ class ScanOrchestrator:
                 tokens = [t for t in tokens if t[2] <= max_price]
                 logger.info(f"Applied price filter: max_price=${max_price}")
             
-            # 3. Select tokens to analyze (try more to account for data availability)
+            # 3. Select tokens to analyze (configurable based on scan type)
             if custom_symbols:
                 # Custom scan: analyze all selected symbols
-                selected_tokens = tokens[:50]  # Limit even custom scans
+                selected_tokens = tokens[:min(max_coins, 50)]  # Limit even custom scans
                 logger.info(f"Custom scan: analyzing {len(selected_tokens)} tokens")
             else:
-                # Take top 80 by market cap to ensure we get enough valid results
-                # (many coins lack sufficient historical data)
-                selected_tokens = tokens[:80]
+                # Take top N by market cap (configurable)
+                selected_tokens = tokens[:max_coins]
                 logger.info(f"Analyzing top {len(selected_tokens)} coins by market cap")
             
             scan_run.total_coins = len(selected_tokens)
             
-            # 🚀 PASS 1: Fast bot analysis (NO SENTIMENT) for ALL coins
-            logger.info(f"⚡ PASS 1: Fast analysis of {len(selected_tokens)} coins (NO sentiment - speed optimization)")
+            # 🚀 PASS 1: Fast bot analysis (conditional sentiment based on scan type)
+            if skip_sentiment:
+                logger.info(f"⚡ PASS 1: Fast analysis of {len(selected_tokens)} coins (NO AI - speed mode)")
+            else:
+                logger.info(f"⚡ PASS 1: Fast analysis of {len(selected_tokens)} coins (AI on top candidates)")
             all_aggregated_results = []
             
             for symbol, display_name, current_price in selected_tokens:
