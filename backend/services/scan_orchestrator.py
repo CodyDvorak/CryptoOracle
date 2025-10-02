@@ -818,6 +818,23 @@ class ScanOrchestrator:
                         if 'predicted_7d' not in result:
                             result['predicted_7d'] = current_price
                         
+                        # Calculate leverage if not provided by bot
+                        if 'recommended_leverage' not in result:
+                            # Default leverage based on confidence and stop loss distance
+                            confidence = result['confidence']
+                            entry = result['entry']
+                            stop_loss = result['stop_loss']
+                            sl_distance = abs(entry - stop_loss) / entry
+                            
+                            # Simple leverage calculation
+                            base_leverage = confidence  # 1-10 based on confidence
+                            if sl_distance < 0.03:  # Tight SL
+                                base_leverage *= 0.7
+                            elif sl_distance > 0.10:  # Wide SL
+                                base_leverage *= 0.6
+                            
+                            result['recommended_leverage'] = max(1.0, min(20.0, round(base_leverage, 1)))
+                        
                         # Save bot result to DB
                         bot_result = BotResult(
                             run_id=run_id,
@@ -829,6 +846,7 @@ class ScanOrchestrator:
                             stop_loss=result['stop_loss'],
                             confidence=result['confidence'],
                             rationale=result['rationale'],
+                            recommended_leverage=result.get('recommended_leverage', 5.0),
                             predicted_24h=result.get('predicted_24h'),
                             predicted_48h=result.get('predicted_48h'),
                             predicted_7d=result.get('predicted_7d')
