@@ -3893,6 +3893,8 @@ async def main():
                 await test_suite.test_multi_tiered_scan_types()
             elif sys.argv[1] == "--analytics":
                 await test_suite.test_analytics_endpoints()
+            elif sys.argv[1] == "--health-check":
+                await test_suite.run_comprehensive_health_check()
             else:
                 await test_suite.run_all_tests()
         else:
