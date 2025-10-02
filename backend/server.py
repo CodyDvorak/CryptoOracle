@@ -862,6 +862,19 @@ async def scheduled_scan_job():
         logger.error(f"Scheduled scan error: {e}")
 
 
+async def evaluate_bot_predictions_job():
+    """Daily job function to evaluate pending bot predictions."""
+    logger.info("🤖 Starting daily bot prediction evaluation...")
+    
+    try:
+        result = await scan_orchestrator.bot_performance_service.evaluate_predictions(hours_old=24)
+        
+        logger.info(f"✅ Bot evaluation complete: {result}")
+    
+    except Exception as e:
+        logger.error(f"Bot evaluation error: {e}")
+
+
 async def track_outcomes_job():
     """Job function to track outcomes for pending recommendations."""
     logger.info("Starting scheduled outcome tracking")
