@@ -612,9 +612,9 @@ function App() {
               </Button>
               
               {showScanMenu && (
-                <div className="absolute right-0 mt-2 w-80 bg-[var(--surface)] border border-[var(--card-border)] rounded-lg shadow-xl z-50">
+                <div className="absolute right-0 mt-2 w-80 bg-[var(--surface)] border border-[var(--card-border)] rounded-lg shadow-xl z-50 max-h-[70vh] overflow-y-auto">
                   <div className="p-2">
-                    <div className="text-sm font-semibold text-[var(--text)] mb-2 px-2">Choose Scan Type</div>
+                    <div className="text-sm font-semibold text-[var(--text)] mb-2 px-2 sticky top-0 bg-[var(--surface)] z-10 pb-2">Choose Scan Type</div>
                     {Object.entries(scanTypes).map(([key, config]) => (
                       <button
                         key={key}
