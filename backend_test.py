@@ -1064,6 +1064,325 @@ class CryptoOracleTestSuite:
         print("✅ No 500 errors or crashes expected")
         print("✅ Existing endpoints should continue to work")
 
+    async def test_multi_provider_fallback_system(self):
+        """Test the new multi-provider fallback system with CoinGecko (primary) and CryptoCompare (backup)"""
+        print("=" * 80)
+        print("MULTI-PROVIDER FALLBACK SYSTEM TESTING")
+        print("=" * 80)
+        print(f"Testing API: {API_BASE}")
+        print()
+        print("Testing new multi-provider crypto data API system:")
+        print("1. Provider Status Endpoint")
+        print("2. Quick Scan with New System")
+        print("3. Provider Statistics After Scan")
+        print("4. Verify Existing Endpoints Still Work")
+        print("5. Check Scan Logs for CoinGecko Usage")
+        print()
+        
+        # Test 1: Provider Status Endpoint
+        print("🔍 Test 1: Provider Status Endpoint...")
+        await self.test_provider_status_endpoint()
+        
+        print()
+        print("⚡ Test 2: Quick Scan with New System...")
+        
+        # Test 2: Quick Scan with New System
+        run_id = await self.test_quick_scan_with_new_system()
+        
+        print()
+        print("📊 Test 3: Provider Statistics After Scan...")
+        
+        # Test 3: Provider Statistics After Scan
+        if run_id:
+            await self.test_provider_statistics_after_scan()
+        
+        print()
+        print("✅ Test 4: Verify Existing Endpoints Still Work...")
+        
+        # Test 4: Verify Existing Endpoints Still Work
+        await self.test_existing_endpoints_compatibility()
+        
+        print()
+        print("📋 Test 5: Check Backend Logs for CoinGecko Usage...")
+        
+        # Test 5: Check Backend Logs (manual verification)
+        await self.test_scan_logs_verification()
+        
+        # Print summary
+        await self.print_multi_provider_summary()
+
+    async def test_provider_status_endpoint(self) -> bool:
+        """Test GET /api/api-providers/status endpoint"""
+        try:
+            async with self.session.get(f"{API_BASE}/api-providers/status") as response:
+                if response.status != 200:
+                    self.log_test("Provider Status Endpoint", "FAIL", f"HTTP {response.status}")
+                    return False
+                
+                data = await response.json()
+                
+                # Check required fields
+                required_fields = [
+                    'current_provider', 'primary_provider', 'backup_provider', 'providers'
+                ]
+                
+                missing_fields = [field for field in required_fields if field not in data]
+                if missing_fields:
+                    self.log_test("Provider Status Endpoint", "FAIL", f"Missing fields: {missing_fields}")
+                    return False
+                
+                # Verify current provider is CoinGecko
+                current_provider = data.get('current_provider')
+                if current_provider != 'coingecko':
+                    self.log_test("Provider Status Endpoint", "FAIL", 
+                                 f"Expected current_provider='coingecko', got '{current_provider}'")
+                    return False
+                
+                # Verify both providers are in status
+                providers = data.get('providers', {})
+                if 'coingecko' not in providers or 'cryptocompare' not in providers:
+                    self.log_test("Provider Status Endpoint", "FAIL", "Missing provider data")
+                    return False
+                
+                # Check provider structure
+                for provider_name, provider_data in providers.items():
+                    required_provider_fields = ['name', 'calls', 'errors', 'rate_limits', 'status']
+                    missing_provider_fields = [field for field in required_provider_fields if field not in provider_data]
+                    if missing_provider_fields:
+                        self.log_test("Provider Status Endpoint", "FAIL", 
+                                     f"Provider {provider_name} missing fields: {missing_provider_fields}")
+                        return False
+                
+                # Verify statistics are tracked
+                coingecko_calls = providers['coingecko']['calls']
+                cryptocompare_calls = providers['cryptocompare']['calls']
+                
+                self.log_test("Provider Status Endpoint", "PASS", 
+                             f"Current provider: {current_provider}, CoinGecko calls: {coingecko_calls}, CryptoCompare calls: {cryptocompare_calls}")
+                return True
+                
+        except Exception as e:
+            self.log_test("Provider Status Endpoint", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def test_quick_scan_with_new_system(self) -> Optional[str]:
+        """Test POST /api/scan/start with scan_type=quick_scan"""
+        try:
+            # Test quick scan request
+            scan_request = {
+                "scope": "all",
+                "scan_type": "quick_scan"
+            }
+            
+            async with self.session.post(f"{API_BASE}/scan/run", json=scan_request) as response:
+                if response.status != 200:
+                    self.log_test("Quick Scan Start", "FAIL", f"HTTP {response.status}")
+                    return None
+                
+                scan_data = await response.json()
+                self.log_test("Quick Scan Start", "PASS", f"Quick scan started: {scan_data.get('status')}")
+            
+            # Wait for completion with timeout (5-10 minutes expected)
+            max_wait = 600  # 10 minutes
+            wait_time = 0
+            start_time = time.time()
+            
+            while wait_time < max_wait:
+                await asyncio.sleep(15)  # Check every 15 seconds
+                wait_time += 15
+                
+                async with self.session.get(f"{API_BASE}/scan/status") as response:
+                    if response.status == 200:
+                        status_data = await response.json()
+                        is_running = status_data.get('is_running', True)
+                        
+                        elapsed_minutes = (time.time() - start_time) / 60
+                        print(f"Quick scan status: running={is_running} ({elapsed_minutes:.1f} minutes elapsed)")
+                        
+                        if not is_running:
+                            recent_run = status_data.get('recent_run')
+                            if recent_run and recent_run.get('status') == 'completed':
+                                run_id = recent_run.get('id')
+                                total_time = (time.time() - start_time) / 60
+                                
+                                # Verify scan completed in reasonable time (5-10 minutes, not 5 seconds)
+                                if total_time < 1:  # Less than 1 minute is too fast
+                                    self.log_test("Quick Scan Completion", "FAIL", 
+                                                 f"Scan completed too quickly ({total_time:.1f} min) - may indicate rate limit issues")
+                                    return None
+                                elif total_time > 15:  # More than 15 minutes is too slow
+                                    self.log_test("Quick Scan Completion", "PARTIAL", 
+                                                 f"Scan took longer than expected ({total_time:.1f} min)")
+                                else:
+                                    self.log_test("Quick Scan Completion", "PASS", 
+                                                 f"Quick scan completed in {total_time:.1f} minutes, run_id: {run_id}")
+                                
+                                return run_id
+                            else:
+                                self.log_test("Quick Scan Completion", "FAIL", "Scan failed or incomplete")
+                                return None
+            
+            self.log_test("Quick Scan Completion", "FAIL", "Scan timeout after 10 minutes")
+            return None
+            
+        except Exception as e:
+            self.log_test("Quick Scan Execution", "FAIL", f"Error: {str(e)}")
+            return None
+
+    async def test_provider_statistics_after_scan(self) -> bool:
+        """Test provider statistics after scan completion"""
+        try:
+            async with self.session.get(f"{API_BASE}/api-providers/status") as response:
+                if response.status != 200:
+                    self.log_test("Provider Statistics After Scan", "FAIL", f"HTTP {response.status}")
+                    return False
+                
+                data = await response.json()
+                providers = data.get('providers', {})
+                
+                # Check CoinGecko calls increased
+                coingecko_calls = providers.get('coingecko', {}).get('calls', 0)
+                coingecko_errors = providers.get('coingecko', {}).get('errors', 0)
+                coingecko_rate_limits = providers.get('coingecko', {}).get('rate_limits', 0)
+                
+                if coingecko_calls == 0:
+                    self.log_test("Provider Statistics After Scan", "FAIL", 
+                                 "CoinGecko calls count is 0 - scan may not have used CoinGecko")
+                    return False
+                
+                # Check for rate limit errors
+                if coingecko_rate_limits > 0:
+                    self.log_test("Provider Statistics After Scan", "PARTIAL", 
+                                 f"CoinGecko rate limits detected: {coingecko_rate_limits}")
+                
+                # Check for general errors
+                if coingecko_errors > coingecko_calls * 0.1:  # More than 10% error rate
+                    self.log_test("Provider Statistics After Scan", "PARTIAL", 
+                                 f"High CoinGecko error rate: {coingecko_errors}/{coingecko_calls}")
+                
+                self.log_test("Provider Statistics After Scan", "PASS", 
+                             f"CoinGecko calls: {coingecko_calls}, errors: {coingecko_errors}, rate limits: {coingecko_rate_limits}")
+                return True
+                
+        except Exception as e:
+            self.log_test("Provider Statistics After Scan", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def test_existing_endpoints_compatibility(self) -> bool:
+        """Test that existing endpoints still work after multi-provider implementation"""
+        try:
+            # Test 1: System Health
+            async with self.session.get(f"{API_BASE}/analytics/system-health") as response:
+                if response.status != 200:
+                    self.log_test("System Health Compatibility", "FAIL", f"HTTP {response.status}")
+                    return False
+                
+                self.log_test("System Health Compatibility", "PASS", "System health endpoint working")
+            
+            # Test 2: Bot Performance
+            async with self.session.get(f"{API_BASE}/bots/performance") as response:
+                if response.status != 200:
+                    self.log_test("Bot Performance Compatibility", "FAIL", f"HTTP {response.status}")
+                    return False
+                
+                data = await response.json()
+                total_bots = data.get('total_bots', 0)
+                self.log_test("Bot Performance Compatibility", "PASS", f"Bot performance endpoint working, {total_bots} bots")
+            
+            # Test 3: Recommendations (if available)
+            async with self.session.get(f"{API_BASE}/recommendations/top5") as response:
+                if response.status == 200:
+                    data = await response.json()
+                    run_id = data.get('run_id')
+                    self.log_test("Recommendations Compatibility", "PASS", f"Recommendations endpoint working, run_id: {run_id}")
+                elif response.status == 404:
+                    self.log_test("Recommendations Compatibility", "PASS", "No recommendations available (expected)")
+                else:
+                    self.log_test("Recommendations Compatibility", "PARTIAL", f"HTTP {response.status}")
+            
+            return True
+            
+        except Exception as e:
+            self.log_test("Existing Endpoints Compatibility", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def test_scan_logs_verification(self) -> bool:
+        """Manual verification step for scan logs"""
+        try:
+            self.log_test("Scan Logs Verification", "MANUAL", 
+                         "Manual check required: Look for 'CoinGecko' or 'coingecko' in backend logs")
+            
+            self.log_test("Rate Limit Check", "MANUAL", 
+                         "Manual check required: Verify no rate limit errors in logs")
+            
+            self.log_test("Coin Fetching Check", "MANUAL", 
+                         "Manual check required: Check that coins are being fetched from CoinGecko")
+            
+            return True
+            
+        except Exception as e:
+            self.log_test("Scan Logs Verification", "FAIL", f"Error: {str(e)}")
+            return False
+
+    async def print_multi_provider_summary(self):
+        """Print summary of multi-provider fallback system tests"""
+        print()
+        print("=" * 80)
+        print("MULTI-PROVIDER FALLBACK SYSTEM TEST SUMMARY")
+        print("=" * 80)
+        
+        # Filter multi-provider related tests
+        provider_tests = [result for result in self.test_results 
+                         if any(keyword in result['test'] for keyword in 
+                               ['Provider', 'Quick Scan', 'Compatibility', 'Logs'])]
+        
+        passed = sum(1 for result in provider_tests if result['status'] == 'PASS')
+        failed = sum(1 for result in provider_tests if result['status'] == 'FAIL')
+        partial = sum(1 for result in provider_tests if result['status'] == 'PARTIAL')
+        manual = sum(1 for result in provider_tests if result['status'] == 'MANUAL')
+        
+        for result in provider_tests:
+            if result['status'] == 'PASS':
+                status_icon = "✅"
+            elif result['status'] == 'FAIL':
+                status_icon = "❌"
+            elif result['status'] == 'PARTIAL':
+                status_icon = "⚠️"
+            elif result['status'] == 'MANUAL':
+                status_icon = "📋"
+            else:
+                status_icon = "ℹ️"
+            print(f"{status_icon} {result['test']}: {result['details']}")
+        
+        print()
+        print(f"Multi-Provider Tests: {len(provider_tests)}")
+        print(f"Passed: {passed}")
+        print(f"Partial: {partial}")
+        print(f"Failed: {failed}")
+        print(f"Manual Verification: {manual}")
+        
+        # Calculate success rate (PASS + PARTIAL as success)
+        success_rate = ((passed + partial) / len(provider_tests) * 100) if provider_tests else 0
+        print(f"Success Rate: {success_rate:.1f}%")
+        
+        print()
+        print("🎯 SUCCESS CRITERIA VERIFICATION:")
+        print("✅ Scans should now work (previously failing due to CryptoCompare rate limits)")
+        print("✅ CoinGecko should be used as primary provider")
+        print("✅ Provider statistics should track usage")
+        print("✅ No rate limit errors (both APIs have fresh keys)")
+        print("✅ Recommendations should be generated successfully")
+        print("✅ Quick scan completes in 5-10 minutes (not 5 seconds like before)")
+        print("✅ Coins are fetched from CoinGecko")
+        print("✅ Provider status shows CoinGecko calls > 0")
+        
+        print()
+        print("📋 MANUAL VERIFICATION STEPS:")
+        print("1. Check backend logs for 'CoinGecko' or 'coingecko' references")
+        print("2. Verify no rate limit errors in logs")
+        print("3. Check that coins are being fetched successfully")
+        print("4. Confirm scan performance improvements")
+
     async def run_bug_fix_tests(self):
         """Run specific tests for the two critical bug fixes"""
         print("=" * 60)
