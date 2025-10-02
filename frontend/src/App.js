@@ -659,7 +659,7 @@ function App() {
       </nav>
       
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
