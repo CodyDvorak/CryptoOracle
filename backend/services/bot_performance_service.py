@@ -87,18 +87,24 @@ class BotPerformanceService:
             logger.error(f"Error classifying market regime: {e}")
             return "sideways"  # Default to sideways on error
     
-    async def save_bot_predictions(self, run_id: str, user_id: Optional[str], bot_results: List[Dict]) -> int:
+    async def save_bot_predictions(self, run_id: str, user_id: Optional[str], bot_results: List[Dict], market_regime: str = None) -> int:
         """Save individual bot predictions for a scan.
         
         Args:
             run_id: Scan run ID
             user_id: User who initiated the scan
             bot_results: List of bot result dictionaries from scan
+            market_regime: Current market regime (will classify if not provided)
             
         Returns:
             Number of predictions saved
         """
         try:
+            # Classify market regime if not provided
+            if market_regime is None:
+                market_regime = await self.classify_market_regime()
+                logger.info(f"📊 Market regime classified: {market_regime}")
+            
             predictions = []
             
             for bot_result in bot_results:
