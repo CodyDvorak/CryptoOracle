@@ -84,6 +84,8 @@ class ScanOrchestrator:
                 return await self._run_quick_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id)
             elif scan_type == 'focused_scan':
                 return await self._run_focused_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id)
+            elif scan_type == 'focused_ai':
+                return await self._run_focused_ai_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id)
             elif scan_type == 'fast_parallel':
                 return await self._run_fast_parallel_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id)
             elif scan_type == 'full_scan_lite':
