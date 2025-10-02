@@ -9,9 +9,11 @@ logger = logging.getLogger(__name__)
 class CryptoCompareClient:
     """CryptoCompare API client for crypto market data (free, generous limits)."""
     
-    def __init__(self):
+    def __init__(self, api_key: Optional[str] = None):
         self.base_url = 'https://min-api.cryptocompare.com/data'
+        self.api_key = api_key
         self.session: Optional[aiohttp.ClientSession] = None
+        self.provider_name = "CryptoCompare"
     
     async def _get_session(self):
         if self.session is None or self.session.closed:
