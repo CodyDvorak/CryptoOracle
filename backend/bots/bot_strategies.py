@@ -138,23 +138,26 @@ class SMA_CrossBot(BotStrategy):
         tp_pct = 0.03 + volatility * 2
         sl_pct = 0.015 + volatility
         
-        # Calculate predicted prices
-        strength = confidence / 10.0
-        predictions = self._calculate_predicted_prices(price, direction, volatility * 10, strength)
-        
+        entry = price
+        stop_loss = price * (1 - sl_pct) if direction == 'long' else price * (1 + sl_pct)
         
         # Calculate predicted prices
         strength = confidence / 10.0
         volatility_factor = 0.02  # Default 2% volatility
         predictions = self._calculate_predicted_prices(price, direction, volatility_factor, strength)
         
+        # Calculate recommended leverage
+        sentiment_score = features.get('sentiment_score', 5)
+        leverage = self._calculate_leverage(confidence, entry, stop_loss, volatility_factor, sentiment_score)
+        
         return {
             'direction': direction,
-            'entry': price,
+            'entry': entry,
             'take_profit': price * (1 + tp_pct) if direction == 'long' else price * (1 - tp_pct),
-            'stop_loss': price * (1 - sl_pct) if direction == 'long' else price * (1 + sl_pct),
+            'stop_loss': stop_loss,
             'confidence': confidence,
             'rationale': f"SMA20 {'above' if direction == 'long' else 'below'} SMA50, indicating {direction} trend",
+            'recommended_leverage': leverage,
             **predictions
         }
 
