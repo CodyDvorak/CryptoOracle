@@ -61,6 +61,7 @@ class BotResult(BaseModel):
     stop_loss: float
     confidence: int  # 1-10
     rationale: str
+    recommended_leverage: Optional[float] = 5.0  # Recommended leverage (1x-20x)
     predicted_24h: Optional[float] = None
     predicted_48h: Optional[float] = None
     predicted_7d: Optional[float] = None
