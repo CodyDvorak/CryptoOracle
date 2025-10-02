@@ -208,20 +208,23 @@ class ScanOrchestrator:
             # 🎯 Identify top candidates for sentiment analysis
             logger.info("🎯 Identifying top candidates for sentiment analysis...")
             
-            # Get preliminary top 5 lists
-            top_5_confidence = self.aggregation_engine.get_top_n(all_aggregated_results, n=5)
-            top_5_percent = self.aggregation_engine.get_top_percent_movers(all_aggregated_results, n=5)
-            top_5_dollar = self.aggregation_engine.get_top_dollar_movers(all_aggregated_results, n=5)
-            
-            # Collect unique top candidates
-            top_candidates = set()
-            for rec in top_5_confidence + top_5_percent + top_5_dollar:
-                top_candidates.add(rec.get('coin'))
-            
-            logger.info(f"📊 Top {len(top_candidates)} candidates identified: {list(top_candidates)}")
-            
-            # 🔮 PASS 2: Sentiment analysis ONLY on top candidates
-            logger.info(f"⚡ PASS 2: Enhanced analysis with sentiment for {len(top_candidates)} top candidates")
+            # 🔮 PASS 2: Sentiment analysis ONLY on top candidates (skip if skip_sentiment=True)
+            if not skip_sentiment:
+                # Get preliminary top 5 lists
+                top_5_confidence = self.aggregation_engine.get_top_n(all_aggregated_results, n=5)
+                top_5_percent = self.aggregation_engine.get_top_percent_movers(all_aggregated_results, n=5)
+                top_5_dollar = self.aggregation_engine.get_top_dollar_movers(all_aggregated_results, n=5)
+                
+                # Collect unique top candidates
+                top_candidates = set()
+                for rec in top_5_confidence + top_5_percent + top_5_dollar:
+                    top_candidates.add(rec.get('coin'))
+                
+                logger.info(f"📊 Top {len(top_candidates)} candidates identified: {list(top_candidates)}")
+                logger.info(f"⚡ PASS 2: Enhanced analysis with sentiment for {len(top_candidates)} top candidates")
+            else:
+                logger.info(f"⚡ PASS 2: SKIPPED (speed mode - no AI sentiment)")
+                top_candidates = set()
             
             for result in all_aggregated_results:
                 coin_name = result.get('coin')
