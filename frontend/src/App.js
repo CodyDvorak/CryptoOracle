@@ -74,22 +74,22 @@ function App() {
     quick_scan: {
       label: '⚡ Quick Scan',
       icon: '⚡',
-      tooltip: '40 coins, 49 bots, NO AI\n~5 minutes\nBest for: Fast technical analysis'
+      tooltip: '40 coins, 49 bots, NO AI\n~6 minutes\nBest for: Fast technical analysis'
     },
     focused_scan: {
       label: '🎯 Focused Scan',
       icon: '🎯',
-      tooltip: '40 coins, 49 bots, AI on top 15\n~12 minutes\nBest for: Quality over quantity'
+      tooltip: '20 top coins, 49 bots, NO AI\n~15 minutes\nBest for: Top coins only'
     },
     fast_parallel: {
       label: '🚀 Fast Parallel',
       icon: '🚀',
-      tooltip: '80 coins, 49 bots, AI optimized\n~12 minutes\nBest for: Balanced speed & coverage'
+      tooltip: '40 coins parallel, 49 bots, NO AI\n~10 minutes\nBest for: Balanced speed'
     },
     full_scan: {
       label: '📊 Full Scan',
       icon: '📊',
-      tooltip: '80 coins, 49 bots, Full AI\n~40 minutes\nBest for: Comprehensive analysis'
+      tooltip: '80 coins, 49 bots, Full AI\n~60 minutes\nBest for: Comprehensive + AI'
     },
     speed_run: {
       label: '💨 Speed Run',
