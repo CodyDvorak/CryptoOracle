@@ -234,7 +234,7 @@ function App() {
       
       // Start polling with a more robust approach
       let pollCount = 0;
-      const maxPolls = 60; // 5 minutes max (60 * 5 seconds)
+      const maxPolls = 240; // 20 minutes max (240 * 5 seconds) - increased for Smart Scan with LLM
       let pollIntervalId = null;
       
       const pollScanStatus = async () => {
