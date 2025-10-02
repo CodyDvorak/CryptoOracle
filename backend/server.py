@@ -517,29 +517,48 @@ async def get_bot_details(run_id: str, coin_symbol: str):
 
 @api_router.get("/bots/status")
 async def get_bots_status():
-    """Get status of all 50 bots (including AIAnalystBot with ChatGPT-5)."""
+    """Get status of all 49 bots (including AIAnalystBot with ChatGPT-5)."""
     from bots.bot_strategies import get_all_bots
     
     bots = get_all_bots()
     statuses = []
     
+    # Check if we have any recent scan runs to determine if bots are active
+    recent_scan = await db.scan_runs.find_one(
+        {'status': 'completed'},
+        sort=[('completed_at', -1)]
+    )
+    
+    # Check if we have any bot predictions (shows bots are working)
+    recent_predictions = await db.bot_predictions.find_one(
+        {},
+        sort=[('timestamp', -1)]
+    )
+    
     for bot in bots:
-        # Check if bot has recent results
-        recent_result = await db.bot_results.find_one(
-            {'bot_name': bot.name},
-            sort=[('created_at', -1)]
+        # Check if this specific bot has made any predictions
+        bot_has_predictions = await db.bot_predictions.find_one(
+            {'bot_name': bot.name}
         )
         
         status = {
             'bot_name': bot.name,
-            'status': 'running' if recent_result else 'idle',
-            'last_run': recent_result['created_at'].isoformat() if recent_result else None,
-            'latency_ms': None
+            'status': 'active' if bot_has_predictions else 'ready',
+            'last_run': recent_scan['completed_at'].isoformat() if recent_scan else None,
+            'total_predictions': await db.bot_predictions.count_documents({'bot_name': bot.name}) if bot_has_predictions else 0
         }
         
         statuses.append(status)
     
-    return {"bots": statuses, "total": len(statuses)}
+    # Calculate active count (bots that have made predictions)
+    active_count = sum(1 for s in statuses if s['status'] == 'active')
+    
+    return {
+        "bots": statuses, 
+        "total": len(statuses),
+        "active": active_count,
+        "ready": len(statuses) - active_count
+    }
 
 
 
