@@ -516,7 +516,7 @@ async def get_bot_details(run_id: str, coin_symbol: str):
 
 @api_router.get("/bots/status")
 async def get_bots_status():
-    """Get status of all 20 bots."""
+    """Get status of all 50 bots (including AIAnalystBot with ChatGPT-5)."""
     from bots.bot_strategies import get_all_bots
     
     bots = get_all_bots()
