@@ -2262,13 +2262,23 @@ class AIAnalystBot(BotStrategy):
             from emergentintegrations.llm.chat import LlmChat, UserMessage
             import asyncio
             
-            # Run async analysis
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(self._async_analysis(features))
-            loop.close()
-            
-            return result
+            # Check if there's already a running event loop
+            try:
+                loop = asyncio.get_running_loop()
+                # We're in an async context, create a task and wait for it
+                # Use asyncio.ensure_future to schedule the coroutine
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(asyncio.run, self._async_analysis(features))
+                    result = future.result(timeout=10)  # 10 second timeout
+                return result
+            except RuntimeError:
+                # No running loop, create one
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                result = loop.run_until_complete(self._async_analysis(features))
+                loop.close()
+                return result
             
         except Exception as e:
             logger.error(f"AIAnalystBot failed: {e}")
