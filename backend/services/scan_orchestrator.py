@@ -644,7 +644,7 @@ class ScanOrchestrator:
                 return None
             
             # 6. Aggregate results
-            aggregated = self.aggregation_engine.aggregate_coin_results(display_name, bot_results, current_price)
+            aggregated = await self.aggregation_engine.aggregate_coin_results(display_name, bot_results, current_price)
             
             # 7. Add AI insights to aggregated results if available
             if features.get('trader_grade', 0) > 0:
@@ -750,7 +750,7 @@ class ScanOrchestrator:
                 return None
             
             # 5. Aggregate results
-            aggregated = self.aggregation_engine.aggregate_coin_results(display_name, bot_results, current_price)
+            aggregated = await self.aggregation_engine.aggregate_coin_results(display_name, bot_results, current_price)
             
             # 6. Optional: LLM synthesis
             try:
@@ -866,7 +866,7 @@ class ScanOrchestrator:
                 return None
             
             # 6. Aggregate results
-            aggregated = self.aggregation_engine.aggregate_coin_results(display_name, bot_results, current_price)
+            aggregated = await self.aggregation_engine.aggregate_coin_results(display_name, bot_results, current_price)
             
             # 7. Add AI insights to aggregated results
             aggregated['trader_grade'] = trader_grade
@@ -1113,7 +1113,7 @@ class ScanOrchestrator:
             logger.info(f"🤖 Layer 2 complete for {symbol}: {len(bot_results)}/49 bots analyzed")
             
             # 5. Aggregate results
-            aggregated = self.aggregation_engine.aggregate_coin_results(display_name, bot_results, current_price)
+            aggregated = await self.aggregation_engine.aggregate_coin_results(display_name, bot_results, current_price)
             
             # 📝 LAYER 3: LLM Synthesis (CONDITIONAL - Basic for Pass 1, Enhanced for Pass 2)
             try:
@@ -1233,7 +1233,7 @@ class ScanOrchestrator:
                 return None
             
             # 5. Aggregate results
-            aggregated = self.aggregation_engine.aggregate_coin_results(symbol, bot_results, current_price)
+            aggregated = await self.aggregation_engine.aggregate_coin_results(symbol, bot_results, current_price)
             
             # 6. Optional: LLM synthesis
             try:
@@ -1363,7 +1363,7 @@ class ScanOrchestrator:
                 return None
             
             # 4. Aggregate results
-            aggregated = self.aggregation_engine.aggregate_coin_results(coin, bot_results, current_price)
+            aggregated = await self.aggregation_engine.aggregate_coin_results(coin, bot_results, current_price)
             
             # 5. Optional: LLM synthesis (if time permits)
             # This adds enhanced rationale but is not critical for MVP
