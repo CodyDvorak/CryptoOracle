@@ -611,7 +611,7 @@ function App() {
                 <p className="text-[var(--muted)] mb-4">
                   Run your first scan to get AI-powered price predictions from 21 diverse bots analyzing TokenMetrics data.
                 </p>
-                <Button onClick={runScan} className="gap-2">
+                <Button onClick={() => runScan(selectedScanType)} className="gap-2">
                   <Play className="w-4 h-4" />
                   Run First Scan
                 </Button>
