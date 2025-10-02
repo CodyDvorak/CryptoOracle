@@ -82,6 +82,11 @@ function App() {
       icon: '🎯',
       tooltip: '20 top coins, 49 bots, NO AI\n~15 minutes\nBest for: Top coins only'
     },
+    focused_ai: {
+      label: '🎯🤖 Focused AI',
+      icon: '🎯🤖',
+      tooltip: '20 top coins, 49 bots, AI on all 20\n~25-28 minutes\nBest for: Deep analysis of top coins'
+    },
     fast_parallel: {
       label: '🚀 Fast Parallel',
       icon: '🚀',
