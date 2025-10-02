@@ -2875,8 +2875,8 @@ async def main():
             else:
                 await test_suite.run_all_tests()
         else:
-            # Default: run Multi-Tiered Scan Types tests (as requested in review)
-            await test_suite.test_multi_tiered_scan_types()
+            # Default: run Comprehensive End-to-End tests (as requested in review)
+            await test_suite.test_comprehensive_end_to_end()
 
 if __name__ == "__main__":
     asyncio.run(main())
