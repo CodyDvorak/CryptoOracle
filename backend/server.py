@@ -695,6 +695,44 @@ async def get_data_readiness():
         "system_accuracy": health['system_accuracy']
     }
 
+
+@api_router.get("/api-providers/status")
+async def get_provider_status():
+    """Get status and statistics for crypto data API providers.
+    
+    Shows:
+    - Current active provider
+    - Primary and backup providers
+    - Usage statistics for each provider
+    - Error and rate limit counts
+    """
+    stats = scan_orchestrator.crypto_client.get_stats()
+    
+    return {
+        "current_provider": stats['current_provider'],
+        "primary_provider": stats['primary_provider'],
+        "backup_provider": stats['backup_provider'],
+        "providers": {
+            "coingecko": {
+                "name": "CoinGecko",
+                "calls": stats['stats']['coingecko']['calls'],
+                "errors": stats['stats']['coingecko']['errors'],
+                "rate_limits": stats['stats']['coingecko']['rate_limits'],
+                "status": "active" if stats['current_provider'] == 'coingecko' else "standby"
+            },
+            "cryptocompare": {
+                "name": "CryptoCompare",
+                "calls": stats['stats']['cryptocompare']['calls'],
+                "errors": stats['stats']['cryptocompare']['errors'],
+                "rate_limits": stats['stats']['cryptocompare']['rate_limits'],
+                "status": "active" if stats['current_provider'] == 'cryptocompare' else "standby"
+            }
+        },
+        "total_calls": sum(p['calls'] for p in stats['stats'].values()),
+        "total_errors": sum(p['errors'] for p in stats['stats'].values()),
+        "total_rate_limits": sum(p['rate_limits'] for p in stats['stats'].values())
+    }
+
 @api_router.post("/bots/evaluate")
 async def trigger_evaluation(hours_old: int = 24):
     """Manually trigger evaluation of pending predictions.
