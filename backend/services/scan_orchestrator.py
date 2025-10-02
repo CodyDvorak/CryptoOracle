@@ -45,6 +45,10 @@ class ScanOrchestrator:
         - complete_market_scan: 86 coins, 49 bots, optimized, ~9 min
         - speed_run: 40 coins, 25 best bots only, ~3 min
         - full_scan: 86 coins smart optimization (default), ~65 min
+        - all_in: 200-300 coins with pagination, 49 bots, parallel, ~20 min
+        - all_in_under_5: 200-300 coins under $5, 49 bots, parallel, ~12 min
+        - all_in_lite: 100 coins, 49 bots, parallel, ~9-11 min
+        - all_in_under_5_lite: 100 coins under $5, 49 bots, parallel, ~5-7 min
         
         Args:
             filter_scope: 'all' or 'alt' (exclude major coins) or 'custom'
@@ -88,6 +92,14 @@ class ScanOrchestrator:
                 return await self._run_complete_market_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id)
             elif scan_type == 'speed_run':
                 return await self._run_speed_run_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id)
+            elif scan_type == 'all_in':
+                return await self._run_all_in_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id)
+            elif scan_type == 'all_in_under_5':
+                return await self._run_all_in_under_5_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id)
+            elif scan_type == 'all_in_lite':
+                return await self._run_all_in_lite_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id)
+            elif scan_type == 'all_in_under_5_lite':
+                return await self._run_all_in_under_5_lite_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id)
             else:  # full_scan (default)
                 return await self._run_full_scan(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id)
         except Exception as e:
