@@ -1058,9 +1058,15 @@ class ScanOrchestrator:
             
             # 🤖 LAYER 2: Run all 49 bots
             bot_results = []
+            bot_count = 0
             
             for bot in self.bots:
                 try:
+                    # Yield to event loop every 5 bots to prevent blocking
+                    bot_count += 1
+                    if bot_count % 5 == 0:
+                        await asyncio.sleep(0)  # Allow other tasks to run
+                    
                     result = bot.analyze(features)
                     if result:
                         # Ensure predicted prices exist
