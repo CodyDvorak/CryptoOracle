@@ -713,8 +713,17 @@ async def get_provider_status():
         "primary_provider": stats['primary_provider'],
         "backup_provider": stats['backup_provider'],
         "providers": {
+            "coinmarketcap": {
+                "name": "CoinMarketCap",
+                "role": "Primary",
+                "calls": stats['stats']['coinmarketcap']['calls'],
+                "errors": stats['stats']['coinmarketcap']['errors'],
+                "rate_limits": stats['stats']['coinmarketcap']['rate_limits'],
+                "status": "active" if stats['current_provider'] == 'coinmarketcap' else "standby"
+            },
             "coingecko": {
                 "name": "CoinGecko",
+                "role": "Backup",
                 "calls": stats['stats']['coingecko']['calls'],
                 "errors": stats['stats']['coingecko']['errors'],
                 "rate_limits": stats['stats']['coingecko']['rate_limits'],
@@ -722,6 +731,7 @@ async def get_provider_status():
             },
             "cryptocompare": {
                 "name": "CryptoCompare",
+                "role": "Tertiary",
                 "calls": stats['stats']['cryptocompare']['calls'],
                 "errors": stats['stats']['cryptocompare']['errors'],
                 "rate_limits": stats['stats']['cryptocompare']['rate_limits'],
