@@ -1047,6 +1047,17 @@ class ScanOrchestrator:
             # Ensure current price is accurate
             features['current_price'] = current_price
             
+            # 🎯 PHASE 2: Classify market regime
+            regime_data = self.market_regime.classify_regime(candles, features)
+            market_regime = regime_data['regime']
+            regime_confidence = regime_data['confidence']
+            
+            logger.info(f"📊 {symbol} Market Regime: {market_regime} (confidence: {regime_confidence:.2f})")
+            
+            # Add regime to features for bot access
+            features['market_regime'] = market_regime
+            features['regime_confidence'] = regime_confidence
+            
             # 🔮 LAYER 1: Pre-Analysis Sentiment (CONDITIONAL - Skip in Pass 1)
             if not skip_sentiment:
                 try:
