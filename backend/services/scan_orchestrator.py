@@ -1091,7 +1091,19 @@ class ScanOrchestrator:
                     if bot_count % 5 == 0:
                         await asyncio.sleep(0)  # Allow other tasks to run
                     
+                    # Phase 2: Apply regime-based weight modifier
+                    bot_name = bot.__class__.__name__
+                    bot_type = getattr(bot, 'bot_type', 'default')  # Bot should define its type
+                    regime_weight = self.market_regime.get_bot_weight_modifier(market_regime, bot_type)
+                    
                     result = bot.analyze(features)
+                    
+                    # Apply regime weight modifier to confidence
+                    if result and regime_weight != 1.0:
+                        original_confidence = result.get('confidence', 5)
+                        result['confidence'] = min(10, max(1, original_confidence * regime_weight))
+                        result['regime_weight'] = regime_weight
+                        logger.debug(f"   {bot_name}: confidence {original_confidence:.1f} → {result['confidence']:.1f} (regime: {market_regime}, weight: {regime_weight})")
                     if result:
                         # Ensure predicted prices exist
                         if 'predicted_24h' not in result:
