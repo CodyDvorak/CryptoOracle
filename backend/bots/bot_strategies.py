@@ -2685,7 +2685,8 @@ class StochasticReversalBot(BotStrategy):
     
     def analyze(self, features: Dict) -> Optional[Dict]:
         price = features.get('current_price', 0)
-        stoch = features.get('stochastic', 50)
+        # Fix: Use correct field name (stoch_k instead of stochastic)
+        stoch = features.get('stoch_k', features.get('stochastic', 50))
         rsi = features.get('rsi_14', 50)
         atr = features.get('atr_14', price * 0.02)
         
