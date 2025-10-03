@@ -2864,6 +2864,43 @@ agent_communication:
       
       🏆 MISSION ACCOMPLISHED: Bot Analytics page freezing issue has been successfully resolved with the new lightweight notification system backend functionality.
 
+frontend:
+  - task: "Market Regime Badges on Recommendation Cards"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/components/DashboardComponents.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added market regime badges (🟢 BULL / 🔴 BEAR / ⚪ SIDEWAYS) to recommendation cards with color-coded styling and confidence tooltips. Badge shows next to coin name in card header."
+
+  - task: "Backend API Market Regime Fields"
+    implemented: false
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Need to add market_regime and regime_confidence fields to /api/recommendations/top5 endpoint response. Frontend expects these fields but API doesn't provide them yet."
+
+  - task: "Bot Performance Partial Wins Display"
+    implemented: false
+    working: "NA"
+    file: "frontend/src/components/BotPerformanceDashboard.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Need to add partial_wins field display to bot performance metrics. Backend may support partial wins but frontend doesn't show them yet."
+
   - agent: "main"
     message: |
       NOTIFICATION SYSTEM & BOT ANALYTICS FIX IMPLEMENTED:
