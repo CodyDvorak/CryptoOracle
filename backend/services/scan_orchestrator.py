@@ -134,10 +134,10 @@ class ScanOrchestrator:
     
     
     async def _run_quick_scan(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
-        """Quick Scan: 45 coins with parallel processing (3 concurrent), ~7 minutes."""
-        logger.info("⚡ QUICK SCAN: 45 coins (3 concurrent), 49 bots, NO AI (~7 min)")
+        """Quick Scan: 100 coins with parallel processing (3 concurrent), ~7-10 minutes."""
+        logger.info("⚡ QUICK SCAN: 100 coins (3 concurrent), 48 bots, NO AI (~7-10 min)")
         return await self._run_scan_with_config(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id,
-                                               max_coins=45, skip_sentiment=True, parallel=True, batch_size=3)
+                                               max_coins=100, skip_sentiment=True, parallel=True, batch_size=3)
     
     async def _run_focused_scan(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
         """Focused Scan: 20 top coins, no AI, ~15 minutes."""
