@@ -475,23 +475,47 @@ async def get_scan_status():
                 )
                 recent_run['status'] = 'failed'
     
-    # Convert ObjectId to string if present
-    if recent_run and '_id' in recent_run:
-        recent_run['_id'] = str(recent_run['_id'])
+        # Convert ObjectId to string if present
+        if recent_run and '_id' in recent_run:
+            recent_run['_id'] = str(recent_run['_id'])
+        
+        # Get total coins analyzed from most recent completed run
+        coins_analyzed = 0
+        total_available = 0
+        if recent_run:
+            coins_analyzed = recent_run.get('total_coins', 0)
+            total_available = recent_run.get('total_available_coins', 0)
+        
+        return {
+            "is_running": is_running,
+            "recent_run": recent_run,
+            "coins_analyzed": coins_analyzed,
+            "total_available_coins": total_available
+        }
     
-    # Get total coins analyzed from most recent completed run
-    coins_analyzed = 0
-    total_available = 0
-    if recent_run:
-        coins_analyzed = recent_run.get('total_coins', 0)
-        total_available = recent_run.get('total_available_coins', 0)
+    except asyncio.TimeoutError:
+        # Database query timed out - return simplified status
+        logger.warning("⚠️ Scan status query timed out - returning simplified status")
+        is_running = current_scan_task and not current_scan_task.done()
+        return {
+            "is_running": is_running,
+            "recent_run": None,
+            "coins_analyzed": 0,
+            "total_available_coins": 0,
+            "message": "Database busy - use /api/scan/health for real-time status"
+        }
     
-    return {
-        "is_running": is_running,
-        "recent_run": recent_run,
-        "coins_analyzed": coins_analyzed,
-        "total_available_coins": total_available
-    }
+    except Exception as e:
+        logger.error(f"Error getting scan status: {e}")
+        # Return simplified status on error
+        is_running = current_scan_task and not current_scan_task.done()
+        return {
+            "is_running": is_running,
+            "recent_run": None,
+            "coins_analyzed": 0,
+            "total_available_coins": 0,
+            "error": "Failed to fetch detailed status - use /api/scan/health"
+        }
 
 
 # ==================== Recommendations Endpoints ====================
