@@ -183,7 +183,7 @@ export const CoinRecommendationCard = ({ recommendation, rank, runId }) => {
         
         {/* Trading Metrics */}
         <div className="space-y-2 pt-3 border-t border-[var(--card-border)]">
-          <div className="text-xs font-semibold text-[var(--muted)] mb-1">Average TP/SL (from 21 bots)</div>
+          <div className="text-xs font-semibold text-[var(--muted)] mb-1">Average TP/SL (from {bot_count} bots)</div>
           
           <div className="flex justify-between items-center">
             <span className="text-xs text-[var(--success)]">Take Profit</span>
