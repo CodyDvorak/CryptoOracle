@@ -12,6 +12,7 @@ from services.aggregation_engine import AggregationEngine
 from services.email_service import EmailService
 from services.google_sheets_service import GoogleSheetsService
 from services.bot_performance_service import BotPerformanceService
+from services.market_regime_classifier import MarketRegimeClassifier  # Phase 2: Market regime detection
 from bots.bot_strategies import get_all_bots
 from models.models import ScanRun, BotResult, Recommendation
 
@@ -22,6 +23,10 @@ class ScanOrchestrator:
     - Layer 1: Pre-Analysis Sentiment (ChatGPT-5)
     - Layer 2: AI Analyst Bot (ChatGPT-5, one of 50 bots)
     - Layer 3: Enhanced Synthesis (ChatGPT-5)
+    
+    PHASE 2 ENHANCEMENT: Market Regime Detection
+    - Classifies market as BULL, BEAR, or SIDEWAYS
+    - Adjusts bot weights based on regime
     """
     
     def __init__(self, db):
@@ -33,10 +38,12 @@ class ScanOrchestrator:
         self.sentiment_service = SentimentAnalysisService()  # Layer 1
         self.aggregation_engine = AggregationEngine(db)  # Pass DB for weight lookup
         self.bot_performance_service = BotPerformanceService(db, self.crypto_client)
+        self.market_regime = MarketRegimeClassifier()  # Phase 2: Market regime classifier
         self.bots = get_all_bots()  # Now includes 50 bots (Layer 2 includes AIAnalystBot)
         
         logger.info(f"🤖 Scan Orchestrator initialized with {len(self.bots)} bots (including AI Analyst)")
         logger.info("📊 Futures/derivatives data enabled: Bybit → OKX → Binance fallback")
+        logger.info("🎯 Phase 2: Market regime detection enabled")
         
     async def run_scan(self, filter_scope: str = 'all', min_price: Optional[float] = None, max_price: Optional[float] = None, custom_symbols: Optional[List[str]] = None, run_id: Optional[str] = None, user_id: Optional[str] = None, scan_type: str = 'full_scan') -> Dict:
         """Execute a scan with the specified strategy.
