@@ -1057,7 +1057,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Phase 2 Market Regime Detection Testing Complete"
+    - "Phase 2.5 Frontend Changes: Market Regime & Partial Wins Visualization"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
