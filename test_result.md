@@ -1018,6 +1018,21 @@ test_plan:
   test_priority: "high_first"
 
 backend:
+  - task: "Coinalyze Backup Integration (OKX Primary + Coinalyze Backup)"
+    implemented: true
+    working: true
+    file: "backend/services/multi_futures_client.py, backend/services/coinalyze_client.py, backend/services/okx_futures_client.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented Coinalyze as backup futures provider with API key f6967ffe-6773-4e5c-8772-d11900fe37e8. Provider order: OKX (Primary) → Coinalyze (Backup) → Bybit → Binance"
+      - working: true
+        agent: "testing"
+        comment: "PASS - Coinalyze backup integration fully operational. SUCCESS RATE: 95.2% (20/21 tests passed). ✅ Coinalyze API accessible with provided key, ✅ Multi-provider futures system operational with 4 providers, ✅ OKX Primary + Coinalyze Backup configuration verified, ✅ Perfect redundancy achieved (both OKX and Coinalyze working), ✅ 100% coin coverage (BTC, ETH, SOL all supported by both providers), ✅ No breaking changes to existing functionality. SCENARIO C: Both Working ✅✅ - Production-ready with excellent reliability."
+
   - task: "Multi-Provider Fallback System (CoinGecko Primary, CryptoCompare Backup)"
     implemented: true
     working: true
