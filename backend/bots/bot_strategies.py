@@ -2832,11 +2832,11 @@ class VolumeSpikeFadeBot(BotStrategy):
         if price_change > 2 and rsi > 60:  # Was: >3 and >65
             # Strong upward move + volume = fade (short)
             direction = 'short'
-            confidence = 5 + min(price_change / 2, 3) + min((volume_ratio - 1.5) / 2, 1)
+            confidence = int(5 + min(price_change / 2, 3) + min((volume_ratio - 1.5) / 2, 1))
         elif price_change < -2 and rsi < 40:  # Was: <-3 and <35
             # Strong downward move + volume = fade (long)
             direction = 'long'
-            confidence = 5 + min(abs(price_change) / 2, 3) + min((volume_ratio - 1.5) / 2, 1)
+            confidence = int(5 + min(abs(price_change) / 2, 3) + min((volume_ratio - 1.5) / 2, 1))
         else:
             return None
         
