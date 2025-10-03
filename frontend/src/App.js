@@ -288,10 +288,26 @@ function App() {
       }
       
       if (response.data.recent_run) {
-        const lastScan = new Date(response.data.recent_run.started_at).toLocaleString();
+        // Parse UTC timestamp and convert to local time
+        const timestamp = response.data.recent_run.started_at;
+        // If timestamp doesn't have timezone info, assume UTC
+        const utcTimestamp = timestamp.endsWith('Z') ? timestamp : timestamp + 'Z';
+        const lastScanDate = new Date(utcTimestamp);
+        const lastScan = lastScanDate.toLocaleString('en-US', {
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true
+        });
+        
         setStats(prev => ({ 
           ...prev, 
-          lastScan,
+          lastScan: lastScanDate.toISOString(), // Store as ISO string
+          lastScanDisplay: lastScan, // Store formatted display
           totalCoins: response.data.coins_analyzed || 0,
           totalAvailable: response.data.total_available_coins || 0
         }));
