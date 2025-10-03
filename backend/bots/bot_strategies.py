@@ -2755,25 +2755,33 @@ class VolumeSpikeFadeBot(BotStrategy):
         price_change = features.get('price_change_24h', 0)
         atr = features.get('atr_14', price * 0.02)
         
-        if price == 0 or volume_sma == 0:
+        # Safety checks
+        if price == 0 or price is None:
+            return None
+        if volume_sma == 0 or volume_sma is None:
+            volume_sma = 1
+        if current_volume is None:
+            current_volume = 1
+        
+        # Calculate volume spike (with safety check)
+        try:
+            volume_ratio = current_volume / volume_sma if volume_sma > 0 else 1
+        except (ZeroDivisionError, TypeError):
+            volume_ratio = 1
+        
+        # RELAXED: Lower volume threshold from 2x to 1.5x for more signals
+        if volume_ratio < 1.5:
             return None
         
-        # Calculate volume spike
-        volume_ratio = current_volume / volume_sma if volume_sma > 0 else 1
-        
-        # Need significant volume spike (>2x normal)
-        if volume_ratio < 2.0:
-            return None
-        
-        # Fade the move: If price up + volume spike = short, if down = long
-        if price_change > 3 and rsi > 65:
+        # RELAXED: Lower price change threshold from 3% to 2% and RSI thresholds
+        if price_change > 2 and rsi > 60:  # Was: >3 and >65
             # Strong upward move + volume = fade (short)
             direction = 'short'
-            confidence = 5 + min(price_change / 2, 3) + min((volume_ratio - 2) / 2, 1)
-        elif price_change < -3 and rsi < 35:
+            confidence = 5 + min(price_change / 2, 3) + min((volume_ratio - 1.5) / 2, 1)
+        elif price_change < -2 and rsi < 40:  # Was: <-3 and <35
             # Strong downward move + volume = fade (long)
             direction = 'long'
-            confidence = 5 + min(abs(price_change) / 2, 3) + min((volume_ratio - 2) / 2, 1)
+            confidence = 5 + min(abs(price_change) / 2, 3) + min((volume_ratio - 1.5) / 2, 1)
         else:
             return None
         
