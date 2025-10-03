@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 import logging
 import os
 
+from services.coinmarketcap_client import CoinMarketCapClient
 from services.coingecko_client import CoinGeckoClient
 from services.cryptocompare_client import CryptoCompareClient
 
@@ -21,21 +22,24 @@ class MultiProviderClient:
     
     def __init__(self):
         # Initialize providers
+        self.coinmarketcap = CoinMarketCapClient(api_key=os.getenv('COINMARKETCAP_API_KEY'))
         self.coingecko = CoinGeckoClient(api_key=os.getenv('COINGECKO_API_KEY'))
         self.cryptocompare = CryptoCompareClient(api_key=os.getenv('CRYPTOCOMPARE_API_KEY'))
         
         # Configuration
-        self.primary_provider = os.getenv('PRIMARY_PROVIDER', 'coingecko')
-        self.backup_provider = os.getenv('BACKUP_PROVIDER', 'cryptocompare')
+        self.primary_provider = os.getenv('PRIMARY_PROVIDER', 'coinmarketcap')
+        self.backup_provider = os.getenv('BACKUP_PROVIDER', 'coingecko')
         
         # Provider mapping
         self.providers = {
+            'coinmarketcap': self.coinmarketcap,
             'coingecko': self.coingecko,
             'cryptocompare': self.cryptocompare
         }
         
         # Statistics tracking
         self.stats = {
+            'coinmarketcap': {'calls': 0, 'errors': 0, 'rate_limits': 0},
             'coingecko': {'calls': 0, 'errors': 0, 'rate_limits': 0},
             'cryptocompare': {'calls': 0, 'errors': 0, 'rate_limits': 0}
         }
