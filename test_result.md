@@ -2480,3 +2480,124 @@ agent_communication:
       The Binance Futures integration is properly implemented but completely non-functional due to API access restrictions. This is a critical blocker that prevents the derivatives data enhancement from working. The system needs either API access resolution or alternative derivatives data sources before this feature can be considered production-ready.
       
       PRIORITY: HIGH - This feature cannot deliver its promised value without resolving the API access issue.
+backend:
+  - task: "Lightweight Scan Status Check Endpoint"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Created /api/scan/is-running endpoint that quickly checks if scan is running without database queries. This prevents performance issues when Bot Analytics page checks scan status."
+
+frontend:
+  - task: "Notification System - Context and Sidebar"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/contexts/NotificationContext.js, frontend/src/components/NotificationSidebar.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Created NotificationContext for app-wide notification management and NotificationSidebar component. Notifications stored in localStorage for persistence. Supports success, error, and info notification types."
+
+  - task: "Notification Integration in App"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/App.js, frontend/src/index.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Integrated notification system into App with bell icon showing unread count. Added notifications for scan start and scan completion. Updated index.js to wrap app with NotificationProvider."
+
+  - task: "Bot Analytics Scan Status Check"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/components/BotPerformanceDashboard.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Modified BotPerformanceDashboard to check if scan is running before fetching analytics data. Shows 'Analytics temporarily unavailable during scan' message if scan is active. Adds error notifications when analytics fail to load."
+
+user_problem_statement: |
+  USER REPORTED ISSUE: Bot Analytics page gets stuck on loading screen when a scan is running concurrently.
+  
+  SOLUTION IMPLEMENTED:
+  1. Notification System: Created a notification sidebar to display scan events (start/stop) and error messages
+  2. Scan Status Check: Added lightweight /api/scan/is-running endpoint
+  3. Bot Analytics Protection: Dashboard now checks scan status first and shows unavailable message if scan is running
+  4. Error Handling: All API errors in Bot Analytics now send notifications to the sidebar
+  
+  This prevents the UI from freezing during scans and provides clear communication to users about system status.
+
+metadata:
+  test_sequence: 5
+  
+test_plan:
+  current_focus:
+    - "Notification System Testing"
+    - "Bot Analytics Scan Check Testing"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: |
+      NOTIFICATION SYSTEM & BOT ANALYTICS FIX IMPLEMENTED:
+      
+      📋 PROBLEM ADDRESSED:
+      - Bot Analytics page freezes when scan is running
+      - No way to track scan events (start/complete) in persistent manner
+      - Error messages not accessible after they disappear from toast
+      
+      ✅ SOLUTION IMPLEMENTED:
+      
+      **Phase 1: Notification System**
+      - Created NotificationContext.js with localStorage persistence
+      - Built NotificationSidebar component with slide-in UI
+      - Integrated bell icon with unread count badge in header
+      - Support for 3 notification types: success, info, error
+      
+      **Phase 2: Backend Enhancement**
+      - Added /api/scan/is-running endpoint (line 527-535 in server.py)
+      - Lightweight endpoint without DB queries for quick status check
+      
+      **Phase 3: Bot Analytics Protection**
+      - Modified BotPerformanceDashboard to check scan status first
+      - Shows "Analytics temporarily unavailable" message when scan running
+      - Prevents concurrent DB-heavy operations during scans
+      - All API errors send notifications to sidebar
+      
+      **Phase 4: Scan Event Notifications**
+      - Scan start triggers notification: "Scan started: {type}"
+      - Scan completion triggers notification: "Scan completed successfully in {time}"
+      - Error notifications for analytics failures
+      
+      🧪 TESTING REQUIRED:
+      1. Backend: Test /api/scan/is-running endpoint
+      2. Frontend: Verify notification bell icon appears
+      3. User Flow: Start scan → see notification → check Bot Analytics → see unavailable message
+      4. User Flow: Scan completes → see success notification → Bot Analytics loads
+      5. Error handling: Trigger API error → see error notification in sidebar
+      
+      📝 FILES MODIFIED:
+      - backend/server.py (added new endpoint)
+      - frontend/src/contexts/NotificationContext.js (new)
+      - frontend/src/components/NotificationSidebar.js (new)
+      - frontend/src/components/BotPerformanceDashboard.js (scan check + error handling)
+      - frontend/src/App.js (bell icon, notification triggers)
+      - frontend/src/index.js (NotificationProvider wrapper)
+      
+      Ready for testing.
