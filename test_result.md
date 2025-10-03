@@ -2910,6 +2910,45 @@ frontend:
         agent: "testing"
         comment: "FAIL - Partial wins not implemented in both frontend and backend. Bot Performance API analysis: partial_wins field: False. Available fields: ['bot_name', 'first_prediction_at', 'last_prediction_at', 'last_updated', 'pending_predictions', 'performance_weight', 'total_predictions', 'accuracy_rate', 'avg_profit_loss', 'failed_predictions', 'successful_predictions']. Bot evaluation API returns 405 error. No 'partial' mentions found in Bot Performance page content. Frontend does not display partial wins metrics."
 
+  - agent: "testing"
+    message: |
+      PHASE 2.5 FRONTEND CHANGES TESTING COMPLETE - MARKET REGIME & PARTIAL WINS VISUALIZATION:
+      
+      📊 OVERALL RESULTS: 33.3% SUCCESS RATE (1/3 features working) - PARTIAL IMPLEMENTATION
+      
+      ✅ MARKET REGIME BADGES ON RECOMMENDATION CARDS - WORKING PERFECTLY:
+      - Visual confirmation: 4/8 cards display '⚪ SIDEWAYS' badges correctly
+      - Badge styling: Proper CSS classes (text-xs px-2 py-0.5 rounded-full border bg-gray-100 text-gray-700 border-gray-300 font-semibold)
+      - Tooltip functionality: Working correctly showing "Market Regime: SIDEWAYS (50% confidence)"
+      - Color coding: Gray badges for SIDEWAYS regime (⚪ emoji + gray styling)
+      - Frontend implementation: Complete and functional using default values
+      
+      ❌ BACKEND API MARKET REGIME FIELDS - NOT IMPLEMENTED:
+      - API Response Analysis: /api/recommendations/top5 missing market_regime and regime_confidence fields
+      - Available fields confirmed: 31 fields but no regime-related data
+      - Frontend compensates: Uses default values (market_regime: 'SIDEWAYS', regime_confidence: 0.5)
+      - Impact: Badges display but show static data instead of dynamic regime detection
+      
+      ❌ BOT PERFORMANCE PARTIAL WINS DISPLAY - NOT IMPLEMENTED:
+      - Bot Performance API: /api/bots/performance missing partial_wins field
+      - Available fields: 11 fields including successful_predictions, failed_predictions but no partial_wins
+      - Bot Evaluation API: Returns 405 error (method not allowed)
+      - Frontend: No partial wins display in BotPerformanceDashboard component
+      - Page content: No 'partial' mentions found in performance metrics
+      
+      🔍 TECHNICAL FINDINGS:
+      - Frontend regime badge implementation is complete and working
+      - Backend regime detection system exists (from Phase 2) but not exposed in API responses
+      - Partial wins feature appears to be missing from both frontend and backend
+      - Authentication required for Bot Performance page access
+      
+      📋 CONCLUSION:
+      ✅ MARKET REGIME BADGES: Frontend implementation working with default data
+      ❌ BACKEND REGIME API: Missing regime fields in recommendation responses
+      ❌ PARTIAL WINS: Not implemented in either frontend or backend
+      
+      🎯 PHASE 2.5 STATUS: PARTIALLY COMPLETE - Frontend UI working, backend integration needed
+
   - agent: "main"
     message: |
       NOTIFICATION SYSTEM & BOT ANALYTICS FIX IMPLEMENTED:
