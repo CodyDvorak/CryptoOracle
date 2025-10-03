@@ -1386,8 +1386,8 @@ async def shutdown_event():
     # Close MongoDB connection
     client.close()
     
-    # Close TokenMetrics client
-    await scan_orchestrator.token_client.close()
+    # Close crypto client
+    await scan_orchestrator.crypto_client.close()
     
     logger.info("Application shutdown complete")
 
