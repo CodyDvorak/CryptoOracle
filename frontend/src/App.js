@@ -1247,6 +1247,9 @@ function App() {
           </p>
         </footer>
       </main>
+      
+      {/* Notification Sidebar */}
+      <NotificationSidebar />
     </div>
   );
 }
