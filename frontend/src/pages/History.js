@@ -201,7 +201,11 @@ const History = () => {
                             <div className="flex items-center gap-3">
                               <div>
                                 <p className="font-semibold text-[var(--text)] flex items-center gap-2">
-                                  {new Date(scan.started_at).toLocaleDateString()} - {new Date(scan.started_at).toLocaleTimeString()}
+                                  {(() => {
+                                    const timestamp = scan.started_at.endsWith('Z') ? scan.started_at : scan.started_at + 'Z';
+                                    const date = new Date(timestamp);
+                                    return `${date.toLocaleDateString()} - ${date.toLocaleTimeString()}`;
+                                  })()}
                                   <span className="text-xs px-2 py-1 bg-[var(--primary)]/20 text-[var(--primary)] rounded">
                                     Click to view
                                   </span>
