@@ -44,8 +44,13 @@ class BotPerformanceService:
             if btc_price_change_7d is None:
                 btc_historical = await self.crypto_client.get_historical_data('BTC', days=7)
                 if btc_historical and len(btc_historical) >= 7:
-                    first_price = btc_historical[0][1]  # (timestamp, close)
-                    last_price = btc_historical[-1][1]
+                    # Handle both dict and tuple formats
+                    if isinstance(btc_historical[0], dict):
+                        first_price = btc_historical[0]['close']
+                        last_price = btc_historical[-1]['close']
+                    else:
+                        first_price = btc_historical[0][1]  # (timestamp, close)
+                        last_price = btc_historical[-1][1]
                     btc_price_change_7d = ((last_price - first_price) / first_price) * 100
                 else:
                     # Fallback: use current vs historical
