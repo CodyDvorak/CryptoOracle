@@ -2664,15 +2664,15 @@ class BollingerReversalBot(BotStrategy):
         except (ZeroDivisionError, TypeError):
             position_in_band = 0.5
         
-        # Signal at extremes
-        if price >= bb_upper and rsi > 60:
-            # At upper band + high RSI = reversal down
+        # Signal at extremes (RELAXED: trigger closer to bands, not just at extremes)
+        if price >= bb_upper * 0.98 and rsi > 55:  # Within 2% of upper band
+            # Near upper band + elevated RSI = reversal down
             direction = 'short'
-            confidence = 6 + min((position_in_band - 0.9) * 20, 3)
-        elif price <= bb_lower and rsi < 40:
-            # At lower band + low RSI = reversal up
+            confidence = 5 + min((position_in_band - 0.85) * 15, 4)  # More gradual confidence
+        elif price <= bb_lower * 1.02 and rsi < 45:  # Within 2% of lower band
+            # Near lower band + depressed RSI = reversal up
             direction = 'long'
-            confidence = 6 + min((0.1 - position_in_band) * 20, 3)
+            confidence = 5 + min((0.15 - position_in_band) * 15, 4)  # More gradual confidence
         else:
             return None
         
