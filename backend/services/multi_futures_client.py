@@ -47,8 +47,9 @@ class MultiFuturesClient:
     
     async def close(self):
         """Close all provider sessions."""
-        await self.bybit.close()
         await self.okx.close()
+        await self.coinalyze.close()
+        await self.bybit.close()
         await self.binance.close()
     
     def _record_call(self, provider_name: str, success: bool):
