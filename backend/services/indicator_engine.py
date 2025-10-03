@@ -90,8 +90,13 @@ class IndicatorEngine:
         return k, d
     
     @classmethod
-    def compute_all_indicators(cls, candles: List[Dict]) -> Dict:
-        """Compute all indicators and return a feature dictionary."""
+    def compute_all_indicators(cls, candles: List[Dict], derivatives_data: Dict = None) -> Dict:
+        """Compute all indicators and return a feature dictionary.
+        
+        Args:
+            candles: List of OHLCV candles
+            derivatives_data: Optional dict with futures/derivatives metrics
+        """
         df = cls.prepare_dataframe(candles)
         
         if len(df) < 50:
@@ -118,6 +123,19 @@ class IndicatorEngine:
             'atr_14': cls.atr(df, 14).iloc[-1],
             'adx': 50.0,  # Placeholder - ADX calculation is complex, use default value
         }
+        
+        # Add derivatives/futures data if available
+        if derivatives_data and derivatives_data.get('has_derivatives_data'):
+            features['open_interest'] = derivatives_data.get('open_interest', 0)
+            features['funding_rate'] = derivatives_data.get('funding_rate', 0)
+            features['long_short_ratio'] = derivatives_data.get('long_short_ratio', 1.0)
+            features['long_account_percent'] = derivatives_data.get('long_account_percent', 50)
+            features['short_account_percent'] = derivatives_data.get('short_account_percent', 50)
+            features['liquidation_risk'] = derivatives_data.get('liquidation_risk', 'unknown')
+            features['funding_direction'] = derivatives_data.get('funding_direction', 'neutral')
+            features['has_derivatives'] = True
+        else:
+            features['has_derivatives'] = False
         
         # MACD
         macd_line, signal_line, histogram = cls.macd(df)
