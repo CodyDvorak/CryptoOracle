@@ -395,6 +395,36 @@ async def get_scan_runs(limit: int = 10):
     return {"runs": runs}
 
 
+@api_router.get("/scan/health")
+async def get_scan_health():
+    """Get scan system health status with monitoring information."""
+    health_status = scan_monitor.get_health_status()
+    
+    return {
+        "monitor_status": health_status,
+        "has_stuck_scan": health_status['is_stuck'],
+        "recommendations": [
+            "Scan is healthy" if not health_status['is_stuck'] 
+            else "⚠️ Scan is stuck! Consider restarting backend or cancelling scan."
+        ]
+    }
+
+
+@api_router.post("/scan/cancel")
+async def cancel_current_scan():
+    """Cancel the currently running scan if it's stuck."""
+    global current_scan_task
+    
+    if not current_scan_task or current_scan_task.done():
+        return {"status": "no_scan_running", "message": "No scan to cancel"}
+    
+    # Cancel the scan
+    await scan_monitor.cancel_scan()
+    current_scan_task = None
+    
+    return {"status": "cancelled", "message": "Scan cancelled successfully"}
+
+
 @api_router.get("/scan/status")
 async def get_scan_status():
     """Get current scan status."""
