@@ -650,10 +650,10 @@ async def get_bot_details(run_id: str, coin_symbol: str):
     ticker = recommendation.get('ticker', coin_symbol)
     
     # Fetch all bot predictions for this coin in this run
-    # Bot predictions are now stored in 'bot_predictions' collection
+    # Bot predictions are stored with 'coin_symbol' field, not 'ticker'
     bot_results = await db.bot_predictions.find({
         'run_id': run_id,
-        'ticker': ticker
+        'coin_symbol': ticker  # Fixed: was 'ticker', should be 'coin_symbol'
     }).to_list(100)
     
     if not bot_results:
