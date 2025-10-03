@@ -2535,10 +2535,10 @@ class RSI_ReversalBot(BotStrategy):
         # Reversal signals (RELAXED: 70/30 → 60/40 for more participation)
         if rsi >= 60:  # Overbought - expect reversal down
             direction = 'short'
-            confidence = 5 + min((rsi - 60) / 4, 4)  # 5-9 confidence (scales faster)
+            confidence = int(5 + min((rsi - 60) / 4, 4))  # 5-9 confidence (scales faster)
         elif rsi <= 40:  # Oversold - expect reversal up
             direction = 'long'
-            confidence = 5 + min((40 - rsi) / 4, 4)  # 5-9 confidence (scales faster)
+            confidence = int(5 + min((40 - rsi) / 4, 4))  # 5-9 confidence (scales faster)
         else:
             return None  # No signal in neutral zone (40-60 RSI)
         
