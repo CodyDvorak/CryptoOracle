@@ -1027,8 +1027,11 @@ class ScanOrchestrator:
                 candles[-1]['high'] = max(candles[-1]['high'], current_price)
                 candles[-1]['low'] = min(candles[-1]['low'], current_price)
             
-            # 3. Compute indicators
-            features = self.indicator_engine.compute_all_indicators(candles)
+            # 2.5. Fetch derivatives/futures data (NEW!)
+            derivatives_data = await self.futures_client.get_all_derivatives_metrics(symbol)
+            
+            # 3. Compute indicators (now includes derivatives data)
+            features = self.indicator_engine.compute_all_indicators(candles, derivatives_data)
             
             if not features:
                 logger.warning(f"Failed to compute indicators for {symbol}")
