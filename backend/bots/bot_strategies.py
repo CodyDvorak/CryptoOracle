@@ -2824,7 +2824,13 @@ class VolumeSpikeFadeBot(BotStrategy):
             return None
         
         confidence = min(confidence, 9)
-        atr_pct = (atr / price) if price > 0 else 0.02
+        
+        # Calculate ATR percentage with safety
+        try:
+            atr_pct = (atr / price) if price > 0 else 0.02
+            atr_pct = max(0.001, min(atr_pct, 0.5))  # Clamp
+        except (ZeroDivisionError, TypeError):
+            atr_pct = 0.02
         
         if direction == 'long':
             entry = price
