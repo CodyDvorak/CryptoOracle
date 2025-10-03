@@ -1177,7 +1177,13 @@ class ScanOrchestrator:
                             predicted_48h=result.get('predicted_48h'),
                             predicted_7d=result.get('predicted_7d')
                         )
-                        await self.db.bot_results.insert_one(bot_result.dict())
+                        
+                        try:
+                            insert_result = await self.db.bot_results.insert_one(bot_result.dict())
+                            logger.debug(f"✅ Saved bot_result: {bot.name} for {display_name}, ID: {insert_result.inserted_id}")
+                        except Exception as db_error:
+                            logger.error(f"❌ Failed to save bot_result for {bot.name}/{display_name}: {db_error}")
+                            raise  # Re-raise to be caught by outer exception handler
                         
                         # Add bot name and coin info for prediction tracking
                         result_with_context = result.copy()
