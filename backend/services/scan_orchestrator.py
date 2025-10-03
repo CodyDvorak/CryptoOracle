@@ -171,10 +171,10 @@ class ScanOrchestrator:
             self.bots = original_bots
     
     async def _run_full_scan_lite(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
-        """Full Scan Lite: 86 coins with parallel processing, no AI, ~14 minutes."""
-        logger.info("📈 FULL SCAN LITE: 86 coins (5 concurrent), 49 bots, NO AI (~14 min)")
+        """Full Scan Lite: 200 coins with parallel processing, no AI, ~15-18 minutes."""
+        logger.info("📈 FULL SCAN LITE: 200 coins (5 concurrent), 48 bots, NO AI (~15-18 min)")
         return await self._run_scan_with_config(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id,
-                                               max_coins=86, skip_sentiment=True, parallel=True, batch_size=5)
+                                               max_coins=200, skip_sentiment=True, parallel=True, batch_size=5)
     
     async def _run_heavy_speed_run(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
         """Heavy Speed Run: 86 coins, 25 best bots, parallel processing, ~7 minutes."""
