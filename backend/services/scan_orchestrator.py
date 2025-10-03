@@ -27,6 +27,7 @@ class ScanOrchestrator:
     def __init__(self, db):
         self.db = db
         self.crypto_client = MultiProviderClient()
+        self.futures_client = BinanceFuturesClient()  # Futures/derivatives data
         self.indicator_engine = IndicatorEngine()
         self.llm_service = LLMSynthesisService()  # Layer 3
         self.sentiment_service = SentimentAnalysisService()  # Layer 1
@@ -35,6 +36,7 @@ class ScanOrchestrator:
         self.bots = get_all_bots()  # Now includes 50 bots (Layer 2 includes AIAnalystBot)
         
         logger.info(f"🤖 Scan Orchestrator initialized with {len(self.bots)} bots (including AI Analyst)")
+        logger.info(f"📊 Futures/derivatives data enabled via Binance Futures API")
         
     async def run_scan(self, filter_scope: str = 'all', min_price: Optional[float] = None, max_price: Optional[float] = None, custom_symbols: Optional[List[str]] = None, run_id: Optional[str] = None, user_id: Optional[str] = None, scan_type: str = 'full_scan') -> Dict:
         """Execute a scan with the specified strategy.
