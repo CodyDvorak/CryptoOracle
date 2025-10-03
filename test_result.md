@@ -2867,39 +2867,48 @@ agent_communication:
 frontend:
   - task: "Market Regime Badges on Recommendation Cards"
     implemented: true
-    working: "NA"
+    working: true
     file: "frontend/src/components/DashboardComponents.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Added market regime badges (🟢 BULL / 🔴 BEAR / ⚪ SIDEWAYS) to recommendation cards with color-coded styling and confidence tooltips. Badge shows next to coin name in card header."
+      - working: true
+        agent: "testing"
+        comment: "PASS - Market regime badges working perfectly. Found 4/8 cards with '⚪ SIDEWAYS' badges displaying correctly with proper CSS styling (text-xs px-2 py-0.5 rounded-full border bg-gray-100 text-gray-700 border-gray-300 font-semibold). Tooltips working: 'Market Regime: SIDEWAYS (50% confidence)'. Frontend implementation is complete and functional despite backend API not providing regime fields yet - using default values from component."
 
   - task: "Backend API Market Regime Fields"
     implemented: false
-    working: "NA"
+    working: false
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Need to add market_regime and regime_confidence fields to /api/recommendations/top5 endpoint response. Frontend expects these fields but API doesn't provide them yet."
+      - working: false
+        agent: "testing"
+        comment: "FAIL - Backend API missing regime fields. API response analysis confirms: market_regime field: False, regime_confidence field: False. Available fields: ['_id', 'id', 'run_id', 'user_id', 'coin', 'ticker', 'current_price', 'consensus_direction', 'avg_confidence', 'avg_take_profit', 'avg_stop_loss', 'avg_entry', 'avg_predicted_24h', 'avg_leverage', 'min_leverage', 'max_leverage', 'actual_price_24h', 'actual_price_48h', 'actual_price_7d', 'outcome_24h', 'outcome_7d', 'avg_predicted_48h', 'avg_predicted_7d', 'bot_count', 'trader_grade', 'investor_grade', 'ai_trend', 'category', 'predicted_percent_change', 'predicted_dollar_change', 'created_at']. Frontend uses default values (SIDEWAYS, 0.5 confidence) from component code."
 
   - task: "Bot Performance Partial Wins Display"
     implemented: false
-    working: "NA"
-    file: "frontend/src/components/BotPerformanceDashboard.js"
+    working: false
+    file: "frontend/src/components/BotPerformanceDashboard.js, backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Need to add partial_wins field display to bot performance metrics. Backend may support partial wins but frontend doesn't show them yet."
+      - working: false
+        agent: "testing"
+        comment: "FAIL - Partial wins not implemented in both frontend and backend. Bot Performance API analysis: partial_wins field: False. Available fields: ['bot_name', 'first_prediction_at', 'last_prediction_at', 'last_updated', 'pending_predictions', 'performance_weight', 'total_predictions', 'accuracy_rate', 'avg_profit_loss', 'failed_predictions', 'successful_predictions']. Bot evaluation API returns 405 error. No 'partial' mentions found in Bot Performance page content. Frontend does not display partial wins metrics."
 
   - agent: "main"
     message: |
