@@ -8,6 +8,7 @@ class BotStrategy:
     
     def __init__(self, name: str):
         self.name = name
+        self.bot_type = "default"  # Default type for regime weighting
     
     def analyze(self, features: Dict) -> Optional[Dict]:
         """Analyze features and return recommendation.
