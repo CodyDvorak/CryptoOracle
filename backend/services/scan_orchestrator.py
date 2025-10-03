@@ -234,11 +234,11 @@ class ScanOrchestrator:
                                                max_coins=500, skip_sentiment=False, parallel=True, batch_size=8, ai_top_n=25)
     
     async def _run_all_in_under_5_ai_scan(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
-        """All In under $5 + AI: 200-300 coins under $5, AI on top 20, ~25-30 minutes."""
-        logger.info("🚀💰🤖 ALL IN UNDER $5 + AI: 200-300 coins (pagination), <$5 filter, 8 concurrent, AI on top 20 (~25-30 min)")
+        """All In under $5 + AI: 500 coins under $5, AI on top 25, ~35-40 minutes."""
+        logger.info("🚀💰🤖 ALL IN UNDER $5 + AI: 500 coins, <$5 filter, 8 concurrent, 48 bots (49 with AI on top 25), AI on top 25 (~35-40 min)")
         # Override max_price to $5 for this scan
         return await self._run_scan_with_config(scan_run, filter_scope, min_price, 5.0, custom_symbols, user_id,
-                                               max_coins=300, skip_sentiment=False, parallel=True, batch_size=8, ai_top_n=20)
+                                               max_coins=500, skip_sentiment=False, parallel=True, batch_size=8, ai_top_n=25)
     
     async def _run_scan_with_config(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str], max_coins: int = 80, skip_sentiment: bool = False, parallel: bool = False, batch_size: int = 1, ai_top_n: int = 15) -> Dict:
         """Core scan logic with configurable parameters including parallel processing.
