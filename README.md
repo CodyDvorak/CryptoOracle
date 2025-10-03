@@ -1,0 +1,2 @@
+# CryptoOracle
+Secrets secrets
