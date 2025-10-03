@@ -1037,6 +1037,9 @@ class ScanOrchestrator:
             # 2.5. Fetch derivatives/futures data (NEW!)
             derivatives_data = await self.futures_client.get_all_derivatives_metrics(symbol)
             
+            # 2.6. PHASE 4: Fetch 4-hour candles for multi-timeframe analysis
+            candles_4h = await self.crypto_client.get_4h_candles(symbol, limit=168)  # 7 days of 4h candles
+            
             # 3. Compute indicators (now includes derivatives data)
             features = self.indicator_engine.compute_all_indicators(candles, derivatives_data)
             
@@ -1046,6 +1049,19 @@ class ScanOrchestrator:
             
             # Ensure current price is accurate
             features['current_price'] = current_price
+            
+            # 3.5. PHASE 4: Compute 4h timeframe indicators
+            features_4h = self.indicator_engine.compute_4h_indicators(candles_4h)
+            
+            # 3.6. PHASE 4: Check timeframe alignment
+            timeframe_alignment = self.indicator_engine.check_timeframe_alignment(features, features_4h)
+            features['timeframe_alignment'] = timeframe_alignment.get('alignment', 'unknown')
+            features['timeframe_confidence_modifier'] = timeframe_alignment.get('confidence_modifier', 1.0)
+            
+            # Merge 4h indicators into features dict
+            features.update(features_4h)
+            
+            logger.debug(f"📊 {symbol} Timeframe Alignment: {timeframe_alignment.get('alignment')} (modifier: {timeframe_alignment.get('confidence_modifier')})")
             
             # 🎯 PHASE 2: Classify market regime
             regime_data = self.market_regime.classify_regime(candles, features)
