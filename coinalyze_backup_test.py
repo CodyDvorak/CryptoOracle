@@ -149,20 +149,18 @@ class CoinalyzeBackupTestSuite:
         """Test Coinalyze funding rate API"""
         try:
             headers = {'api_key': COINALYZE_API_KEY}
-            url = 'https://api.coinalyze.net/v1/funding-rate-history'
+            url = 'https://api.coinalyze.net/v1/funding-rate'
             
-            from datetime import datetime, timedelta, timezone
+            # Use correct Coinalyze symbol format
             params = {
-                'symbols': f'{symbol.upper()}USDT_PERP',
-                'from': int((datetime.now(timezone.utc) - timedelta(hours=24)).timestamp()),
-                'to': int(datetime.now(timezone.utc).timestamp())
+                'symbols': f'{symbol.upper()}USDT_PERP.A'
             }
             
             async with self.coinalyze_session.get(url, headers=headers, params=params, timeout=15) as response:
                 if response.status == 200:
                     data = await response.json()
                     if data and len(data) > 0:
-                        latest = data[-1] if isinstance(data, list) else data
+                        latest = data[0] if isinstance(data, list) else data
                         funding_rate = float(latest.get('value', 0)) * 100  # Convert to percentage
                         
                         # Validate funding rate is reasonable (-1% to +1%)
