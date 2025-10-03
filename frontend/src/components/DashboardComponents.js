@@ -42,6 +42,36 @@ export const CoinRecommendationCard = ({ recommendation, rank, runId }) => {
   // Format display name
   const displayName = ticker ? `${coin}/${ticker}` : coin;
   
+  // Get regime badge styling
+  const getRegimeBadge = () => {
+    const regimeStyles = {
+      BULL: { 
+        color: 'text-green-700', 
+        bg: 'bg-green-100', 
+        border: 'border-green-300',
+        icon: '🟢',
+        label: 'BULL'
+      },
+      BEAR: { 
+        color: 'text-red-700', 
+        bg: 'bg-red-100', 
+        border: 'border-red-300',
+        icon: '🔴',
+        label: 'BEAR'
+      },
+      SIDEWAYS: { 
+        color: 'text-gray-700', 
+        bg: 'bg-gray-100', 
+        border: 'border-gray-300',
+        icon: '⚪',
+        label: 'SIDEWAYS'
+      }
+    };
+    return regimeStyles[market_regime] || regimeStyles.SIDEWAYS;
+  };
+  
+  const regimeBadge = getRegimeBadge();
+  
   // Format price with conditional decimal places
   const formatPrice = (price) => {
     if (!price) return '0.00';
