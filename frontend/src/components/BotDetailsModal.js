@@ -87,7 +87,7 @@ const BotDetailsModal = ({ open, onClose, runId, coinSymbol, coinName }) => {
             {/* Bot Results Table */}
             <div className="space-y-2">
               <h3 className="text-sm font-semibold text-[var(--muted)] mb-3">
-                Individual Bot Confidence Scores (21 Bots)
+                Individual Bot Confidence Scores ({botDetails.bot_results?.length || 0} Bots)
               </h3>
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
