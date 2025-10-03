@@ -409,16 +409,19 @@ class BotPerformanceService:
             if not predictions:
                 continue
             
-            # Calculate metrics
+            # Calculate metrics (IMPROVED: Count partial wins)
             total = len(predictions)
             wins = sum(1 for p in predictions if p.get('outcome_status') == 'win')
+            partial_wins = sum(1 for p in predictions if p.get('outcome_status') == 'partial_win')
             losses = sum(1 for p in predictions if p.get('outcome_status') == 'loss')
             pending = sum(1 for p in predictions if p.get('outcome_status') == 'pending')
             
-            accuracy = (wins / (wins + losses) * 100) if (wins + losses) > 0 else 0.0
+            # Accuracy calculation: count partial wins as 0.5 wins
+            effective_wins = wins + (partial_wins * 0.5)
+            accuracy = (effective_wins / (wins + partial_wins + losses) * 100) if (wins + partial_wins + losses) > 0 else 0.0
             
-            # Calculate average profit/loss for closed predictions
-            closed_predictions = [p for p in predictions if p.get('outcome_status') in ['win', 'loss']]
+            # Calculate average profit/loss for closed predictions (including partial wins)
+            closed_predictions = [p for p in predictions if p.get('outcome_status') in ['win', 'partial_win', 'loss']]
             avg_pl = sum(p.get('profit_loss_percent', 0) for p in closed_predictions) / len(closed_predictions) if closed_predictions else 0.0
             
             # Update bot performance
