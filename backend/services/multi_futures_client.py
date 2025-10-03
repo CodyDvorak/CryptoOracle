@@ -2,43 +2,48 @@ import asyncio
 from typing import Dict, Optional
 from datetime import datetime, timezone
 import logging
+import os
 
 from services.binance_futures_client import BinanceFuturesClient
 from services.bybit_futures_client import BybitFuturesClient
 from services.okx_futures_client import OKXFuturesClient
+from services.coinalyze_client import CoinalyzeClient
 
 logger = logging.getLogger(__name__)
 
 class MultiFuturesClient:
     """Multi-provider futures/derivatives client with automatic fallback.
     
-    Tries providers in order: Bybit → OKX → Binance
+    Tries providers in order: OKX (Primary) → Coinalyze (Backup) → Bybit → Binance
     """
     
     def __init__(self):
         # Initialize all providers
-        self.bybit = BybitFuturesClient()
         self.okx = OKXFuturesClient()
+        self.coinalyze = CoinalyzeClient(api_key=os.getenv('COINALYZE_API_KEY'))
+        self.bybit = BybitFuturesClient()
         self.binance = BinanceFuturesClient()
         
-        # Provider order (try Bybit first, then OKX, then Binance)
+        # Provider order (OKX primary, Coinalyze backup, then Bybit, then Binance)
         self.providers = [
-            ('bybit', self.bybit),
             ('okx', self.okx),
+            ('coinalyze', self.coinalyze),
+            ('bybit', self.bybit),
             ('binance', self.binance)
         ]
         
         # Statistics tracking
         self.stats = {
-            'bybit': {'calls': 0, 'success': 0, 'failures': 0},
             'okx': {'calls': 0, 'success': 0, 'failures': 0},
+            'coinalyze': {'calls': 0, 'success': 0, 'failures': 0},
+            'bybit': {'calls': 0, 'success': 0, 'failures': 0},
             'binance': {'calls': 0, 'success': 0, 'failures': 0}
         }
         
         # Cache successful provider per symbol
         self.symbol_providers = {}  # {symbol: provider_name}
         
-        logger.info(f"🔄 MultiFuturesClient initialized: Bybit → OKX → Binance fallback")
+        logger.info(f"🔄 MultiFuturesClient initialized: OKX (Primary) → Coinalyze (Backup) → Bybit → Binance")
     
     async def close(self):
         """Close all provider sessions."""
