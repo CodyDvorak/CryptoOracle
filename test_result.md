@@ -372,6 +372,50 @@ agent_communication:
       Overall: 6/7 major components working (85.7% success rate)
       The Triple-Layer LLM Integration is largely functional with one technical issue to resolve.
 
+  - agent: "testing"
+    message: |
+      PHASE 3 CONTRARIAN BOTS TESTING COMPLETE - CRITICAL ISSUES FOUND:
+      
+      ✅ VERIFIED WORKING COMPONENTS:
+      1. Bot Count Expansion: 54 bots confirmed (was 49, added 5 contrarian bots)
+      2. Bot Registration: All 5 contrarian bots present in system
+         - RSI_ReversalBot, MeanReversionBot, BollingerReversalBot, StochasticReversalBot, VolumeSpikeFadeBot
+      3. Bot Type Configuration: All 5 bots have bot_type = "mean_reversion" for regime weighting
+      4. Bot Logic: 5/7 test cases pass for contrarian logic
+         - RSI_ReversalBot: HIGH RSI → SHORT, LOW RSI → LONG ✅
+         - BollingerReversalBot: UPPER BAND → SHORT, LOWER BAND → LONG ✅  
+         - MeanReversionBot: EXTREME UP MOVE → SHORT ✅
+      
+      ❌ CRITICAL ISSUES IDENTIFIED:
+      1. JSON Serialization Error: "ValueError: Out of range float values are not JSON compliant"
+         - Bot details API returning 500 errors for all coins
+         - Prevents contrarian bots from being displayed/used in recommendations
+      2. No Contrarian Activity in Live Scans:
+         - 0% SHORT signals detected (still 100% long bias)
+         - No contrarian bot signals found in scan results
+         - Contrarian bots not participating in recommendation generation
+      3. Bot Logic Issues:
+         - StochasticReversalBot: Expects 'stochastic' field, not 'stoch_k'/'stoch_d'
+         - VolumeSpikeFadeBot: Requires >2x volume spike + >3% price change + RSI conditions
+      
+      📊 TEST RESULTS SUMMARY:
+      - Bot count verification: ✅ PASS (54 bots including 5 contrarian)
+      - Bot type verification: ✅ PASS (all have bot_type = "mean_reversion")
+      - Bot logic testing: ⚠️ PARTIAL (5/7 test cases pass)
+      - Live scan integration: ❌ FAIL (no contrarian activity detected)
+      - API functionality: ❌ FAIL (500 errors due to JSON serialization)
+      - Long/short balance: ❌ FAIL (still 100% long bias, no improvement)
+      
+      🔧 URGENT FIXES REQUIRED:
+      1. Fix JSON serialization error in bot strategies (likely NaN/Infinity values)
+      2. Debug why contrarian bots are not participating in scans
+      3. Fix field name mismatches in StochasticReversalBot
+      4. Review VolumeSpikeFadeBot trigger conditions (may be too restrictive)
+      5. Verify regime-based weighting is working for mean_reversion bots
+      
+      Overall: 3/7 major components working (42.9% success rate)
+      The contrarian bots are implemented but not functional due to backend errors.
+
   - agent: "main"
     message: |
       TRIPLE-LAYER LLM INTEGRATION + 49 BOT EXPANSION COMPLETE:
