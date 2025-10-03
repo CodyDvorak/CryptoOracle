@@ -2727,20 +2727,20 @@ class StochasticReversalBot(BotStrategy):
         if price == 0:
             return None
         
-        # Extreme stochastic levels
-        if stoch >= 80:
+        # Extreme stochastic levels (RELAXED: 80/20 → 70/30 for more signals)
+        if stoch >= 70:  # Lowered from 80
             # Overbought - expect reversal down
             direction = 'short'
-            confidence = 6 + min((stoch - 80) / 6.67, 3)  # 6-9 confidence
+            confidence = 5 + min((stoch - 70) / 6, 4)  # 5-9 confidence
             # Higher confidence if RSI also overbought
-            if rsi > 70:
+            if rsi > 60:  # Lowered from 70
                 confidence = min(confidence + 1, 10)
-        elif stoch <= 20:
+        elif stoch <= 30:  # Raised from 20
             # Oversold - expect reversal up
             direction = 'long'
-            confidence = 6 + min((20 - stoch) / 6.67, 3)  # 6-9 confidence
+            confidence = 5 + min((30 - stoch) / 6, 4)  # 5-9 confidence
             # Higher confidence if RSI also oversold
-            if rsi < 30:
+            if rsi < 40:  # Raised from 30
                 confidence = min(confidence + 1, 10)
         else:
             return None
