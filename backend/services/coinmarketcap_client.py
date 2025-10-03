@@ -168,6 +168,68 @@ class CoinMarketCapClient:
             logger.error(f"CoinMarketCap historical data exception for {symbol}: {e}")
             raise
     
+    async def get_4h_candles(self, symbol: str, limit: int = 168) -> List[Dict]:
+        """Get 4-hour candles (7 days = 168 4h periods).
+        
+        Phase 4: Multi-timeframe analysis
+        Note: CMC may not support 4h interval directly, so we'll use hourly and aggregate
+        """
+        try:
+            cmc_id = await self._get_cmc_id(symbol)
+            if not cmc_id:
+                return []
+            
+            # Fetch hourly data and aggregate to 4h
+            url = f"{self.base_url}/v2/cryptocurrency/ohlcv/historical"
+            end_time = datetime.now(timezone.utc)
+            start_time = end_time - timedelta(days=7)  # Last 7 days
+            
+            params = {
+                'id': cmc_id,
+                'time_start': int(start_time.timestamp()),
+                'time_end': int(end_time.timestamp()),
+                'interval': 'hourly',  # Fetch hourly, aggregate to 4h
+                'convert': 'USD'
+            }
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, params=params, headers=self.headers, timeout=aiohttp.ClientTimeout(total=15)) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        quotes = data.get('data', {}).get('quotes', [])
+                        
+                        # Aggregate hourly to 4h candles
+                        candles_4h = []
+                        for i in range(0, len(quotes), 4):  # Every 4 hours
+                            chunk = quotes[i:i+4]
+                            if len(chunk) < 4:
+                                continue
+                            
+                            # Aggregate OHLCV
+                            opens = [q.get('quote', {}).get('USD', {}).get('open', 0) for q in chunk]
+                            highs = [q.get('quote', {}).get('USD', {}).get('high', 0) for q in chunk]
+                            lows = [q.get('quote', {}).get('USD', {}).get('low', 0) for q in chunk]
+                            closes = [q.get('quote', {}).get('USD', {}).get('close', 0) for q in chunk]
+                            volumes = [q.get('quote', {}).get('USD', {}).get('volume', 0) for q in chunk]
+                            
+                            candles_4h.append({
+                                'timestamp': int(datetime.fromisoformat(chunk[0].get('timestamp').replace('Z', '+00:00')).timestamp()),
+                                'open': opens[0] if opens else 0,
+                                'high': max(highs) if highs else 0,
+                                'low': min(lows) if lows else 0,
+                                'close': closes[-1] if closes else 0,
+                                'volume': sum(volumes) if volumes else 0
+                            })
+                        
+                        logger.info(f"CoinMarketCap: Aggregated {len(candles_4h)} 4h candles for {symbol}")
+                        return candles_4h[-limit:] if len(candles_4h) > limit else candles_4h
+                    else:
+                        logger.warning(f"CoinMarketCap 4h candles error {response.status} for {symbol}")
+                        return []
+        except Exception as e:
+            logger.error(f"CoinMarketCap 4h candles exception for {symbol}: {e}")
+            return []
+    
     async def _get_cmc_id(self, symbol: str) -> Optional[int]:
         """Get CoinMarketCap ID from symbol.
         
