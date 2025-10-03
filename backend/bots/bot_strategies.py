@@ -2648,12 +2648,20 @@ class BollingerReversalBot(BotStrategy):
         rsi = features.get('rsi_14', 50)
         atr = features.get('atr_14', price * 0.02)
         
-        if price == 0 or bb_upper == bb_lower:
+        # Safety checks
+        if price == 0 or price is None or price < 0:
             return None
+        if bb_upper == bb_lower or bb_upper is None or bb_lower is None:
+            return None
+        if atr is None or atr < 0:
+            atr = price * 0.02
         
-        # Calculate position in band
+        # Calculate position in band (with safety)
         band_width = bb_upper - bb_lower
-        position_in_band = (price - bb_lower) / band_width if band_width > 0 else 0.5
+        try:
+            position_in_band = (price - bb_lower) / band_width if band_width > 0 else 0.5
+        except (ZeroDivisionError, TypeError):
+            position_in_band = 0.5
         
         # Signal at extremes
         if price >= bb_upper and rsi > 60:
