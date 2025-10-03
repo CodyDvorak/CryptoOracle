@@ -670,10 +670,10 @@ async def get_bot_details(run_id: str, coin_symbol: str):
         
         bot_details.append({
             'bot_name': result.get('bot_name'),
-            'confidence': result.get('confidence', 0),
-            'direction': result.get('direction'),
+            'confidence': result.get('confidence_score', 0),  # Fixed: was 'confidence', should be 'confidence_score'
+            'direction': result.get('position_direction'),  # Fixed: was 'direction', should be 'position_direction'
             'entry_price': result.get('entry_price'),
-            'take_profit': result.get('take_profit'),
+            'take_profit': result.get('target_price'),  # Fixed: was 'take_profit', should be 'target_price'
             'stop_loss': result.get('stop_loss'),
             'rationale': result.get('rationale', '')
         })
