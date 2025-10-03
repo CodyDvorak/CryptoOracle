@@ -100,6 +100,8 @@ class Recommendation(BaseModel):
     category: str = ""  # confidence/percent_mover/dollar_mover
     predicted_percent_change: float = 0  # Predicted % change
     predicted_dollar_change: float = 0  # Predicted $ change
+    market_regime: str = "SIDEWAYS"  # Phase 2: BULL, BEAR, or SIDEWAYS
+    regime_confidence: float = 0.5  # Phase 2: Confidence in regime classification (0-1)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class IntegrationsConfig(BaseModel):
