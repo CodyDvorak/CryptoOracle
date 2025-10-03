@@ -242,7 +242,10 @@ const History = () => {
               <Card>
                 <CardHeader>
                   <CardTitle>
-                    Scan Details - {new Date(selectedRun.started_at).toLocaleDateString()}
+                    Scan Details - {(() => {
+                      const timestamp = selectedRun.started_at.endsWith('Z') ? selectedRun.started_at : selectedRun.started_at + 'Z';
+                      return new Date(timestamp).toLocaleDateString();
+                    })()}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
