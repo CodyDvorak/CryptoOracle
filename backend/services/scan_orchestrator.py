@@ -158,14 +158,14 @@ class ScanOrchestrator:
                                                max_coins=100, skip_sentiment=True, parallel=True, batch_size=5)
     
     async def _run_speed_run_scan(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
-        """Speed Run: 40 coins, 25 best bots only, ~3 minutes."""
-        logger.info("💨 SPEED RUN: 40 coins, 25 top bots, NO AI (~3 min)")
-        # Use first 25 bots
+        """Speed Run: 75 coins, 25 best bots only, ~4-5 minutes."""
+        logger.info("💨 SPEED RUN: 75 coins, 25 top bots, NO AI (~4-5 min)")
+        # Use first 25 bots (excluding AIAnalystBot which would be filtered anyway)
         original_bots = self.bots
-        self.bots = self.bots[:25]
+        self.bots = [bot for bot in self.bots if bot.__class__.__name__ != 'AIAnalystBot'][:25]
         try:
             result = await self._run_scan_with_config(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id,
-                                                    max_coins=40, skip_sentiment=True)
+                                                    max_coins=75, skip_sentiment=True)
             return result
         finally:
             self.bots = original_bots
