@@ -448,33 +448,33 @@ async def get_scan_status():
             db.scan_runs.find_one(sort=[('started_at', -1)]),
             timeout=3.0
         )
-    
-    # If we have a running task but the DB shows completed/failed, there's a mismatch
-    if is_running and recent_run and recent_run.get('status') in ['completed', 'failed']:
-        logger.warning("Scan status mismatch: task running but DB shows completed/failed")
-        is_running = False
-        current_scan_task = None
-    
-    # If DB shows running but no task, mark as failed (stale state)
-    if not is_running and recent_run and recent_run.get('status') == 'running':
-        # Check if it's been running for too long (> 2 hours = stale)
-        from datetime import datetime, timezone, timedelta
-        started_at = recent_run.get('started_at')
-        if started_at and isinstance(started_at, datetime):
-            time_running = datetime.now(timezone.utc) - started_at
-            if time_running > timedelta(hours=2):
-                logger.warning(f"Stale scan detected: {recent_run['id']} running for {time_running}")
-                # Mark as failed
-                await db.scan_runs.update_one(
-                    {'id': recent_run['id']},
-                    {'$set': {
-                        'status': 'failed',
-                        'error_message': 'Scan timed out or crashed',
-                        'completed_at': datetime.now(timezone.utc)
-                    }}
-                )
-                recent_run['status'] = 'failed'
-    
+        
+        # If we have a running task but the DB shows completed/failed, there's a mismatch
+        if is_running and recent_run and recent_run.get('status') in ['completed', 'failed']:
+            logger.warning("Scan status mismatch: task running but DB shows completed/failed")
+            is_running = False
+            current_scan_task = None
+        
+        # If DB shows running but no task, mark as failed (stale state)
+        if not is_running and recent_run and recent_run.get('status') == 'running':
+            # Check if it's been running for too long (> 2 hours = stale)
+            from datetime import datetime, timezone, timedelta
+            started_at = recent_run.get('started_at')
+            if started_at and isinstance(started_at, datetime):
+                time_running = datetime.now(timezone.utc) - started_at
+                if time_running > timedelta(hours=2):
+                    logger.warning(f"Stale scan detected: {recent_run['id']} running for {time_running}")
+                    # Mark as failed
+                    await db.scan_runs.update_one(
+                        {'id': recent_run['id']},
+                        {'$set': {
+                            'status': 'failed',
+                            'error_message': 'Scan timed out or crashed',
+                            'completed_at': datetime.now(timezone.utc)
+                        }}
+                    )
+                    recent_run['status'] = 'failed'
+        
         # Convert ObjectId to string if present
         if recent_run and '_id' in recent_run:
             recent_run['_id'] = str(recent_run['_id'])
