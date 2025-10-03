@@ -192,17 +192,24 @@ class MultiProviderClient:
         """Fetch 4-hour candles with automatic provider fallback.
         
         Phase 4: Multi-timeframe analysis
+        Fallback order: CoinMarketCap → CoinGecko → CryptoCompare
+        
         Args:
             symbol: Coin symbol (e.g., 'BTC')
             limit: Number of 4h candles to fetch (default 168 = 7 days)
         
         Returns list of dicts with OHLCV data for 4h timeframe
         """
+        # Try all providers in order: primary → backup → tertiary (cryptocompare)
         providers_to_try = [self.current_provider]
         
-        # If current is primary, also try backup
-        if self.current_provider == self.primary_provider:
+        # Add backup provider if not already in list
+        if self.backup_provider != self.current_provider and self.backup_provider not in providers_to_try:
             providers_to_try.append(self.backup_provider)
+        
+        # Always try cryptocompare as last resort for 4h candles
+        if 'cryptocompare' not in providers_to_try:
+            providers_to_try.append('cryptocompare')
         
         for provider_name in providers_to_try:
             provider = self._get_provider(provider_name)
