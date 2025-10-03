@@ -164,6 +164,7 @@ class IndicatorEngine:
         features['recent_high'] = df['high'].iloc[-recent_period:].max()
         features['recent_low'] = df['low'].iloc[-recent_period:].min()
         
+        return features
 
     @classmethod
     def compute_4h_indicators(cls, candles_4h: List[Dict]) -> Dict:
