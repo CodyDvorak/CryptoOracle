@@ -708,7 +708,7 @@ function App() {
           <StatCard 
             icon={Clock} 
             label="Last Scan" 
-            value={stats.lastScan === 'Never' ? 'Never' : new Date(stats.lastScan).toLocaleTimeString()}
+            value={stats.lastScanDisplay || 'Never'}
           />
           <StatCard 
             icon={TrendingUp} 
