@@ -358,7 +358,6 @@ function App() {
     toast.info('Starting scan... This may take a few minutes.');
     
     // Add notification
-    const { addNotification } = require('./contexts/NotificationContext').useNotifications();
     addNotification(`Scan started: ${scanTypes[scanType]?.label || scanType}`, 'info');
     
     try {
