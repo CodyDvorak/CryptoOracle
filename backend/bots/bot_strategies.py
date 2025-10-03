@@ -2588,15 +2588,15 @@ class MeanReversionBot(BotStrategy):
         except (ZeroDivisionError, TypeError):
             return None
         
-        # Trigger on extreme deviations
-        if price > bb_upper and deviation_pct > 2:
+        # Trigger on moderate deviations (RELAXED: 2% → 1.5% for more signals)
+        if price > bb_upper * 0.98 and deviation_pct > 1.5:  # Within 2% of upper band, 1.5% deviation
             # Price too high - expect reversion down
             direction = 'short'
-            confidence = 6 + min(abs(deviation_pct) / 2, 3)
-        elif price < bb_lower and deviation_pct < -2:
+            confidence = 5 + min(abs(deviation_pct) / 2, 4)
+        elif price < bb_lower * 1.02 and deviation_pct < -1.5:  # Within 2% of lower band, -1.5% deviation
             # Price too low - expect reversion up
             direction = 'long'
-            confidence = 6 + min(abs(deviation_pct) / 2, 3)
+            confidence = 5 + min(abs(deviation_pct) / 2, 4)
         else:
             return None
         
