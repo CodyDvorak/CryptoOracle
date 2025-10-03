@@ -221,11 +221,11 @@ class ScanOrchestrator:
                                                max_coins=250, skip_sentiment=True, parallel=True, batch_size=8)
     
     async def _run_all_in_under_5_lite_scan(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
-        """All In under $5 Lite: 100 coins filtered to <$5, 49 bots, parallel, ~5-7 minutes."""
-        logger.info("⚡💰 ALL IN UNDER $5 LITE: 100 coins (no pagination), <$5 filter, 8 concurrent, 49 bots (~5-7 min)")
+        """All In under $5 Lite: 250 coins filtered to <$5, 48 bots, parallel, ~15-18 minutes."""
+        logger.info("⚡💰 ALL IN UNDER $5 LITE: 250 coins, <$5 filter, 8 concurrent, 48 bots (~15-18 min)")
         # Override max_price to $5 for this scan
         return await self._run_scan_with_config(scan_run, filter_scope, min_price, 5.0, custom_symbols, user_id,
-                                               max_coins=100, skip_sentiment=True, parallel=True, batch_size=8)
+                                               max_coins=250, skip_sentiment=True, parallel=True, batch_size=8)
     
     async def _run_all_in_ai_scan(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
         """All In + AI: 200-300 coins with pagination, AI on top 20, ~30-35 minutes."""
