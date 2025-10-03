@@ -164,4 +164,122 @@ class IndicatorEngine:
         features['recent_high'] = df['high'].iloc[-recent_period:].max()
         features['recent_low'] = df['low'].iloc[-recent_period:].min()
         
+
+    @classmethod
+    def compute_4h_indicators(cls, candles_4h: List[Dict]) -> Dict:
+        """Compute indicators for 4-hour timeframe.
+        
+        Phase 4: Multi-timeframe analysis
+        Returns key indicators for 4h chart: trend, momentum, RSI
+        """
+        try:
+            if not candles_4h or len(candles_4h) < 20:
+                return {}
+            
+            df = cls.prepare_dataframe(candles_4h)
+            if df.empty:
+                return {}
+            
+            indicators_4h = {}
+            
+            # Trend indicators (4h)
+            sma_10_4h = cls.sma(df, 10)
+            sma_20_4h = cls.sma(df, 20)
+            ema_9_4h = cls.ema(df, 9)
+            
+            indicators_4h['sma_10_4h'] = float(sma_10_4h.iloc[-1]) if not pd.isna(sma_10_4h.iloc[-1]) else 0
+            indicators_4h['sma_20_4h'] = float(sma_20_4h.iloc[-1]) if not pd.isna(sma_20_4h.iloc[-1]) else 0
+            indicators_4h['ema_9_4h'] = float(ema_9_4h.iloc[-1]) if not pd.isna(ema_9_4h.iloc[-1]) else 0
+            
+            # Momentum indicators (4h)
+            rsi_14_4h = cls.rsi(df, 14)
+            macd_line, signal_line, histogram = cls.macd(df)
+            
+            indicators_4h['rsi_14_4h'] = float(rsi_14_4h.iloc[-1]) if not pd.isna(rsi_14_4h.iloc[-1]) else 50
+            indicators_4h['macd_4h'] = float(macd_line.iloc[-1]) if not pd.isna(macd_line.iloc[-1]) else 0
+            indicators_4h['macd_signal_4h'] = float(signal_line.iloc[-1]) if not pd.isna(signal_line.iloc[-1]) else 0
+            indicators_4h['macd_histogram_4h'] = float(histogram.iloc[-1]) if not pd.isna(histogram.iloc[-1]) else 0
+            
+            # 4h trend direction
+            current_price = df['close'].iloc[-1]
+            if indicators_4h['sma_10_4h'] > 0:
+                if current_price > indicators_4h['sma_10_4h'] and indicators_4h['sma_10_4h'] > indicators_4h['sma_20_4h']:
+                    indicators_4h['trend_4h'] = 'bullish'
+                elif current_price < indicators_4h['sma_10_4h'] and indicators_4h['sma_10_4h'] < indicators_4h['sma_20_4h']:
+                    indicators_4h['trend_4h'] = 'bearish'
+                else:
+                    indicators_4h['trend_4h'] = 'neutral'
+            else:
+                indicators_4h['trend_4h'] = 'neutral'
+            
+            # 4h momentum
+            if indicators_4h['macd_histogram_4h'] > 0 and indicators_4h['rsi_14_4h'] > 50:
+                indicators_4h['momentum_4h'] = 'positive'
+            elif indicators_4h['macd_histogram_4h'] < 0 and indicators_4h['rsi_14_4h'] < 50:
+                indicators_4h['momentum_4h'] = 'negative'
+            else:
+                indicators_4h['momentum_4h'] = 'neutral'
+            
+            return indicators_4h
+            
+        except Exception as e:
+            logger.error(f"Error computing 4h indicators: {e}")
+            return {}
+    
+    @classmethod
+    def check_timeframe_alignment(cls, daily_features: Dict, features_4h: Dict) -> Dict:
+        """Check if daily and 4h timeframes are aligned.
+        
+        Phase 4: Timeframe confirmation
+        Returns alignment score and recommendations
+        """
+        if not features_4h:
+            return {'alignment': 'unknown', 'confidence_modifier': 1.0}
+        
+        try:
+            # Get daily trend
+            current_price = daily_features.get('current_price', 0)
+            sma_20 = daily_features.get('sma_20', 0)
+            sma_50 = daily_features.get('sma_50', 0)
+            
+            if current_price > sma_20 > sma_50:
+                daily_trend = 'bullish'
+            elif current_price < sma_20 < sma_50:
+                daily_trend = 'bearish'
+            else:
+                daily_trend = 'neutral'
+            
+            # Get 4h trend
+            trend_4h = features_4h.get('trend_4h', 'neutral')
+            momentum_4h = features_4h.get('momentum_4h', 'neutral')
+            
+            # Check alignment
+            if daily_trend == 'bullish' and trend_4h == 'bullish' and momentum_4h == 'positive':
+                alignment = 'strong_bullish'
+                confidence_modifier = 1.3  # Boost confidence
+            elif daily_trend == 'bearish' and trend_4h == 'bearish' and momentum_4h == 'negative':
+                alignment = 'strong_bearish'
+                confidence_modifier = 1.3  # Boost confidence
+            elif daily_trend == trend_4h:
+                alignment = 'aligned'
+                confidence_modifier = 1.1  # Mild boost
+            elif (daily_trend == 'bullish' and trend_4h == 'bearish') or (daily_trend == 'bearish' and trend_4h == 'bullish'):
+                alignment = 'conflicting'
+                confidence_modifier = 0.7  # Reduce confidence
+            else:
+                alignment = 'neutral'
+                confidence_modifier = 1.0
+            
+            return {
+                'alignment': alignment,
+                'confidence_modifier': confidence_modifier,
+                'daily_trend': daily_trend,
+                'trend_4h': trend_4h,
+                'momentum_4h': momentum_4h
+            }
+            
+        except Exception as e:
+            logger.error(f"Error checking timeframe alignment: {e}")
+            return {'alignment': 'unknown', 'confidence_modifier': 1.0}
+
         return features
