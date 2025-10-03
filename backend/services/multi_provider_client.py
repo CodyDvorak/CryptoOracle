@@ -89,7 +89,7 @@ class MultiProviderClient:
         }
     
     async def get_all_coins(self, max_coins: int = 100) -> List[tuple]:
-        """Fetch top coins with automatic provider fallback.
+        """Fetch top coins with automatic provider fallback and timeout protection.
         
         Args:
             max_coins: Maximum number of coins to fetch
