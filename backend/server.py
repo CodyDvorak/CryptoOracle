@@ -460,7 +460,13 @@ async def get_scan_status():
             # Check if it's been running for too long (> 2 hours = stale)
             from datetime import datetime, timezone, timedelta
             started_at = recent_run.get('started_at')
-            if started_at and isinstance(started_at, datetime):
+            if started_at:
+                # Ensure timezone-aware comparison
+                if isinstance(started_at, str):
+                    started_at = datetime.fromisoformat(started_at.replace('Z', '+00:00'))
+                elif not started_at.tzinfo:
+                    started_at = started_at.replace(tzinfo=timezone.utc)
+                
                 time_running = datetime.now(timezone.utc) - started_at
                 if time_running > timedelta(hours=2):
                     logger.warning(f"Stale scan detected: {recent_run['id']} running for {time_running}")
