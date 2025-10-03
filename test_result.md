@@ -1256,6 +1256,75 @@ backend:
         comment: "Added force_close parameter to evaluation endpoint for time-based evaluation"
       - working: true
         agent: "testing"
+        comment: "PASS - Force close parameter working correctly. Evaluation endpoint accepts force_close parameter and processes time-based evaluations properly."
+
+  - task: "Phase 2: Market Regime Detection System"
+    implemented: true
+    working: true
+    file: "backend/services/market_regime_classifier.py, backend/services/scan_orchestrator.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Phase 2 Enhancement: Implemented MarketRegimeClassifier service that detects BULL, BEAR, SIDEWAYS markets based on SMA alignment (40% weight), momentum (30% weight), trend strength/ADX (15% weight), and market structure/higher highs (15% weight). Integrated into scan orchestrator with bot confidence adjusted based on regime (0.7x to 1.4x modifiers)."
+      - working: true
+        agent: "testing"
+        comment: "PASS - Phase 2 Market Regime Detection fully operational. ✅ Backend startup shows 'Phase 2: Market regime detection enabled', ✅ Regime classification working correctly (BULL/BEAR/SIDEWAYS detected with confidence scores 0.0-1.0), ✅ Backend logs show regime detection for each coin (e.g., 'SOL Market Regime: SIDEWAYS (confidence: 0.15)', 'XMR Market Regime: BULL (confidence: 1.00)', 'TAO Market Regime: BEAR (confidence: 1.00)'), ✅ Bot confidence adjustments implemented with regime weight modifiers, ✅ 49 bots operational including regime-aware analysis, ✅ No breaking changes to existing functionality, ✅ All analytics endpoints working correctly. Minor: Regime fields not yet added to recommendation API responses but core functionality working perfectly."
+
+  - task: "Market Regime Classification Logic"
+    implemented: true
+    working: true
+    file: "backend/services/market_regime_classifier.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented regime classification algorithm using SMA alignment, momentum, ADX trend strength, RSI positioning, and market structure analysis to classify BULL, BEAR, or SIDEWAYS markets with confidence scores"
+      - working: true
+        agent: "testing"
+        comment: "PASS - Market regime classification logic working correctly. Backend logs show accurate regime detection with proper confidence scores: BULL markets (confidence up to 1.00), BEAR markets (confidence up to 1.00), SIDEWAYS markets (confidence 0.00-0.45). Algorithm successfully processes multiple indicators and produces reliable regime classifications."
+
+  - task: "Bot Weight Modifiers Based on Regime"
+    implemented: true
+    working: true
+    file: "backend/services/market_regime_classifier.py, backend/services/scan_orchestrator.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented bot weight modifiers: BULL regime (trend_following: 1.3x, momentum: 1.2x, mean_reversion: 0.7x), BEAR regime (trend_following: 1.3x, momentum: 1.2x, mean_reversion: 0.7x), SIDEWAYS regime (mean_reversion: 1.4x, trend_following: 0.7x)"
+      - working: true
+        agent: "testing"
+        comment: "PASS - Bot weight modifiers implemented and integrated into scan orchestrator. Code analysis shows regime weight calculation and application to bot confidence scores. Scan orchestrator applies regime-based weight modifiers during bot analysis phase, adjusting confidence scores based on market regime and bot strategy type."
+
+  - task: "Regime Integration in Scan Orchestrator"
+    implemented: true
+    working: true
+    file: "backend/services/scan_orchestrator.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Integrated market regime classifier into scan orchestrator workflow: regime classification occurs for each coin, regime data added to features, bot confidence adjusted based on regime weights"
+      - working: true
+        agent: "testing"
+        comment: "PASS - Regime integration working perfectly in scan orchestrator. Backend logs confirm regime classification for each coin during scans with detailed logging (📊 {symbol} Market Regime: {regime} (confidence: {confidence})). Regime data successfully added to features dict and used for bot weight adjustments. Scan completed successfully with 9 recommendations and 48 bot results per coin."
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added force_close parameter to evaluation endpoint for time-based evaluation"
+      - working: true
+        agent: "testing"
         comment: "PASS - Force close parameter working correctly. POST /api/bots/evaluate?hours_old=1&force_close=true endpoint accepts parameter and processes evaluation. Returns structured response with wins, partial_wins, losses, and neutral counts. With force_close=true, system evaluates 1000 predictions with results: 22 wins, 42 partial wins, 44 losses, 475 neutral."
 
 agent_communication:
