@@ -427,23 +427,27 @@ async def cancel_current_scan():
 
 @api_router.get("/scan/status")
 async def get_scan_status():
-    """Get current scan status."""
+    """Get current scan status with timeout protection."""
     global current_scan_task
     
-    # Check if task is running
-    is_running = current_scan_task and not current_scan_task.done()
-    
-    # If task is done but had an exception, log it
-    if current_scan_task and current_scan_task.done():
-        try:
-            exception = current_scan_task.exception()
-            if exception:
-                logger.error(f"Scan task failed with exception: {exception}")
-        except Exception:
-            pass
-    
-    # Get most recent run from database
-    recent_run = await db.scan_runs.find_one(sort=[('started_at', -1)])
+    try:
+        # Check if task is running
+        is_running = current_scan_task and not current_scan_task.done()
+        
+        # If task is done but had an exception, log it
+        if current_scan_task and current_scan_task.done():
+            try:
+                exception = current_scan_task.exception()
+                if exception:
+                    logger.error(f"Scan task failed with exception: {exception}")
+            except Exception:
+                pass
+        
+        # Get most recent run from database with timeout
+        recent_run = await asyncio.wait_for(
+            db.scan_runs.find_one(sort=[('started_at', -1)]),
+            timeout=3.0
+        )
     
     # If we have a running task but the DB shows completed/failed, there's a mismatch
     if is_running and recent_run and recent_run.get('status') in ['completed', 'failed']:
