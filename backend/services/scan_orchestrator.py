@@ -41,22 +41,22 @@ class ScanOrchestrator:
     async def run_scan(self, filter_scope: str = 'all', min_price: Optional[float] = None, max_price: Optional[float] = None, custom_symbols: Optional[List[str]] = None, run_id: Optional[str] = None, user_id: Optional[str] = None, scan_type: str = 'full_scan') -> Dict:
         """Execute a scan with the specified strategy.
         
-        Scan Types:
-        - quick_scan: 45 coins, no AI, ~7 min
-        - focused_scan: 20 coins, no AI, ~15 min
-        - focused_ai: 20 coins, AI on all 20, ~25-28 min
-        - fast_parallel: 45 coins parallel processing, ~11 min
-        - full_scan_lite: 86 coins parallel, no AI, ~14 min
-        - heavy_speed_run: 86 coins, 25 best bots, ~7 min
-        - complete_market_scan: 86 coins, 49 bots, optimized, ~9 min
-        - speed_run: 40 coins, 25 best bots only, ~3 min
-        - full_scan: 86 coins smart optimization (default), ~65 min
-        - all_in: 200-300 coins with pagination, 49 bots, parallel, ~20 min
-        - all_in_under_5: 200-300 coins under $5, 49 bots, parallel, ~12 min
-        - all_in_lite: 100 coins, 49 bots, parallel, ~9-11 min
-        - all_in_under_5_lite: 100 coins under $5, 49 bots, parallel, ~5-7 min
-        - all_in_ai: 200-300 coins, AI on top 20, ~30-35 min
-        - all_in_under_5_ai: 200-300 coins under $5, AI on top 20, ~25-30 min
+        Scan Types (Updated with CoinMarketCap API - up to 5000 coins available):
+        - quick_scan: 100 coins, 48 bots, no AI, ~7-10 min
+        - focused_scan: 50 coins, 48 bots, no AI, ~10-12 min
+        - focused_ai: 20 coins, 49 bots (AI on all 20), ~25-28 min
+        - fast_parallel: 100 coins, 48 bots, parallel processing, ~8-10 min
+        - speed_run: 75 coins, 25 best bots, ~4-5 min
+        - full_scan_lite: 200 coins, 48 bots, parallel, no AI, ~15-18 min
+        - heavy_speed_run: 150 coins, 25 best bots, parallel, ~8-10 min
+        - complete_market_scan: 250 coins, 48 bots, optimized, ~18-20 min
+        - full_scan: 200 coins, 48 bots (49 with AI on top 20), smart optimization, ~40-45 min
+        - all_in: 500 coins, 48 bots, parallel, ~30-35 min
+        - all_in_under_5: 500 coins under $5, 48 bots, parallel, ~20-25 min
+        - all_in_lite: 250 coins, 48 bots, parallel, ~18-20 min
+        - all_in_under_5_lite: 250 coins under $5, 48 bots, parallel, ~15-18 min
+        - all_in_ai: 500 coins, 48 bots (49 with AI on top 25), ~45-50 min
+        - all_in_under_5_ai: 500 coins under $5, 48 bots (49 with AI on top 25), ~35-40 min
         
         Args:
             filter_scope: 'all' or 'alt' (exclude major coins) or 'custom'
