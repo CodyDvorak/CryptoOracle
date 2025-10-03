@@ -8,10 +8,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 class CoinalyzeClient:
-    def __init__(self, api_key: str):
-        self.api_key = api_key
+    def __init__(self, api_key: str = None):
+        self.api_key = api_key or os.getenv('COINALYZE_API_KEY')
         self.base_url = 'https://api.coinalyze.net/v1'
         self.session: Optional[aiohttp.ClientSession] = None
+        self.provider_name = "Coinalyze"
 
     async def _get_session(self):
         if self.session is None or self.session.closed:
