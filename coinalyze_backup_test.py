@@ -194,20 +194,18 @@ class CoinalyzeBackupTestSuite:
         """Test Coinalyze long/short ratio API"""
         try:
             headers = {'api_key': COINALYZE_API_KEY}
-            url = 'https://api.coinalyze.net/v1/long-short-ratio-history'
+            url = 'https://api.coinalyze.net/v1/long-short-ratio'
             
-            from datetime import datetime, timedelta, timezone
+            # Use correct Coinalyze symbol format
             params = {
-                'symbols': f'{symbol.upper()}USDT_PERP',
-                'from': int((datetime.now(timezone.utc) - timedelta(hours=24)).timestamp()),
-                'to': int(datetime.now(timezone.utc).timestamp())
+                'symbols': f'{symbol.upper()}USDT_PERP.A'
             }
             
             async with self.coinalyze_session.get(url, headers=headers, params=params, timeout=15) as response:
                 if response.status == 200:
                     data = await response.json()
                     if data and len(data) > 0:
-                        latest = data[-1] if isinstance(data, list) else data
+                        latest = data[0] if isinstance(data, list) else data
                         ratio = float(latest.get('value', 1.0))
                         
                         # Validate ratio is reasonable (around 1.0, typically 0.1 to 10.0)
