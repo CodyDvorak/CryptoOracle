@@ -1153,10 +1153,16 @@ class EMA_CrossBot(BotStrategy):
         
         if ema_12 > ema_26:
             direction = 'long'
-            confidence = min(10, int(6 + ((ema_12 - ema_26) / ema_26) * 150))
+            try:
+                confidence = min(10, int(6 + ((ema_12 - ema_26) / ema_26) * 150)) if ema_26 > 0 else 6
+            except (ZeroDivisionError, ValueError, OverflowError):
+                confidence = 6
         else:
             direction = 'short'
-            confidence = min(10, int(6 + ((ema_26 - ema_12) / ema_26) * 150))
+            try:
+                confidence = min(10, int(6 + ((ema_26 - ema_12) / ema_26) * 150)) if ema_26 > 0 else 6
+            except (ZeroDivisionError, ValueError, OverflowError):
+                confidence = 6
         
         strength = confidence / 10.0
         predictions = self._calculate_predicted_prices(price, direction, 0.025, strength)
