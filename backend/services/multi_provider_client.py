@@ -51,6 +51,7 @@ class MultiProviderClient:
     
     async def close(self):
         """Close all provider sessions."""
+        await self.coinmarketcap.close()
         await self.coingecko.close()
         await self.cryptocompare.close()
     
