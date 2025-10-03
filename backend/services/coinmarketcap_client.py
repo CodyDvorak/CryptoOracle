@@ -180,7 +180,9 @@ class CoinMarketCapClient:
                 return []
             
             # Fetch hourly data and aggregate to 4h
-            url = f"{self.base_url}/v2/cryptocurrency/ohlcv/historical"
+            # Note: CoinMarketCap historical OHLCV requires enterprise plan
+            # For now, we'll use quotes/historical and approximate 4h candles
+            url = f"{self.base_url}/cryptocurrency/quotes/historical"
             end_time = datetime.now(timezone.utc)
             start_time = end_time - timedelta(days=7)  # Last 7 days
             
