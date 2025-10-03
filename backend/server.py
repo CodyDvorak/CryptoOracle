@@ -647,17 +647,19 @@ async def get_bot_details(run_id: str, coin_symbol: str):
         )
     
     coin_name = recommendation.get('coin')
+    ticker = recommendation.get('ticker', coin_symbol)
     
-    # Fetch all bot results for this coin in this run
-    bot_results = await db.bot_results.find({
+    # Fetch all bot predictions for this coin in this run
+    # Bot predictions are now stored in 'bot_predictions' collection
+    bot_results = await db.bot_predictions.find({
         'run_id': run_id,
-        'coin': coin_name
+        'ticker': ticker
     }).to_list(100)
     
     if not bot_results:
         raise HTTPException(
             status_code=404,
-            detail=f"No bot results found for {coin_name} in run {run_id}"
+            detail=f"No bot predictions found for {coin_name} ({ticker}) in run {run_id}"
         )
     
     # Convert ObjectId to string and format response
@@ -682,7 +684,7 @@ async def get_bot_details(run_id: str, coin_symbol: str):
     response_data = {
         'run_id': run_id,
         'coin': coin_name,
-        'ticker': coin_symbol,
+        'ticker': ticker,
         'total_bots': len(bot_details),
         'avg_confidence': recommendation.get('avg_confidence', 0),
         'bot_results': bot_details
