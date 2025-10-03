@@ -142,17 +142,24 @@ class MultiProviderClient:
     async def get_historical_data(self, symbol: str, days: int = 30) -> List[tuple]:
         """Fetch historical data with automatic provider fallback.
         
+        Fallback order: CoinMarketCap → CoinGecko → CryptoCompare
+        
         Args:
             symbol: Coin symbol (e.g., 'BTC')
             days: Number of days of historical data
         
         Returns list of tuples: (timestamp, close_price, high, low, open)
         """
+        # Try all providers: primary → backup → cryptocompare
         providers_to_try = [self.current_provider]
         
-        # If current is primary, also try backup
-        if self.current_provider == self.primary_provider:
+        # Add backup provider if not already in list
+        if self.backup_provider != self.current_provider and self.backup_provider not in providers_to_try:
             providers_to_try.append(self.backup_provider)
+        
+        # Always try cryptocompare as last resort
+        if 'cryptocompare' not in providers_to_try:
+            providers_to_try.append('cryptocompare')
         
         for provider_name in providers_to_try:
             provider = self._get_provider(provider_name)
@@ -165,6 +172,7 @@ class MultiProviderClient:
                 self._record_call(provider_name)
                 
                 if data and len(data) > 0:
+                    logger.info(f"✅ {provider_name}: Successfully fetched {len(data)} candles for {symbol}")
                     return data
                 else:
                     logger.warning(f"⚠️ {provider_name} returned no historical data for {symbol}")
