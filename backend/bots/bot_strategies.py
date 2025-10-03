@@ -2541,6 +2541,12 @@ ALL_BOTS = [
     KSTBot(),
     VortexBot(),
     AIAnalystBot(),  # Layer 2: AI-powered bot using ChatGPT-5
+    # Phase 3: Contrarian/Reversal Bots (5 new bots)
+    RSI_ReversalBot(),
+    MeanReversionBot(),
+    BollingerReversalBot(),
+    StochasticReversalBot(),
+    VolumeSpikeFadeBot(),
 ]
 
 def get_all_bots():
