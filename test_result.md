@@ -2869,6 +2869,44 @@ test_plan:
 agent_communication:
   - agent: "testing"
     message: |
+      PHASE 3 CONTRARIAN BOTS TESTING COMPLETE - CRITICAL JSON SERIALIZATION ISSUE REMAINS:
+      
+      🔴 CRITICAL FINDINGS:
+      1. JSON Serialization Error: Still occurring despite fixes - "ValueError: Out of range float values are not JSON compliant"
+         - Bot details API returns 500 errors for coins: CAKE, ETHFI, DEXE
+         - Backend logs show JSON serialization failures
+      
+      2. Contrarian Bot Participation: PARTIAL SUCCESS
+         - Only 1/5 contrarian bots found: StochasticReversalBot ✅
+         - Missing: RSI_ReversalBot, MeanReversionBot, BollingerReversalBot, VolumeSpikeFadeBot ❌
+      
+      3. Long/Short Balance: NO IMPROVEMENT
+         - Still 100% LONG bias (16/16 predictions)
+         - Zero SHORT predictions detected
+      
+      ✅ WORKING FIXES:
+      - StochasticReversalBot field fix: 'stoch_k' working correctly
+      - VolumeSpikeFadeBot relaxed triggers: Implemented (1.5x volume, 2% price, 60/40 RSI)
+      - ATR clamping: Working in contrarian bots
+      
+      🔧 ROOT CAUSE IDENTIFIED:
+      Division operations in bot_strategies.py can produce NaN/Infinity:
+      - Line 71: sl_distance = abs(entry - stop_loss) / entry (entry could be 0)
+      - Line 131: ((sma_20 - sma_50) / sma_50) (sma_50 could be 0)
+      - Line 134: ((sma_50 - sma_20) / sma_50) (sma_50 could be 0)  
+      - Line 137: abs(sma_20 - sma_50) / price (price could be 0)
+      
+      🚨 URGENT FIXES NEEDED:
+      1. Add safety checks for all division operations in bot_strategies.py
+      2. Debug why 4/5 contrarian bots are not participating in scans
+      3. Verify regime-based weighting is working for mean_reversion bots
+      4. Test again after fixes to confirm SHORT signals appear
+      
+      SUCCESS RATE: 54.5% (6/11 tests passed)
+      STATUS: Phase 3 fixes partially working but critical issues remain
+
+  - agent: "testing"
+    message: |
       PHASE 2 MARKET REGIME DETECTION TESTING COMPLETE:
       
       ✅ VERIFIED WORKING COMPONENTS:
