@@ -2516,15 +2516,15 @@ class RSI_ReversalBot(BotStrategy):
         if atr is None or atr < 0:
             atr = price * 0.02
         
-        # Reversal signals
-        if rsi >= 70:  # Overbought - expect reversal down
+        # Reversal signals (RELAXED: 70/30 → 60/40 for more participation)
+        if rsi >= 60:  # Overbought - expect reversal down
             direction = 'short'
-            confidence = 6 + min((rsi - 70) / 10, 3)  # 6-9 confidence
-        elif rsi <= 30:  # Oversold - expect reversal up
+            confidence = 5 + min((rsi - 60) / 4, 4)  # 5-9 confidence (scales faster)
+        elif rsi <= 40:  # Oversold - expect reversal up
             direction = 'long'
-            confidence = 6 + min((30 - rsi) / 10, 3)  # 6-9 confidence
+            confidence = 5 + min((40 - rsi) / 4, 4)  # 5-9 confidence (scales faster)
         else:
-            return None  # No signal in neutral zone
+            return None  # No signal in neutral zone (40-60 RSI)
         
         # Use ATR for TP/SL (with safety)
         try:
