@@ -1158,6 +1158,9 @@ class ScanOrchestrator:
                             
                             result['recommended_leverage'] = max(1.0, min(20.0, round(base_leverage, 1)))
                         
+                        # Convert confidence to int for BotResult model (fixes validation error)
+                        confidence_int = int(round(result['confidence']))
+                        
                         # Save bot result to DB
                         bot_result = BotResult(
                             run_id=run_id,
@@ -1167,7 +1170,7 @@ class ScanOrchestrator:
                             entry_price=result['entry'],
                             take_profit=result['take_profit'],
                             stop_loss=result['stop_loss'],
-                            confidence=result['confidence'],
+                            confidence=confidence_int,  # Use integer confidence
                             rationale=result['rationale'],
                             recommended_leverage=result.get('recommended_leverage', 5.0),
                             predicted_24h=result.get('predicted_24h'),
