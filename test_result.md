@@ -1093,6 +1093,21 @@ backend:
         agent: "testing"
         comment: "PASS - Coinalyze backup integration fully operational. SUCCESS RATE: 95.2% (20/21 tests passed). ✅ Coinalyze API accessible with provided key, ✅ Multi-provider futures system operational with 4 providers, ✅ OKX Primary + Coinalyze Backup configuration verified, ✅ Perfect redundancy achieved (both OKX and Coinalyze working), ✅ 100% coin coverage (BTC, ETH, SOL all supported by both providers), ✅ No breaking changes to existing functionality. SCENARIO C: Both Working ✅✅ - Production-ready with excellent reliability."
 
+  - task: "Dual API Usage Verification (OHLCV + Futures)"
+    implemented: true
+    working: true
+    file: "backend/services/scan_orchestrator.py, backend/services/multi_provider_client.py, backend/services/multi_futures_client.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Every scan type must use BOTH OHLCV APIs (CoinMarketCap primary) AND Futures APIs (OKX primary) as implemented in _analyze_coin_with_cryptocompare function"
+      - working: true
+        agent: "testing"
+        comment: "PASS - Dual API usage fully verified. ✅ Code flow confirmed: Line 1018 (OHLCV) + Line 1031 (Futures) both called for every coin, ✅ Provider statistics show active usage: CoinMarketCap 63+ calls, OKX 59+ calls, ✅ Backend logs confirm both 'CoinMarketCap: Fetched' and 'OKX: Fetched derivatives' messages for same coins, ✅ Features dict includes both OHLCV indicators and derivatives metrics, ✅ All 49 bots receive complete dual API data, ✅ Multiple scan types verified using same dual API architecture. MISSION CRITICAL SUCCESS: Every scan uses BOTH API systems as designed."
+
   - task: "Multi-Provider Fallback System (CoinGecko Primary, CryptoCompare Backup)"
     implemented: true
     working: true
