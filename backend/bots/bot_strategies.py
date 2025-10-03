@@ -2509,8 +2509,11 @@ class RSI_ReversalBot(BotStrategy):
         price = features.get('current_price', 0)
         atr = features.get('atr_14', price * 0.02)
         
-        if price == 0:
+        # Safety checks
+        if price == 0 or price is None or price < 0:
             return None
+        if atr is None or atr < 0:
+            atr = price * 0.02
         
         # Reversal signals
         if rsi >= 70:  # Overbought - expect reversal down
@@ -2522,8 +2525,12 @@ class RSI_ReversalBot(BotStrategy):
         else:
             return None  # No signal in neutral zone
         
-        # Use ATR for TP/SL
-        atr_pct = (atr / price) if price > 0 else 0.02
+        # Use ATR for TP/SL (with safety)
+        try:
+            atr_pct = (atr / price) if price > 0 else 0.02
+            atr_pct = max(0.001, min(atr_pct, 0.5))  # Clamp between 0.1% and 50%
+        except (ZeroDivisionError, TypeError):
+            atr_pct = 0.02
         
         if direction == 'long':
             entry = price
