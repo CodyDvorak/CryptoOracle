@@ -4,11 +4,13 @@ import axios from 'axios';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { RefreshCw, TrendingUp, TrendingDown, Target, Award, ArrowLeft, AlertTriangle, CheckCircle, Clock, BarChart3 } from 'lucide-react';
+import { useNotifications } from '../contexts/NotificationContext';
 
 const API = process.env.REACT_APP_BACKEND_URL || '';
 
 const BotPerformanceDashboard = () => {
   const navigate = useNavigate();
+  const { addNotification } = useNotifications();
   const [performances, setPerformances] = useState([]);
   const [systemHealth, setSystemHealth] = useState(null);
   const [regimePerformance, setRegimePerformance] = useState([]);
@@ -17,9 +19,10 @@ const BotPerformanceDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [evaluating, setEvaluating] = useState(false);
   const [lastEvaluation, setLastEvaluation] = useState(null);
+  const [scanRunning, setScanRunning] = useState(false);
 
   useEffect(() => {
-    fetchAllData();
+    checkScanStatusAndFetch();
   }, []);
 
   const fetchAllData = async () => {
