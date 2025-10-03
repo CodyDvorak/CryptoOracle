@@ -82,77 +82,77 @@ function App() {
     quick_scan: {
       label: '⚡ Quick Scan',
       icon: '⚡',
-      tooltip: '45 coins, 49 bots, NO AI\n~7 minutes\nBest for: Fast technical analysis'
+      tooltip: '100 coins, 48 bots, NO AI\n~7-10 minutes\nBest for: Fast technical analysis of top 100'
     },
     focused_scan: {
       label: '🎯 Focused Scan',
       icon: '🎯',
-      tooltip: '20 top coins, 49 bots, NO AI\n~15 minutes\nBest for: Top coins only'
+      tooltip: '50 top coins, 48 bots, NO AI\n~10-12 minutes\nBest for: Top 50 comprehensive analysis'
     },
     focused_ai: {
       label: '🎯🤖 Focused AI',
       icon: '🎯🤖',
-      tooltip: '20 top coins, 49 bots, AI on all 20\n~25-28 minutes\nBest for: Deep analysis of top coins'
+      tooltip: '20 top coins, 49 bots, AI on all 20\n~25-28 minutes\nBest for: Deep AI analysis of top 20'
     },
     fast_parallel: {
       label: '🚀 Fast Parallel',
       icon: '🚀',
-      tooltip: '45 coins parallel, 49 bots, NO AI\n~11 minutes\nBest for: Balanced speed'
-    },
-    full_scan_lite: {
-      label: '📈 Full Scan Lite',
-      icon: '📈',
-      tooltip: '86 coins parallel, 49 bots, NO AI\n~14 minutes\nBest for: Full coverage without AI'
-    },
-    heavy_speed_run: {
-      label: '⚡💨 Heavy Speed',
-      icon: '⚡',
-      tooltip: '86 coins, 25 best bots, NO AI\n~7 minutes\nBest for: Fast full coverage'
-    },
-    complete_market_scan: {
-      label: '🌐 Complete Market',
-      icon: '🌐',
-      tooltip: '86 coins (ALL), 49 bots, 6 concurrent\n~9 minutes\nBest for: Total market coverage + speed'
-    },
-    full_scan: {
-      label: '📊 Full Scan',
-      icon: '📊',
-      tooltip: '86 coins, 49 bots, Full AI\n~65 minutes\nBest for: Comprehensive + AI'
+      tooltip: '100 coins, 48 bots, 5 concurrent, NO AI\n~8-10 minutes\nBest for: Balanced speed + coverage'
     },
     speed_run: {
       label: '💨 Speed Run',
       icon: '💨',
-      tooltip: '40 coins, 25 best bots, NO AI\n~3 minutes\nBest for: Maximum speed'
+      tooltip: '75 coins, 25 best bots, NO AI\n~4-5 minutes\nBest for: Maximum speed analysis'
     },
-    all_in: {
-      label: '🚀💎 All In',
-      icon: '🚀💎',
-      tooltip: '200-300 coins (pagination), 49 bots\n~20 minutes\nBest for: Maximum coverage'
+    full_scan_lite: {
+      label: '📈 Full Scan Lite',
+      icon: '📈',
+      tooltip: '200 coins, 48 bots, 5 concurrent, NO AI\n~15-18 minutes\nBest for: Wide coverage without AI'
     },
-    all_in_under_5: {
-      label: '🚀💰 All In <$5',
-      icon: '🚀💰',
-      tooltip: '200-300 coins under $5, 49 bots\n~12 minutes\nBest for: Low-price coverage'
+    heavy_speed_run: {
+      label: '⚡💨 Heavy Speed',
+      icon: '⚡',
+      tooltip: '150 coins, 25 best bots, 5 concurrent, NO AI\n~8-10 minutes\nBest for: Fast wide coverage'
+    },
+    complete_market_scan: {
+      label: '🌐 Complete Market',
+      icon: '🌐',
+      tooltip: '250 coins, 48 bots, 6 concurrent, NO AI\n~18-20 minutes\nBest for: Comprehensive market scan'
+    },
+    full_scan: {
+      label: '📊 Full Scan',
+      icon: '📊',
+      tooltip: '200 coins, 48 bots (49 with AI on top 20)\n~40-45 minutes\nBest for: Deep analysis + AI insights'
     },
     all_in_lite: {
       label: '⚡💎 All In Lite',
       icon: '⚡💎',
-      tooltip: '100 coins (no pagination), 49 bots\n~9-11 minutes\nBest for: Quick max coverage'
+      tooltip: '250 coins, 48 bots, 8 concurrent, NO AI\n~18-20 minutes\nBest for: Large coverage, fast'
     },
     all_in_under_5_lite: {
       label: '⚡💰 All In <$5 Lite',
       icon: '⚡💰',
-      tooltip: '100 coins under $5, 49 bots\n~5-7 minutes\nBest for: Quick low-price scan'
+      tooltip: '250 coins under $5, 48 bots, 8 concurrent, NO AI\n~15-18 minutes\nBest for: Fast low-price hunt'
+    },
+    all_in: {
+      label: '🚀💎 All In',
+      icon: '🚀💎',
+      tooltip: '500 coins, 48 bots, 8 concurrent, NO AI\n~30-35 minutes\nBest for: Maximum market coverage'
+    },
+    all_in_under_5: {
+      label: '🚀💰 All In <$5',
+      icon: '🚀💰',
+      tooltip: '500 coins under $5, 48 bots, 8 concurrent, NO AI\n~20-25 minutes\nBest for: Max low-price coverage'
     },
     all_in_ai: {
       label: '🚀💎🤖 All In + AI',
       icon: '🚀💎🤖',
-      tooltip: '200-300 coins, AI on top 20\n~30-35 minutes\nBest for: Max coverage + AI insights'
+      tooltip: '500 coins, 48 bots (49 with AI on top 25)\n~45-50 minutes\nBest for: Max coverage + AI on best'
     },
     all_in_under_5_ai: {
       label: '🚀💰🤖 All In <$5 + AI',
       icon: '🚀💰🤖',
-      tooltip: '200-300 coins under $5, AI on top 20\n~25-30 minutes\nBest for: Low-price + AI insights'
+      tooltip: '500 coins under $5, 48 bots (49 with AI on top 25)\n~35-40 minutes\nBest for: Low-price + AI insights'
     }
   };
 
