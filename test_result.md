@@ -880,6 +880,21 @@ test_plan:
   test_priority: "high_first"
 
 backend:
+  - task: "Binance Futures/Derivatives Data Integration"
+    implemented: true
+    working: false
+    file: "backend/services/binance_futures_client.py, backend/services/scan_orchestrator.py, backend/services/indicator_engine.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented Binance Futures API integration for derivatives data: open interest, funding rates, long/short ratios, liquidation risk metrics. Integration added to scan orchestrator and indicator engine to enrich bot features with derivatives data."
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL ISSUE - Binance Futures API blocked (HTTP 451 - Legal restrictions) in this environment. Integration is properly implemented but cannot fetch derivatives data due to API access restrictions. Scans complete successfully but no derivatives data appears in recommendations or bot analysis. System shows 'Futures/derivatives data enabled' in logs but no actual API calls occur. Recommendations: 1) Use VPN/proxy for Binance API access, 2) Implement fallback derivatives data source (CoinGlass, Coinalyze), 3) Add proper error handling for blocked API access."
+
   - task: "All In scan types (4 new scans with pagination)"
     implemented: true
     working: "NA"
