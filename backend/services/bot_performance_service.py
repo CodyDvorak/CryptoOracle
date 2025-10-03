@@ -196,11 +196,17 @@ class BotPerformanceService:
                 upsert=True
             )
     
-    async def evaluate_predictions(self, hours_old: int = 24) -> Dict:
+    async def evaluate_predictions(self, hours_old: int = 24, force_close: bool = False) -> Dict:
         """Evaluate pending predictions that are at least X hours old.
+        
+        IMPROVED (Phase 1 Enhancement):
+        - Added time-based forced evaluation at 24h, 48h, 7d
+        - Added partial_win tracking
+        - Improved logging with detailed breakdown
         
         Args:
             hours_old: Minimum age of predictions to evaluate (default 24h)
+            force_close: If True, forces evaluation (no neutral outcomes)
             
         Returns:
             Dictionary with evaluation statistics
@@ -216,17 +222,22 @@ class BotPerformanceService:
             
             if not pending:
                 logger.info(f"No pending predictions older than {hours_old}h to evaluate")
-                return {'evaluated': 0, 'wins': 0, 'losses': 0, 'neutral': 0}
+                return {'evaluated': 0, 'wins': 0, 'partial_wins': 0, 'losses': 0, 'neutral': 0}
             
-            logger.info(f"📊 Evaluating {len(pending)} predictions older than {hours_old}h...")
+            logger.info(f"📊 Evaluating {len(pending)} predictions older than {hours_old}h (force_close={force_close})...")
             
             # Get current prices for all unique coins
             unique_symbols = list(set(p['coin_symbol'] for p in pending))
             current_prices = await self._get_current_prices(unique_symbols)
             
             wins = 0
+            partial_wins = 0
             losses = 0
             neutral = 0
+            
+            # Determine if we should force close based on age
+            # Force close at 24h, 48h, and 7d (168h)
+            should_force_close = force_close or hours_old in [24, 48, 168]
             
             # Evaluate each prediction
             for prediction in pending:
@@ -237,7 +248,8 @@ class BotPerformanceService:
                     logger.warning(f"Could not get price for {symbol}, skipping")
                     continue
                 
-                outcome = self._determine_outcome(prediction, current_price)
+                # Use improved outcome determination with force_close
+                outcome = self._determine_outcome(prediction, current_price, force_close=should_force_close)
                 
                 # Update prediction with outcome
                 await self.db.bot_predictions.update_one(
@@ -252,9 +264,11 @@ class BotPerformanceService:
                     }
                 )
                 
-                # Count results
+                # Count results (including partial wins)
                 if outcome['status'] == 'win':
                     wins += 1
+                elif outcome['status'] == 'partial_win':
+                    partial_wins += 1
                 elif outcome['status'] == 'loss':
                     losses += 1
                 else:
@@ -266,18 +280,19 @@ class BotPerformanceService:
             # Recalculate performance weights
             await self._recalculate_weights()
             
-            logger.info(f"✅ Evaluation complete: {wins} wins, {losses} losses, {neutral} neutral")
+            logger.info(f"✅ Evaluation complete: {wins} wins, {partial_wins} partial wins, {losses} losses, {neutral} neutral")
             
             return {
                 'evaluated': len(pending),
                 'wins': wins,
+                'partial_wins': partial_wins,
                 'losses': losses,
                 'neutral': neutral
             }
             
         except Exception as e:
             logger.error(f"Error evaluating predictions: {e}")
-            return {'evaluated': 0, 'wins': 0, 'losses': 0, 'neutral': 0, 'error': str(e)}
+            return {'evaluated': 0, 'wins': 0, 'partial_wins': 0, 'losses': 0, 'neutral': 0, 'error': str(e)}
     
     async def _get_current_prices(self, symbols: List[str]) -> Dict[str, float]:
         """Fetch current prices for a list of symbols."""
