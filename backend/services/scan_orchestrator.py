@@ -4,6 +4,7 @@ import logging
 from datetime import datetime, timezone
 
 from services.multi_provider_client import MultiProviderClient
+from services.binance_futures_client import BinanceFuturesClient
 from services.indicator_engine import IndicatorEngine
 from services.llm_synthesis_service import LLMSynthesisService
 from services.sentiment_analysis_service import SentimentAnalysisService  # Layer 1
