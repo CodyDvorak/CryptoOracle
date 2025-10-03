@@ -68,7 +68,12 @@ class BotPerformanceService:
             
             # Calculate volatility if not provided (using historical data)
             if volatility is None and btc_historical:
-                prices = [candle[1] for candle in btc_historical]
+                # Handle both dict and tuple formats
+                if isinstance(btc_historical[0], dict):
+                    prices = [candle['close'] for candle in btc_historical]
+                else:
+                    prices = [candle[1] for candle in btc_historical]
+                
                 if len(prices) > 1:
                     # Simple volatility: standard deviation / mean
                     import statistics
