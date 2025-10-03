@@ -192,8 +192,8 @@ class CoinMarketCapClient:
                 'convert': 'USD'
             }
             
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url, params=params, headers=self.headers, timeout=aiohttp.ClientTimeout(total=15)) as response:
+            session = await self._get_session()
+            async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=15)) as response:
                     if response.status == 200:
                         data = await response.json()
                         quotes = data.get('data', {}).get('quotes', [])
