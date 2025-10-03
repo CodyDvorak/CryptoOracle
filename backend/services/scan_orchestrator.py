@@ -1168,6 +1168,10 @@ class ScanOrchestrator:
             # 5. Aggregate results
             aggregated = await self.aggregation_engine.aggregate_coin_results(display_name, bot_results, current_price)
             
+            # PHASE 2: Add market regime data to aggregated results
+            aggregated['market_regime'] = market_regime
+            aggregated['regime_confidence'] = regime_confidence
+            
             # 📝 LAYER 3: LLM Synthesis (CONDITIONAL - Basic for Pass 1, Enhanced for Pass 2)
             try:
                 if not skip_sentiment:
@@ -1184,7 +1188,7 @@ class ScanOrchestrator:
                 logger.warning(f"LLM synthesis skipped for {symbol}: {e}")
                 aggregated['rationale'] = f"{len(bot_results)} bots analyzed"
             
-            logger.info(f"✓ {symbol}: {len(bot_results)} bots, confidence={aggregated.get('avg_confidence', 0):.1f}, price=${current_price:.6f}")
+            logger.info(f"✓ {symbol}: {len(bot_results)} bots, confidence={aggregated.get('avg_confidence', 0):.1f}, price=${current_price:.6f}, regime={market_regime}")
             
             # Return both aggregated and individual bot results
             return {
