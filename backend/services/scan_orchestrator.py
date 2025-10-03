@@ -1114,12 +1114,24 @@ class ScanOrchestrator:
                     
                     result = bot.analyze(features)
                     
-                    # Apply regime weight modifier to confidence
-                    if result and regime_weight != 1.0:
+                    # Phase 2 & 4: Apply regime weight AND timeframe confidence modifiers
+                    if result:
                         original_confidence = result.get('confidence', 5)
-                        result['confidence'] = min(10, max(1, original_confidence * regime_weight))
+                        
+                        # Apply regime weight modifier
+                        confidence_after_regime = original_confidence * regime_weight
+                        
+                        # PHASE 4: Apply timeframe alignment modifier
+                        timeframe_modifier = features.get('timeframe_confidence_modifier', 1.0)
+                        final_confidence = confidence_after_regime * timeframe_modifier
+                        
+                        # Clamp confidence
+                        result['confidence'] = min(10, max(1, final_confidence))
                         result['regime_weight'] = regime_weight
-                        logger.debug(f"   {bot_name}: confidence {original_confidence:.1f} → {result['confidence']:.1f} (regime: {market_regime}, weight: {regime_weight})")
+                        result['timeframe_modifier'] = timeframe_modifier
+                        
+                        if regime_weight != 1.0 or timeframe_modifier != 1.0:
+                            logger.debug(f"   {bot_name}: {original_confidence:.1f} → {result['confidence']:.1f} (regime: {regime_weight}x, timeframe: {timeframe_modifier}x)")
                     if result:
                         # Ensure predicted prices exist
                         if 'predicted_24h' not in result:
