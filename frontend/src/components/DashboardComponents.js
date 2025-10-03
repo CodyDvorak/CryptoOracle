@@ -96,12 +96,19 @@ export const CoinRecommendationCard = ({ recommendation, rank, runId }) => {
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-col gap-1 min-w-0 flex-1">
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 flex-wrap">
               <span className="text-[var(--primary)] flex-shrink-0">
                 #{rank}
               </span>
               <span className="truncate" data-testid="coin-symbol" title={displayName}>
                 {displayName}
+              </span>
+              {/* Phase 2: Market Regime Badge */}
+              <span 
+                className={`text-xs px-2 py-0.5 rounded-full border ${regimeBadge.bg} ${regimeBadge.color} ${regimeBadge.border} font-semibold`}
+                title={`Market Regime: ${market_regime} (${(regime_confidence * 100).toFixed(0)}% confidence)`}
+              >
+                {regimeBadge.icon} {regimeBadge.label}
               </span>
             </CardTitle>
             {/* AI Insights */}
