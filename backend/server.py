@@ -677,9 +677,9 @@ async def get_bot_details(run_id: str, coin_symbol: str):
         })
     
     # Sort by confidence (highest first)
-    bot_details.sort(key=lambda x: x['confidence'], reverse=True)
+    bot_details.sort(key=lambda x: x.get('confidence', 0), reverse=True)
     
-    return {
+    response_data = {
         'run_id': run_id,
         'coin': coin_name,
         'ticker': coin_symbol,
@@ -687,6 +687,9 @@ async def get_bot_details(run_id: str, coin_symbol: str):
         'avg_confidence': recommendation.get('avg_confidence', 0),
         'bot_results': bot_details
     }
+    
+    # Sanitize for JSON (prevent NaN/Infinity errors)
+    return sanitize_for_json(response_data)
 
 
 # ==================== Bots Status ====================
