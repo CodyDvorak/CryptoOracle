@@ -2573,11 +2573,19 @@ class MeanReversionBot(BotStrategy):
         bb_lower = features.get('bollinger_lower', price * 0.98)
         atr = features.get('atr_14', price * 0.02)
         
-        if price == 0 or sma_20 == 0:
+        # Safety checks
+        if price == 0 or price is None or price < 0:
             return None
+        if sma_20 == 0 or sma_20 is None or sma_20 < 0:
+            return None
+        if atr is None or atr < 0:
+            atr = price * 0.02
         
-        # Calculate deviation from mean
-        deviation_pct = ((price - sma_20) / sma_20) * 100
+        # Calculate deviation from mean (with safety)
+        try:
+            deviation_pct = ((price - sma_20) / sma_20) * 100
+        except (ZeroDivisionError, TypeError):
+            return None
         
         # Trigger on extreme deviations
         if price > bb_upper and deviation_pct > 2:
