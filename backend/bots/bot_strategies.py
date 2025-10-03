@@ -2488,6 +2488,320 @@ Be specific with numbers. Use current price ${price:.6f} as reference."""
         }
 
 
+# ============================================================================
+# PHASE 3: CONTRARIAN/REVERSAL BOTS (5 NEW BOTS)
+# Purpose: Balance the long bias by adding mean-reversion strategies
+# ============================================================================
+
+class RSI_ReversalBot(BotStrategy):
+    """Phase 3: Reversal bot that fades extreme RSI levels.
+    
+    Strategy: Short when RSI > 70 (overbought), Long when RSI < 30 (oversold)
+    Type: Mean reversion / Contrarian
+    """
+    
+    def __init__(self):
+        super().__init__("RSI_ReversalBot")
+        self.bot_type = "mean_reversion"
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        rsi = features.get('rsi_14', 50)
+        price = features.get('current_price', 0)
+        atr = features.get('atr_14', price * 0.02)
+        
+        if price == 0:
+            return None
+        
+        # Reversal signals
+        if rsi >= 70:  # Overbought - expect reversal down
+            direction = 'short'
+            confidence = 6 + min((rsi - 70) / 10, 3)  # 6-9 confidence
+        elif rsi <= 30:  # Oversold - expect reversal up
+            direction = 'long'
+            confidence = 6 + min((30 - rsi) / 10, 3)  # 6-9 confidence
+        else:
+            return None  # No signal in neutral zone
+        
+        # Use ATR for TP/SL
+        atr_pct = (atr / price) if price > 0 else 0.02
+        
+        if direction == 'long':
+            entry = price
+            take_profit = price * (1 + atr_pct * 2)
+            stop_loss = price * (1 - atr_pct)
+        else:
+            entry = price
+            take_profit = price * (1 - atr_pct * 2)
+            stop_loss = price * (1 + atr_pct)
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, atr_pct, strength)
+        
+        return {
+            'direction': direction,
+            'entry': entry,
+            'take_profit': take_profit,
+            'stop_loss': stop_loss,
+            'confidence': confidence,
+            'rationale': f"RSI Reversal: {'Overbought' if direction == 'short' else 'Oversold'} at RSI {rsi:.1f}",
+            **predictions
+        }
+
+
+class MeanReversionBot(BotStrategy):
+    """Phase 3: Fades extreme price moves relative to moving average.
+    
+    Strategy: When price deviates >2 std dev from SMA, bet on return to mean
+    Type: Mean reversion
+    """
+    
+    def __init__(self):
+        super().__init__("MeanReversionBot")
+        self.bot_type = "mean_reversion"
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        price = features.get('current_price', 0)
+        sma_20 = features.get('sma_20', price)
+        bb_upper = features.get('bollinger_upper', price * 1.02)
+        bb_lower = features.get('bollinger_lower', price * 0.98)
+        atr = features.get('atr_14', price * 0.02)
+        
+        if price == 0 or sma_20 == 0:
+            return None
+        
+        # Calculate deviation from mean
+        deviation_pct = ((price - sma_20) / sma_20) * 100
+        
+        # Trigger on extreme deviations
+        if price > bb_upper and deviation_pct > 2:
+            # Price too high - expect reversion down
+            direction = 'short'
+            confidence = 6 + min(abs(deviation_pct) / 2, 3)
+        elif price < bb_lower and deviation_pct < -2:
+            # Price too low - expect reversion up
+            direction = 'long'
+            confidence = 6 + min(abs(deviation_pct) / 2, 3)
+        else:
+            return None
+        
+        atr_pct = (atr / price) if price > 0 else 0.02
+        
+        if direction == 'long':
+            entry = price
+            take_profit = sma_20  # Target the mean
+            stop_loss = price * (1 - atr_pct * 1.5)
+        else:
+            entry = price
+            take_profit = sma_20  # Target the mean
+            stop_loss = price * (1 + atr_pct * 1.5)
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, atr_pct, strength)
+        
+        return {
+            'direction': direction,
+            'entry': entry,
+            'take_profit': take_profit,
+            'stop_loss': stop_loss,
+            'confidence': confidence,
+            'rationale': f"Mean Reversion: {deviation_pct:.1f}% from SMA, targeting reversion",
+            **predictions
+        }
+
+
+class BollingerReversalBot(BotStrategy):
+    """Phase 3: Trades at Bollinger Band extremes expecting reversal.
+    
+    Strategy: Long at lower band, Short at upper band
+    Type: Mean reversion
+    """
+    
+    def __init__(self):
+        super().__init__("BollingerReversalBot")
+        self.bot_type = "mean_reversion"
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        price = features.get('current_price', 0)
+        bb_upper = features.get('bollinger_upper', price * 1.02)
+        bb_lower = features.get('bollinger_lower', price * 0.98)
+        bb_middle = features.get('sma_20', price)
+        rsi = features.get('rsi_14', 50)
+        atr = features.get('atr_14', price * 0.02)
+        
+        if price == 0 or bb_upper == bb_lower:
+            return None
+        
+        # Calculate position in band
+        band_width = bb_upper - bb_lower
+        position_in_band = (price - bb_lower) / band_width if band_width > 0 else 0.5
+        
+        # Signal at extremes
+        if price >= bb_upper and rsi > 60:
+            # At upper band + high RSI = reversal down
+            direction = 'short'
+            confidence = 6 + min((position_in_band - 0.9) * 20, 3)
+        elif price <= bb_lower and rsi < 40:
+            # At lower band + low RSI = reversal up
+            direction = 'long'
+            confidence = 6 + min((0.1 - position_in_band) * 20, 3)
+        else:
+            return None
+        
+        atr_pct = (atr / price) if price > 0 else 0.02
+        
+        if direction == 'long':
+            entry = price
+            take_profit = bb_middle
+            stop_loss = price * (1 - atr_pct * 1.5)
+        else:
+            entry = price
+            take_profit = bb_middle
+            stop_loss = price * (1 + atr_pct * 1.5)
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, atr_pct, strength)
+        
+        return {
+            'direction': direction,
+            'entry': entry,
+            'take_profit': take_profit,
+            'stop_loss': stop_loss,
+            'confidence': confidence,
+            'rationale': f"Bollinger Reversal: At {'upper' if direction == 'short' else 'lower'} band",
+            **predictions
+        }
+
+
+class StochasticReversalBot(BotStrategy):
+    """Phase 3: Uses Stochastic oscillator for reversal signals.
+    
+    Strategy: Long when Stochastic < 20, Short when > 80
+    Type: Mean reversion / Momentum reversal
+    """
+    
+    def __init__(self):
+        super().__init__("StochasticReversalBot")
+        self.bot_type = "mean_reversion"
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        price = features.get('current_price', 0)
+        stoch = features.get('stochastic', 50)
+        rsi = features.get('rsi_14', 50)
+        atr = features.get('atr_14', price * 0.02)
+        
+        if price == 0:
+            return None
+        
+        # Extreme stochastic levels
+        if stoch >= 80:
+            # Overbought - expect reversal down
+            direction = 'short'
+            confidence = 6 + min((stoch - 80) / 6.67, 3)  # 6-9 confidence
+            # Higher confidence if RSI also overbought
+            if rsi > 70:
+                confidence = min(confidence + 1, 10)
+        elif stoch <= 20:
+            # Oversold - expect reversal up
+            direction = 'long'
+            confidence = 6 + min((20 - stoch) / 6.67, 3)  # 6-9 confidence
+            # Higher confidence if RSI also oversold
+            if rsi < 30:
+                confidence = min(confidence + 1, 10)
+        else:
+            return None
+        
+        atr_pct = (atr / price) if price > 0 else 0.02
+        
+        if direction == 'long':
+            entry = price
+            take_profit = price * (1 + atr_pct * 2)
+            stop_loss = price * (1 - atr_pct)
+        else:
+            entry = price
+            take_profit = price * (1 - atr_pct * 2)
+            stop_loss = price * (1 + atr_pct)
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, atr_pct, strength)
+        
+        return {
+            'direction': direction,
+            'entry': entry,
+            'take_profit': take_profit,
+            'stop_loss': stop_loss,
+            'confidence': confidence,
+            'rationale': f"Stochastic Reversal: {'Overbought' if direction == 'short' else 'Oversold'} at {stoch:.1f}",
+            **predictions
+        }
+
+
+class VolumeSpikeFadeBot(BotStrategy):
+    """Phase 3: Fades volume spikes (contrarian to panic/euphoria).
+    
+    Strategy: When volume spikes significantly, bet against the move
+    Type: Contrarian / Mean reversion
+    """
+    
+    def __init__(self):
+        super().__init__("VolumeSpikeFadeBot")
+        self.bot_type = "mean_reversion"
+    
+    def analyze(self, features: Dict) -> Optional[Dict]:
+        price = features.get('current_price', 0)
+        volume_sma = features.get('volume_sma_20', 1)
+        current_volume = features.get('volume', 1)
+        rsi = features.get('rsi_14', 50)
+        price_change = features.get('price_change_24h', 0)
+        atr = features.get('atr_14', price * 0.02)
+        
+        if price == 0 or volume_sma == 0:
+            return None
+        
+        # Calculate volume spike
+        volume_ratio = current_volume / volume_sma if volume_sma > 0 else 1
+        
+        # Need significant volume spike (>2x normal)
+        if volume_ratio < 2.0:
+            return None
+        
+        # Fade the move: If price up + volume spike = short, if down = long
+        if price_change > 3 and rsi > 65:
+            # Strong upward move + volume = fade (short)
+            direction = 'short'
+            confidence = 5 + min(price_change / 2, 3) + min((volume_ratio - 2) / 2, 1)
+        elif price_change < -3 and rsi < 35:
+            # Strong downward move + volume = fade (long)
+            direction = 'long'
+            confidence = 5 + min(abs(price_change) / 2, 3) + min((volume_ratio - 2) / 2, 1)
+        else:
+            return None
+        
+        confidence = min(confidence, 9)
+        atr_pct = (atr / price) if price > 0 else 0.02
+        
+        if direction == 'long':
+            entry = price
+            take_profit = price * (1 + atr_pct * 2)
+            stop_loss = price * (1 - atr_pct * 1.5)
+        else:
+            entry = price
+            take_profit = price * (1 - atr_pct * 2)
+            stop_loss = price * (1 + atr_pct * 1.5)
+        
+        strength = confidence / 10.0
+        predictions = self._calculate_predicted_prices(price, direction, atr_pct, strength)
+        
+        return {
+            'direction': direction,
+            'entry': entry,
+            'take_profit': take_profit,
+            'stop_loss': stop_loss,
+            'confidence': confidence,
+            'rationale': f"Volume Spike Fade: {volume_ratio:.1f}x volume, {price_change:+.1f}% move",
+            **predictions
+        }
+
+
 # Bot Registry
 ALL_BOTS = [
     # Original 21 bots
