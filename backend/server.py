@@ -524,6 +524,18 @@ async def get_scan_status():
         }
 
 
+@api_router.get("/scan/is-running")
+async def is_scan_running():
+    """Lightweight endpoint to check if scan is currently running.
+    
+    This endpoint does NOT query the database, making it extremely fast
+    and suitable for frequent polling without causing performance issues.
+    """
+    global current_scan_task
+    is_running = current_scan_task and not current_scan_task.done()
+    return {"is_running": is_running}
+
+
 # ==================== Recommendations Endpoints ====================
 
 @api_router.get("/recommendations/top5")
