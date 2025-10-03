@@ -1108,6 +1108,21 @@ test_plan:
   test_priority: "high_first"
 
 backend:
+  - task: "Phase 3 Contrarian Bots: JSON Serialization & Bot Participation"
+    implemented: true
+    working: false
+    file: "backend/bots/bot_strategies.py, backend/server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Phase 3 fixes implemented: JSON serialization safety checks, StochasticReversalBot field fix ('stoch_k'), VolumeSpikeFadeBot relaxed triggers (1.5x volume, 2% price change, 60/40 RSI), and 5 contrarian bots added"
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL ISSUES FOUND: 1) JSON serialization error still occurring - 'ValueError: Out of range float values are not JSON compliant' for coins like CAKE, ETHFI, DEXE. Bot details API returns 500 errors. 2) Only 1/5 contrarian bots (StochasticReversalBot) found participating. 3) Still 100% LONG bias (16/16 predictions) - no SHORT signals. 4) VolumeSpikeFadeBot not found in any results. ROOT CAUSE: Division operations in bot_strategies.py lines 71, 131, 134, 137 can produce NaN/Infinity when denominators are 0. Need safety checks for entry, sma_50, and price divisions."
+
   - task: "CoinMarketCap Primary Provider Integration"
     implemented: true
     working: true
