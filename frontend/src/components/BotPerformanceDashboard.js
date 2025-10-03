@@ -25,16 +25,47 @@ const BotPerformanceDashboard = () => {
     checkScanStatusAndFetch();
   }, []);
 
-  const fetchAllData = async () => {
+  const checkScanStatusAndFetch = async () => {
     setLoading(true);
-    await Promise.all([
-      fetchPerformances(),
-      fetchSystemHealth(),
-      fetchRegimePerformance(),
-      fetchDegradationAlerts(),
-      fetchDataReadiness()
-    ]);
-    setLoading(false);
+    try {
+      // First, check if a scan is running
+      const statusResponse = await axios.get(`${API}/api/scan/is-running`);
+      const isRunning = statusResponse.data.is_running;
+      
+      setScanRunning(isRunning);
+      
+      if (isRunning) {
+        // Scan is running, show message and don't fetch analytics
+        setLoading(false);
+        addNotification('Bot Analytics unavailable during scan. Please wait for scan to complete.', 'info');
+        return;
+      }
+      
+      // Scan not running, fetch all data
+      await fetchAllData();
+    } catch (error) {
+      console.error('Error checking scan status:', error);
+      // If we can't check status, try fetching anyway
+      addNotification('Unable to check scan status. Attempting to load analytics...', 'error');
+      await fetchAllData();
+    }
+  };
+
+  const fetchAllData = async () => {
+    try {
+      await Promise.all([
+        fetchPerformances(),
+        fetchSystemHealth(),
+        fetchRegimePerformance(),
+        fetchDegradationAlerts(),
+        fetchDataReadiness()
+      ]);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching analytics data:', error);
+      addNotification('Failed to load some analytics data. Please try again later.', 'error');
+      setLoading(false);
+    }
   };
 
   const fetchPerformances = async () => {
