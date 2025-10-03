@@ -206,3 +206,58 @@ class CryptoCompareClient:
         except Exception as e:
             logger.error(f"Exception fetching CryptoCompare historical data for {symbol}: {e}")
             return []
+    
+    async def get_4h_candles(self, symbol: str, limit: int = 168) -> List[Dict]:
+        """Get 4-hour candles.
+        
+        Phase 4: Multi-timeframe analysis - CryptoCompare fallback
+        Args:
+            symbol: Coin symbol (e.g., 'BTC')
+            limit: Number of 4h candles to fetch (default 168 = 7 days)
+        
+        Returns list of dicts with OHLCV data for 4h timeframe
+        """
+        try:
+            session = await self._get_session()
+            
+            # CryptoCompare histohour endpoint with aggregate=4 for 4h candles
+            url = f'{self.base_url}/v2/histohour'
+            params = {
+                'fsym': symbol,
+                'tsym': 'USD',
+                'limit': limit,  # Number of data points
+                'aggregate': 4,  # Aggregate 4 hours
+                'toTs': int(datetime.now(timezone.utc).timestamp())
+            }
+            
+            async with session.get(url, params=params, timeout=30) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    if data.get('Response') == 'Success':
+                        raw_data = data.get('Data', {}).get('Data', [])
+                        candles = []
+                        
+                        for candle in raw_data:
+                            if candle.get('close', 0) > 0:
+                                candles.append({
+                                    'timestamp': candle.get('time'),
+                                    'open': float(candle.get('open', 0)),
+                                    'high': float(candle.get('high', 0)),
+                                    'low': float(candle.get('low', 0)),
+                                    'close': float(candle.get('close', 0)),
+                                    'volume': float(candle.get('volumeto', 0))
+                                })
+                        
+                        logger.info(f"CryptoCompare: Fetched {len(candles)} 4h candles for {symbol}")
+                        return candles
+                    else:
+                        logger.warning(f"CryptoCompare 4h candles error for {symbol}: {data.get('Message')}")
+                        return []
+                else:
+                    logger.warning(f"CryptoCompare 4h candles HTTP error for {symbol}: {response.status}")
+                    return []
+                    
+        except Exception as e:
+            logger.error(f"CryptoCompare 4h candles exception for {symbol}: {e}")
+            return []
