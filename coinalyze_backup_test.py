@@ -105,26 +105,23 @@ class CoinalyzeBackupTestSuite:
         """Test Coinalyze open interest API"""
         try:
             headers = {'api_key': COINALYZE_API_KEY}
-            url = 'https://api.coinalyze.net/v1/open-interest-aggregated-ohlc-history'
+            url = 'https://api.coinalyze.net/v1/open-interest'
             
-            from datetime import datetime, timedelta, timezone
+            # Use correct Coinalyze symbol format: BTCUSDT_PERP.A (Binance perpetual)
             params = {
-                'symbols': f'{symbol.upper()}USDT_PERP',
-                'interval': '1h',
-                'from': int((datetime.now(timezone.utc) - timedelta(hours=2)).timestamp()),
-                'to': int(datetime.now(timezone.utc).timestamp())
+                'symbols': f'{symbol.upper()}USDT_PERP.A'
             }
             
             async with self.coinalyze_session.get(url, headers=headers, params=params, timeout=15) as response:
                 if response.status == 200:
                     data = await response.json()
                     if data and len(data) > 0:
-                        latest = data[-1] if isinstance(data, list) else data
-                        open_interest = float(latest.get('close', 0))
+                        latest = data[0] if isinstance(data, list) else data
+                        open_interest = float(latest.get('value', 0))
                         
                         if open_interest > 0:
                             self.log_test(f"Coinalyze Open Interest - {symbol}", "PASS", 
-                                         f"Open Interest: {open_interest:,.0f}")
+                                         f"Open Interest: {open_interest:,.2f}")
                             return True
                         else:
                             self.log_test(f"Coinalyze Open Interest - {symbol}", "PARTIAL", 
