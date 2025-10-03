@@ -1012,7 +1012,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Coinalyze Backup Integration Testing Complete - OKX Primary + Coinalyze Backup Verified"
+    - "CoinMarketCap Primary Provider + Scan Time Analysis Testing Complete"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
