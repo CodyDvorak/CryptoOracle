@@ -187,3 +187,60 @@ class MultiProviderClient:
         # All providers failed - return empty list
         logger.warning(f"⚠️ All providers failed to fetch historical data for {symbol}")
         return []
+    
+    async def get_4h_candles(self, symbol: str, limit: int = 168) -> List[Dict]:
+        """Fetch 4-hour candles with automatic provider fallback.
+        
+        Phase 4: Multi-timeframe analysis
+        Args:
+            symbol: Coin symbol (e.g., 'BTC')
+            limit: Number of 4h candles to fetch (default 168 = 7 days)
+        
+        Returns list of dicts with OHLCV data for 4h timeframe
+        """
+        providers_to_try = [self.current_provider]
+        
+        # If current is primary, also try backup
+        if self.current_provider == self.primary_provider:
+            providers_to_try.append(self.backup_provider)
+        
+        for provider_name in providers_to_try:
+            provider = self._get_provider(provider_name)
+            if not provider:
+                continue
+            
+            # Check if provider supports 4h candles
+            if not hasattr(provider, 'get_4h_candles'):
+                logger.debug(f"⚠️ {provider_name} does not support 4h candles")
+                continue
+            
+            try:
+                logger.debug(f"📊 Fetching 4h candles from {provider_name} for {symbol}...")
+                candles = await provider.get_4h_candles(symbol, limit)
+                
+                self._record_call(provider_name)
+                
+                if candles and len(candles) > 0:
+                    logger.info(f"✅ Success: {len(candles)} 4h candles from {provider_name} for {symbol}")
+                    return candles
+                else:
+                    logger.warning(f"⚠️ {provider_name} returned no 4h candles for {symbol}")
+                    self._record_error(provider_name)
+                    
+            except Exception as e:
+                error_msg = str(e).lower()
+                is_rate_limit = 'rate limit' in error_msg or '429' in error_msg
+                
+                self._record_error(provider_name, is_rate_limit)
+                
+                if is_rate_limit:
+                    logger.warning(f"⚠️ {provider_name} rate limit exceeded for 4h candles")
+                else:
+                    logger.error(f"❌ {provider_name} 4h candles error: {e}")
+                
+                # Try next provider
+                continue
+        
+        # All providers failed - return empty list
+        logger.warning(f"⚠️ All providers failed to fetch 4h candles for {symbol}")
+        return []
