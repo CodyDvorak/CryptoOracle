@@ -1224,6 +1224,30 @@ backend:
     status_history:
       - working: "NA"
         agent: "main"
+        comment: "Updated default stop loss from -10% to -5% for better risk management"
+      - working: true
+        agent: "testing"
+        comment: "PASS - Default stop loss update verified through evaluation testing. Average stop loss values closer to -5% range as expected."
+
+  - task: "Phase 3: Contrarian Bots Implementation (5 new bots)"
+    implemented: true
+    working: false
+    file: "backend/bots/bot_strategies.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added 5 new contrarian/reversal bots to balance long bias: RSI_ReversalBot, MeanReversionBot, BollingerReversalBot, StochasticReversalBot, VolumeSpikeFadeBot. All have bot_type='mean_reversion' for regime-based weighting."
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL ISSUE - Contrarian bots implemented but not working in production. ✅ Bot count correct (54 total including 5 contrarian bots), ✅ Bot logic partially working (5/7 test cases pass), ✅ Bot type correctly set to 'mean_reversion', ❌ JSON serialization error preventing bot details API (ValueError: Out of range float values are not JSON compliant), ❌ No contrarian bot activity detected in live scans (0% SHORT signals, still 100% long bias), ❌ Bot details endpoint returning 500 errors. Root cause: Float calculation errors in bot strategies causing JSON serialization failures. Contrarian bots exist but are not being used due to backend errors."
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
         comment: "Updated default stop loss from -10% to -5% for tighter risk management"
       - working: true
         agent: "testing"
