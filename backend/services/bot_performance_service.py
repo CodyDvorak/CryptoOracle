@@ -292,13 +292,23 @@ class BotPerformanceService:
         
         return prices
     
-    def _determine_outcome(self, prediction: Dict, current_price: float) -> Dict:
+    def _determine_outcome(self, prediction: Dict, current_price: float, force_close: bool = False) -> Dict:
         """Determine if a prediction was successful.
         
-        Logic:
-        - LONG: Win if current_price >= target, Loss if current_price <= stop_loss (or -10% if no stop)
-        - SHORT: Win if current_price <= target, Loss if current_price >= stop_loss (or +10% if no stop)
-        - Neutral if neither condition met
+        IMPROVED LOGIC (Phase 1 Enhancement):
+        - Tightened default stop loss: -10% → -5%
+        - Added partial win detection (50%+ of target)
+        - Added force_close parameter for time-based evaluation
+        - LONG: Win if >= target, Partial Win if >= 50% of target, Loss if <= stop_loss (or -5% default)
+        - SHORT: Win if <= target, Partial Win if <= 50% of target, Loss if >= stop_loss (or +5% default)
+        
+        Args:
+            prediction: Prediction dict with entry, target, stop_loss
+            current_price: Current market price
+            force_close: If True, forces win/loss/partial_win (no neutral) for time-based eval
+        
+        Returns:
+            Dict with status ('win', 'partial_win', 'loss', 'neutral') and profit_loss_percent
         """
         entry_price = prediction['entry_price']
         target_price = prediction['target_price']
@@ -311,15 +321,29 @@ class BotPerformanceService:
         if direction == 'long':
             profit_loss = price_change
             
-            # Check win condition
+            # Check full win condition
             if current_price >= target_price:
                 return {'status': 'win', 'profit_loss_percent': profit_loss}
             
-            # Check loss condition
+            # Check partial win condition (reached 50%+ of target)
+            halfway_to_target = entry_price + (target_price - entry_price) * 0.5
+            if current_price >= halfway_to_target:
+                return {'status': 'partial_win', 'profit_loss_percent': profit_loss}
+            
+            # Check loss condition (TIGHTENED: -5% instead of -10%)
             if stop_loss and current_price <= stop_loss:
                 return {'status': 'loss', 'profit_loss_percent': profit_loss}
-            elif profit_loss <= -10:  # Default -10% stop if none specified
+            elif profit_loss <= -5:  # IMPROVED: Default -5% stop (was -10%)
                 return {'status': 'loss', 'profit_loss_percent': profit_loss}
+            
+            # Force close for time-based evaluation
+            if force_close:
+                # If positive, count as partial win
+                if profit_loss > 0:
+                    return {'status': 'partial_win', 'profit_loss_percent': profit_loss}
+                # If negative but not at SL, still a loss
+                else:
+                    return {'status': 'loss', 'profit_loss_percent': profit_loss}
             
             # Still pending/neutral
             return {'status': 'neutral', 'profit_loss_percent': profit_loss}
@@ -327,15 +351,29 @@ class BotPerformanceService:
         elif direction == 'short':
             profit_loss = -price_change  # Inverse for shorts
             
-            # Check win condition
+            # Check full win condition
             if current_price <= target_price:
                 return {'status': 'win', 'profit_loss_percent': profit_loss}
             
-            # Check loss condition
+            # Check partial win condition (reached 50%+ of target)
+            halfway_to_target = entry_price - (entry_price - target_price) * 0.5
+            if current_price <= halfway_to_target:
+                return {'status': 'partial_win', 'profit_loss_percent': profit_loss}
+            
+            # Check loss condition (TIGHTENED: +5% instead of +10%)
             if stop_loss and current_price >= stop_loss:
                 return {'status': 'loss', 'profit_loss_percent': profit_loss}
-            elif price_change >= 10:  # Default +10% stop if none specified
+            elif price_change >= 5:  # IMPROVED: Default +5% stop (was +10%)
                 return {'status': 'loss', 'profit_loss_percent': profit_loss}
+            
+            # Force close for time-based evaluation
+            if force_close:
+                # If positive, count as partial win
+                if profit_loss > 0:
+                    return {'status': 'partial_win', 'profit_loss_percent': profit_loss}
+                # If negative but not at SL, still a loss
+                else:
+                    return {'status': 'loss', 'profit_loss_percent': profit_loss}
             
             # Still pending/neutral
             return {'status': 'neutral', 'profit_loss_percent': profit_loss}
