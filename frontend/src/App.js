@@ -603,6 +603,20 @@ function App() {
                   <span className="hidden sm:inline">Bot Performance</span>
                 </Button>
                 
+                {/* Notification Bell */}
+                <Button
+                  onClick={toggleSidebar}
+                  variant="outline"
+                  className="gap-2 relative"
+                >
+                  <Bell className="w-4 h-4" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </Button>
+                
                 <div className="relative group">
                   <Button variant="outline" className="gap-2">
                     <User className="w-4 h-4" />
