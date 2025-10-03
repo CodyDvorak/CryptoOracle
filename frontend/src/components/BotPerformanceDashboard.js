@@ -170,6 +170,40 @@ const BotPerformanceDashboard = () => {
     .filter(b => b.best_regime)
     .slice(0, 10);
 
+  // If scan is running, show unavailable message
+  if (scanRunning && !loading) {
+    return (
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Card className="border-2 border-yellow-500 bg-yellow-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-yellow-700">
+              <Clock className="w-6 h-6" />
+              Analytics Temporarily Unavailable
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-yellow-700 mb-4">
+              Bot Analytics are currently unavailable while a scan is running. This prevents system overload and ensures your scan completes quickly.
+            </p>
+            <p className="text-yellow-600 mb-4">
+              Please wait for the scan to complete and try again. You can check scan status on the main dashboard.
+            </p>
+            <div className="flex gap-3">
+              <Button onClick={() => navigate('/')} variant="outline">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Return to Dashboard
+              </Button>
+              <Button onClick={checkScanStatusAndFetch} variant="primary">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Check Again
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
