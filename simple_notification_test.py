@@ -8,7 +8,7 @@ import requests
 import time
 import json
 
-API_BASE = "https://oracle-trading-1.preview.emergentagent.com/api"
+API_BASE = "https://smarttrade-ai-43.preview.emergentagent.com/api"
 
 def test_scan_is_running():
     """Test the new /api/scan/is-running endpoint"""

@@ -399,7 +399,7 @@ async def test_backend_futures_integration():
     """Test the backend futures integration endpoints."""
     logger.info("\n🔧 Testing Backend Futures Integration...")
     
-    backend_url = "https://oracle-trading-1.preview.emergentagent.com"
+    backend_url = "https://smarttrade-ai-43.preview.emergentagent.com"
     
     async with aiohttp.ClientSession() as session:
         try:

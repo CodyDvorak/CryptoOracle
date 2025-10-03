@@ -14,7 +14,7 @@ import json
 import time
 from datetime import datetime, timezone
 
-BACKEND_URL = "https://oracle-trading-1.preview.emergentagent.com"
+BACKEND_URL = "https://smarttrade-ai-43.preview.emergentagent.com"
 
 class DerivativesBackendTest:
     def __init__(self):

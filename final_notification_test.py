@@ -11,7 +11,7 @@ import json
 def run_curl_test(endpoint, description):
     """Run curl test and measure response time"""
     try:
-        cmd = f'curl -s -w "RESPONSE_TIME:%{{time_total}}s" https://oracle-trading-1.preview.emergentagent.com/api{endpoint}'
+        cmd = f'curl -s -w "RESPONSE_TIME:%{{time_total}}s" https://smarttrade-ai-43.preview.emergentagent.com/api{endpoint}'
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30)
         
         if result.returncode == 0:

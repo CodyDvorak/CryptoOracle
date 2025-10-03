@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 # Test configuration
 TEST_COINS = ['BTC', 'ETH', 'SOL', 'DOGE', 'BNB']
-BACKEND_URL = "https://oracle-trading-1.preview.emergentagent.com"
+BACKEND_URL = "https://smarttrade-ai-43.preview.emergentagent.com"
 
 class FinalFuturesIntegrationTest:
     """Final comprehensive futures integration test."""
