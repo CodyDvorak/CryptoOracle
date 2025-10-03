@@ -310,34 +310,82 @@ async def get_user_run_recommendations(run_id: str, current_user: dict = Depends
 
 @api_router.post("/scan/run")
 async def run_scan(request: ScanRunRequest, background_tasks: BackgroundTasks, current_user: Optional[dict] = Depends(get_current_user)):
-    """Trigger a crypto scan (user-specific if authenticated)."""
+    """Trigger a crypto scan (user-specific if authenticated) with timeout protection."""
     global current_scan_task
+    
+    # Check if previous scan is stuck
+    if scan_monitor.is_scan_stuck(request.scan_type):
+        logger.warning("⚠️ Previous scan stuck, auto-cancelling...")
+        await scan_monitor.cancel_scan()
+        current_scan_task = None
     
     if current_scan_task and not current_scan_task.done():
         raise HTTPException(status_code=409, detail="A scan is already running")
     
     user_id = current_user['id'] if current_user else None
     
-    # Create a background task for the scan
-    async def scan_task():
+    # Generate scan ID for monitoring
+    import uuid
+    scan_id = str(uuid.uuid4())
+    
+    # Create a background task for the scan with timeout protection
+    async def scan_task_with_timeout():
         global current_scan_task
         try:
-            await scan_orchestrator.run_scan(
-                filter_scope=request.scope,
-                min_price=request.min_price,
-                max_price=request.max_price,
-                custom_symbols=request.custom_symbols,
-                user_id=user_id,
-                scan_type=request.scan_type
+            # Start monitoring
+            scan_monitor.start_monitoring(scan_id, request.scan_type)
+            
+            # Get timeout for this scan type
+            timeout_minutes = scan_monitor.max_scan_time_minutes.get(
+                request.scan_type, 
+                scan_monitor.default_timeout_minutes
             )
+            timeout_seconds = timeout_minutes * 60
+            
+            # Run scan with timeout
+            logger.info(f"🚀 Starting scan {scan_id} with {timeout_seconds}s timeout")
+            await asyncio.wait_for(
+                scan_orchestrator.run_scan(
+                    filter_scope=request.scope,
+                    min_price=request.min_price,
+                    max_price=request.max_price,
+                    custom_symbols=request.custom_symbols,
+                    user_id=user_id,
+                    scan_type=request.scan_type
+                ),
+                timeout=timeout_seconds
+            )
+            logger.info(f"✅ Scan {scan_id} completed successfully")
+            
+        except asyncio.TimeoutError:
+            logger.error(f"⚠️ Scan {scan_id} timed out after {timeout_minutes} minutes")
+            # Update scan run status in DB
+            try:
+                await db.scan_runs.update_one(
+                    {'id': scan_id},
+                    {'$set': {
+                        'status': 'timeout',
+                        'error_message': f'Scan timed out after {timeout_minutes} minutes',
+                        'completed_at': datetime.now(timezone.utc).isoformat()
+                    }}
+                )
+            except Exception as e:
+                logger.error(f"Error updating scan timeout status: {e}")
+                
         except Exception as e:
-            logger.error(f"Scan error: {e}")
+            logger.error(f"❌ Scan {scan_id} error: {e}")
         finally:
+            scan_monitor.stop_monitoring()
             current_scan_task = None
     
-    current_scan_task = asyncio.create_task(scan_task())
+    current_scan_task = asyncio.create_task(scan_task_with_timeout())
+    scan_monitor.scan_task = current_scan_task
     
-    return {"status": "started", "message": "Scan initiated"}
+    return {
+        "status": "started", 
+        "message": "Scan initiated with timeout protection",
+        "scan_id": scan_id
+    }
 
 
 @api_router.get("/scan/runs")
