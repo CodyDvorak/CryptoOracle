@@ -1195,8 +1195,9 @@ async def delete_schedule(schedule_id: str):
 @api_router.get("/coins")
 async def get_coins(scope: str = 'all'):
     """Get list of coins based on filter scope."""
-    tokens_data = await scan_orchestrator.token_client.get_all_tokens(limit=100)
-    coins = [symbol for symbol, name, price, token_id, trader_grade, investor_grade in tokens_data]
+    # Use crypto client to get coins (CryptoCompare-only implementation)
+    coins_data = await scan_orchestrator.crypto_client.get_all_coins(max_coins=100)
+    coins = [symbol for symbol, name, price in coins_data]
     
     if scope == 'alt':
         exclusions = ['BTC', 'ETH', 'USDT', 'USDC', 'DAI', 'TUSD', 'BUSD']
