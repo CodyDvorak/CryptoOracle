@@ -1,82 +1,77 @@
 <analysis>
-The trajectory documents the evolution of the Crypto Oracle application, a full-stack AI trading recommendation tool. The development process began by resolving initial user-reported bugs related to frontend auto-refresh and backend email notifications.
+The trajectory chronicles the evolution of the Crypto Oracle application, moving from feature enhancement to critical stability and architectural improvements. Initially, the focus was on adding an Adaptive Intelligence data collection layer. This involved creating a new analytics dashboard and enhancing the backend to track market regimes and bot parameters.
 
-Following the bug fixes, the project underwent a significant feature expansion. The core scanning functionality was enhanced by increasing the number of trading bots from 21 to 49. User requests led to the creation of a multi-tiered scanning system, offering a wide array of scan types with varying speeds, depths, and coin counts (from a Quick Scan to All In scans using API pagination). This required a major refactoring of the backend scan orchestrator and a complete UI overhaul, replacing a single scan button with a dynamic, scrollable dropdown menu.
+Development was then driven by user-reported issues. A major crisis arose when scans started failing due to CryptoCompare API rate limits. This triggered a significant architectural refactor, replacing the single API client with a resilient, multi-provider fallback system for both OHLCV data (CoinMarketCap, CoinGecko) and, later, for futures/derivatives data (OKX, Coinalyze), complete with user-provided API keys.
 
-Further feature development introduced a scheduler UI allowing users to select a specific scan type for automated runs. A major architectural addition was the implementation of a bot performance tracking system. This system saves individual bot predictions, evaluates their success against market outcomes via a scheduled background job, and uses the resulting performance data to apply weights during recommendation aggregation, creating a self-improving feedback loop. Numerous UI tweaks were made to improve layout, spacing, and readability based on user feedback. The final interactions involved debugging a login issue caused by the new aggregation logic and preparing a detailed analysis for the user on implementing true adaptive intelligence for the bots.
+Subsequently, a series of critical performance bugs emerged. Users reported being unable to log in, which was traced to long-running, synchronous scan operations blocking Python's async event loop. This required implementing multiple layers of safeguards: API timeouts, a scan monitoring system, and ultimately, adding  in the core bot processing loop to yield control and prevent event loop starvation. The final interactions involved fixing a UI timezone bug and starting to investigate a new issue where the Bot Analytics page freezes during active scans.
 </analysis>
 
 <product_requirements>
-The Crypto Oracle is a personalized, AI-powered agent providing users with actionable cryptocurrency trading recommendations.
+The Crypto Oracle is an AI-powered cryptocurrency trading recommendation agent.
 
-**Core Features:**
-*   **Authentication:** Users must register and log in to access persistent, user-specific data and settings.
-*   **Multi-Tiered Scanning:** The application offers 15 distinct scan types, ranging from quick scans on a few coins to comprehensive All In scans analyzing over 200 coins via API pagination. Options include variants with and without deep AI analysis and filters for coins under a certain price.
-*   **AI-Powered Analysis:** The system utilizes 49 unique trading bots. Advanced scans integrate an OpenAI GPT-5 model for deep sentiment analysis on top candidates.
-*   **Dynamic Bot Weighting:** A bot performance tracking system monitors the success and failure of each bot's predictions. It dynamically adjusts the weight/influence of each bot in the final recommendation aggregation, allowing the system to learn and improve over time.
-*   **Categorized Results:** After a scan, the app displays the top 8 coins in categories like highest confidence and biggest movers, presented in an improved 4-column card layout.
-*   **Scan Scheduling:** Users can schedule scans to run at set intervals (e.g., 6h, 12h, 24h) and select the desired scan type for each scheduled job.
-*   **Bot Performance Dashboard:** A dedicated page displays the performance metrics of each bot, including accuracy, win/loss ratios, and total predictions made.
+**Core Functionality:**
+*   **User Authentication:** Secure login for personalized settings and data.
+*   **Multi-API Data Sourcing:**
+    *   **OHLCV Data:** Utilizes a primary (CoinMarketCap) and backup (CoinGecko) provider with automatic failover to ensure scan reliability.
+    *   **Futures/Derivatives Data:** Integrates futures metrics (open interest, funding rates) from a primary (OKX) and backup (Coinalyze) provider to enhance bot analysis.
+*   **Advanced Scanning Engine:** Employs 49 trading bots to analyze market data. Scans run as non-blocking background tasks with timeout protection to ensure UI responsiveness.
+*   **Bot Performance & Analytics:**
+    *   A system tracks individual bot prediction success against market outcomes.
+    *   A dedicated dashboard displays system health, bot performance by market condition, and data readiness metrics for future adaptive intelligence implementations.
+*   **System Resilience:**
+    *   Includes a scan monitoring service to detect and handle stuck scans.
+    *   All external API calls have built-in timeouts to prevent system hangs.
+    *   A health check endpoint provides real-time monitoring of system status.
+*   **User Experience:** Displays all timestamps correctly converted to the user's local timezone.
 </product_requirements>
 
 <key_technical_concepts>
-- **Backend:** Python (FastAPI), Motor (async MongoDB driver), APScheduler (for background jobs),  (for parallel coin analysis).
-- **Frontend:** JavaScript (React), React Context (for authentication state management), Axios (for API calls), TailwindCSS (for styling).
-- **Database:** MongoDB for storing user data, scan history, recommendations, and bot performance metrics.
-- **Authentication:** JWT for securing API endpoints, with persistence handled via Axios interceptors and localStorage.
-- **APIs:** CryptoCompare for market data,  for OpenAI GPT-5 access.
+- **Backend:** FastAPI,  for concurrency, Motor for async MongoDB access.
+- **Frontend:** React, React Context for auth, Axios for API calls.
+- **Architecture:**
+  - **Multi-Provider Fallback:** A resilient pattern using primary and backup API clients (for both OHLCV and futures data) to handle rate limits and provider outages.
+  - **Non-Blocking Tasks:** Using  for scans and  within CPU-intensive loops to prevent starving the async event loop.
+  - **System Monitoring:** Dedicated health check endpoints and a  service for timeout protection and detection of stuck processes.
 </key_technical_concepts>
 
 <code_architecture>
-The application is a monorepo with a React frontend and a FastAPI backend.
+The application is a monorepo with a React frontend and a FastAPI backend. The architecture was significantly updated to support multi-provider API clients for resilience and to incorporate derivatives data.
 
 
--   ****
-    -   **Importance:** The core engine of the application. It orchestrates the entire scan lifecycle, from fetching coins to running bots, aggregating results, and now, saving individual bot predictions for the learning system.
-    -   **Summary of Changes:** This file has been massively refactored. It now manages 15 distinct  strategies, handles API pagination to fetch hundreds of coins, and integrates with the new  to collect raw bot results during scans. The  method was made highly configurable to support the various scan permutations (coin count, AI usage, parallelism).
 
--   ****
-    -   **Importance:** The main frontend component, serving as the user dashboard. It manages UI state, user interactions, and API communication for scanning, scheduling, and viewing results.
-    -   **Summary of Changes:** The UI was transformed from a single Run Scan button to a dynamic, scrollable dropdown menu supporting 15 scan types. A scheduler UI was added with a dropdown to select the scan type. The main layout was updated to a 4-column grid for recommendation cards, and numerous CSS classes were adjusted to improve spacing, component sizes, and text wrapping based on user feedback. It now includes navigation to the new Bot Performance Dashboard.
+- ****
+  - **Importance:** This remains the brain of the application, orchestrating coin analysis and bot execution.
+  - **Changes:** It was heavily refactored to replace direct calls to a single crypto client with the new  (for OHLCV) and  (for derivatives). A crucial fix was added here:  inside the main bot processing loop to prevent blocking the entire server during scans.
 
--   ****
-    -   **Importance:** A new service created to implement the bot learning system. It is responsible for saving individual bot predictions, evaluating their outcomes against historical price data, and calculating each bot's performance metrics (accuracy, win/loss ratio).
-    -   **Summary of Changes:** This is a newly created file. It contains the logic to determine if a trade prediction was a success (hit target price) or loss (hit stop loss) and updates the  collection in MongoDB.
+- ** & **
+  - **Importance:** These new files form the core of the system's resilience. They abstract the data fetching logic, allowing the application to automatically failover from a primary API (e.g., CoinMarketCap) to a backup (e.g., CoinGecko) if the primary fails or hits a rate limit.
+  - **Changes:** Created from scratch to manage a list of client instances, try them in order, and track their status.
 
--   ****
-    -   **Importance:** This service aggregates the results from all bots for a single coin to produce a final confidence score and recommendation.
-    -   **Summary of Changes:** This engine was significantly upgraded to be performance-aware. It now fetches the latest performance weights for each bot from the database and uses these weights to calculate a weighted average confidence score, giving more influence to historically accurate bots. The core function  was made  to support this database lookup.
+- ****
+  - **Importance:** The main API server file.
+  - **Changes:** It was updated to use  more effectively, incorporating the new  for timeout protection on scans. New health check endpoints () were added, and the existing  endpoint was fortified with timeouts and better error handling to fix crashes and hangs.
 
--   ****
-    -   **Importance:** Defines all Pydantic models for API validation and database schemas.
-    -   **Summary of Changes:** This file was updated multiple times to support new features. The  enum was expanded to include 15 different scan options.  and  models were updated to include  for the scheduler. Critically, new models like , , and  were added to create the database schema for the bot learning system.
+- ****
+  - **Importance:** The primary UI for the new analytics and data collection features.
+  - **Changes:** This component was completely rewritten to fetch data from several new backend analytics endpoints and display new sections: Overall System Health, Bot Degradation Alerts, Market Regime Performance, and a Data Readiness Indicator. It is the focus of the current debugging effort.
 
--   ****
-    -   **Importance:** A new UI component created to display the results of the bot learning system.
-    -   **Summary of Changes:** This new file creates a page that fetches and displays a table of all bots, showing their accuracy, total predictions, wins, and losses. It provides users with transparency into how the system is learning.
-
--   ****
-    -   **Importance:** A newly created document containing a detailed analysis of implementing true adaptive intelligence for the bots.
-    -   **Summary of Changes:** This file was created at the very end of the trajectory to provide the user with a comprehensive breakdown of options for evolving the bot learning system further, including parameter optimization and reinforcement learning.
+- ****
+    - **Importance:** The main entry point and state management hub for the frontend.
+    - **Changes:** Logic was added to fetch and display the last scan time. A significant bug was fixed here by ensuring UTC timestamps from the backend were correctly parsed and consistently displayed in the user's local timezone, preventing confusion.
 </code_architecture>
 
 <pending_tasks>
-- **Implement Adaptive Intelligence:** The user has been presented with a detailed analysis of adaptive intelligence (e.g., parameter optimization, reinforcement learning). The next step is to get the user's decision on whether to proceed with this advanced feature and, if so, which implementation path to take.
+- **Implement True Adaptive Intelligence:** The original goal of implementing parameter optimization or reinforcement learning for the bots is still pending. The current system is in a data-gathering phase to inform which approach to take in the future.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer addressed a critical login issue reported by the user. The investigation revealed a  error caused by a server crash. The crash was traced back to an  in , which was introduced during the recent implementation of the performance-weighting logic.
+The most recent task involves debugging a user-reported issue where the Bot Analytics page () gets stuck on a loading screen if a scan is running concurrently.
 
-The engineer performed the following actions:
-1.  Identified the  in the backend logs ().
-2.  Located and corrected the faulty code in  by removing a duplicate line.
-3.  Restarted the backend service using backend: stopped
-backend: started.
-4.  Verified that the login endpoint was now responsive, albeit returning an expected Invalid username or password for a test user.
+My investigation revealed that the corresponding frontend component, , initiates five separate API calls simultaneously in a  hook to populate the dashboard. When a scan is active, the backend's database is under heavy load, causing these concurrent, database-intensive API queries to hang and eventually time out. This locks up the UI.
 
-After resolving the critical bug, the engineer was in the process of providing the user with a detailed analysis on implementing Adaptive Intelligence for the bots. A comprehensive document, , was created to outline the benefits, challenges, and implementation options for making the bots themselves learn and adapt their strategies, going beyond the current weight-based system. The last action was creating this file and preparing to present a summary of it to the user.
+The immediate plan was to make the backend endpoints more robust by adding timeouts and to implement graceful error handling on the frontend. Specifically, I was about to modify the five analytics endpoints in  (like ) to prevent them from hanging indefinitely and then update the  component to handle potential API failures without freezing, perhaps by displaying an error message or partial data.
 </current_work>
 
 <optional_next_step>
-Present the summary of the  document and ask the user for a decision on how to proceed with implementing true adaptive intelligence for the bots.
+Add timeouts to the five backend analytics endpoints in  and implement graceful error handling in the  hook within  to prevent the UI from freezing during a scan.
 </optional_next_step>

@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 # Backend URL from environment
-BACKEND_URL = "https://crypto-oracle-27.preview.emergentagent.com"
+BACKEND_URL = "https://oracle-trading-1.preview.emergentagent.com"
 
 class BinanceFuturesIntegrationTest:
     def __init__(self):

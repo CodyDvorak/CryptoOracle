@@ -10,7 +10,7 @@ import json
 import time
 from datetime import datetime
 
-API_BASE = "https://crypto-oracle-27.preview.emergentagent.com/api"
+API_BASE = "https://oracle-trading-1.preview.emergentagent.com/api"
 
 async def test_cmc_integration():
     """Test CoinMarketCap integration and provider status"""

@@ -12,7 +12,7 @@ from datetime import datetime, timedelta, timezone
 # Test configuration
 COINALYZE_API_KEY = "f6967ffe-6773-4e5c-8772-d11900fe37e8"
 TEST_COINS = ['BTC', 'ETH', 'SOL']
-API_BASE = "https://crypto-oracle-27.preview.emergentagent.com/api"
+API_BASE = "https://oracle-trading-1.preview.emergentagent.com/api"
 
 async def test_coinalyze_apis():
     """Test Coinalyze API endpoints"""

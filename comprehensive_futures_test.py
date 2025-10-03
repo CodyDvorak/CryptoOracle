@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 # Test coins - major cryptocurrencies
 TEST_COINS = ['BTC', 'ETH', 'BNB', 'SOL', 'DOGE']
-BACKEND_URL = "https://crypto-oracle-27.preview.emergentagent.com"
+BACKEND_URL = "https://oracle-trading-1.preview.emergentagent.com"
 
 class ComprehensiveFuturesTest:
     """Comprehensive test of futures API accessibility and integration."""
