@@ -629,14 +629,10 @@ class CoinalyzeBackupTestSuite:
         """Test if Coinalyze has data for a specific coin"""
         try:
             headers = {'api_key': COINALYZE_API_KEY}
-            url = 'https://api.coinalyze.net/v1/open-interest-aggregated-ohlc-history'
+            url = 'https://api.coinalyze.net/v1/open-interest'
             
-            from datetime import datetime, timedelta, timezone
             params = {
-                'symbols': f'{coin.upper()}USDT_PERP',
-                'interval': '1h',
-                'from': int((datetime.now(timezone.utc) - timedelta(hours=2)).timestamp()),
-                'to': int(datetime.now(timezone.utc).timestamp())
+                'symbols': f'{coin.upper()}USDT_PERP.A'
             }
             
             async with self.coinalyze_session.get(url, headers=headers, params=params, timeout=10) as response:
