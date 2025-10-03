@@ -739,7 +739,7 @@ async def get_futures_provider_status():
     """Get status and statistics for futures/derivatives data API providers.
     
     Shows:
-    - Usage statistics for each futures provider (Bybit, OKX, Binance)
+    - Usage statistics for each futures provider (OKX, Coinalyze, Bybit, Binance)
     - Success/failure rates
     - Which provider is used for which symbols
     """
@@ -747,22 +747,33 @@ async def get_futures_provider_status():
     
     return {
         "providers": {
-            "bybit": {
-                "name": "Bybit Futures",
-                "calls": stats['providers']['bybit']['calls'],
-                "success": stats['providers']['bybit']['success'],
-                "failures": stats['providers']['bybit']['failures'],
-                "success_rate": (stats['providers']['bybit']['success'] / stats['providers']['bybit']['calls'] * 100) if stats['providers']['bybit']['calls'] > 0 else 0
-            },
             "okx": {
                 "name": "OKX Futures",
+                "role": "Primary",
                 "calls": stats['providers']['okx']['calls'],
                 "success": stats['providers']['okx']['success'],
                 "failures": stats['providers']['okx']['failures'],
                 "success_rate": (stats['providers']['okx']['success'] / stats['providers']['okx']['calls'] * 100) if stats['providers']['okx']['calls'] > 0 else 0
             },
+            "coinalyze": {
+                "name": "Coinalyze",
+                "role": "Backup",
+                "calls": stats['providers']['coinalyze']['calls'],
+                "success": stats['providers']['coinalyze']['success'],
+                "failures": stats['providers']['coinalyze']['failures'],
+                "success_rate": (stats['providers']['coinalyze']['success'] / stats['providers']['coinalyze']['calls'] * 100) if stats['providers']['coinalyze']['calls'] > 0 else 0
+            },
+            "bybit": {
+                "name": "Bybit Futures",
+                "role": "Tertiary",
+                "calls": stats['providers']['bybit']['calls'],
+                "success": stats['providers']['bybit']['success'],
+                "failures": stats['providers']['bybit']['failures'],
+                "success_rate": (stats['providers']['bybit']['success'] / stats['providers']['bybit']['calls'] * 100) if stats['providers']['bybit']['calls'] > 0 else 0
+            },
             "binance": {
                 "name": "Binance Futures",
+                "role": "Fallback",
                 "calls": stats['providers']['binance']['calls'],
                 "success": stats['providers']['binance']['success'],
                 "failures": stats['providers']['binance']['failures'],
