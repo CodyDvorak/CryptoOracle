@@ -22,6 +22,7 @@ from services.scan_orchestrator import ScanOrchestrator
 from services.auth_service import hash_password, verify_password, create_access_token, decode_access_token
 from services.outcome_tracker import OutcomeTracker
 from services.cryptocompare_client import CryptoCompareClient
+from services.scan_monitor import scan_monitor
 
 # Setup
 ROOT_DIR = Path(__file__).parent
