@@ -21,7 +21,8 @@ export const CoinRecommendationCard = ({ recommendation, rank, runId }) => {
     investor_grade = 0,
     ai_trend = '',
     predicted_percent_change = 0,
-    predicted_dollar_change = 0
+    predicted_dollar_change = 0,
+    bot_count = 48
   } = recommendation;
   
   const [showBotDetails, setShowBotDetails] = useState(false);
