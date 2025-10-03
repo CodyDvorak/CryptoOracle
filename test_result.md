@@ -874,8 +874,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Launch Readiness Assessment Complete"
-  stuck_tasks: []
+    - "Binance Futures/Derivatives Data Integration - API Access Issue"
+  stuck_tasks:
+    - "Binance Futures/Derivatives Data Integration" # API blocked in environment
   test_all: false
   test_priority: "high_first"
 
