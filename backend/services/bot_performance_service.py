@@ -125,7 +125,7 @@ class BotPerformanceService:
             
             predictions = []
             
-            for bot_result in bot_results:
+            for idx, bot_result in enumerate(bot_results):
                 # Only save if bot made a prediction (not neutral)
                 direction = bot_result.get('direction', bot_result.get('signal', 'neutral'))
                 
@@ -144,24 +144,33 @@ class BotPerformanceService:
                     
                     # Skip if we don't have essential data
                     if not coin_symbol or current_price == 0:
+                        logger.warning(f"Skipping bot result {idx}: missing coin_symbol or price. Data: {bot_result.keys()}")
                         continue
                     
-                    prediction = BotPrediction(
-                        run_id=run_id,
-                        user_id=user_id,
-                        bot_name=bot_name,
-                        coin_symbol=coin_symbol,
-                        coin_name=coin_name,
-                        entry_price=current_price,
-                        target_price=target_price,
-                        stop_loss=stop_loss,
-                        position_direction=direction,
-                        confidence_score=bot_result.get('confidence', 0.0),
-                        leverage=bot_result.get('leverage', bot_result.get('recommended_leverage')),
-                        market_regime=market_regime,
-                        outcome_status='pending'
-                    )
-                    predictions.append(prediction.dict())
+                    # Log first prediction for debugging
+                    if idx == 0:
+                        logger.debug(f"First prediction: bot={bot_name}, symbol={coin_symbol}, name={coin_name}, price={current_price}")
+                    
+                    try:
+                        prediction = BotPrediction(
+                            run_id=run_id,
+                            user_id=user_id,
+                            bot_name=bot_name,
+                            coin_symbol=coin_symbol,
+                            coin_name=coin_name,
+                            entry_price=current_price,
+                            target_price=target_price,
+                            stop_loss=stop_loss,
+                            position_direction=direction,
+                            confidence_score=bot_result.get('confidence', 0.0),
+                            leverage=bot_result.get('leverage', bot_result.get('recommended_leverage')),
+                            market_regime=market_regime,
+                            outcome_status='pending'
+                        )
+                        predictions.append(prediction.dict())
+                    except Exception as pred_error:
+                        logger.error(f"Failed to create BotPrediction for bot {bot_name}, coin {coin_symbol}: {pred_error}")
+                        continue
             
             if predictions:
                 # Log sample prediction for debugging
