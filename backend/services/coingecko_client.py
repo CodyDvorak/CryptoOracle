@@ -156,6 +156,97 @@ class CoinGeckoClient:
             logger.error(f"CoinGecko historical data exception for {symbol}: {e}")
             raise
     
+    async def get_4h_candles(self, symbol: str, limit: int = 168) -> List[Dict]:
+        """Get 4-hour candles (7 days = 168 4h periods).
+        
+        Phase 4: Multi-timeframe analysis - CoinGecko fallback
+        Args:
+            symbol: Coin symbol (e.g., 'BTC')
+            limit: Number of 4h candles to fetch (default 168 = 7 days)
+        
+        Returns list of dicts with OHLCV data for 4h timeframe
+        """
+        try:
+            # Get coin ID first
+            coin_id = await self._get_coin_id(symbol)
+            if not coin_id:
+                logger.warning(f"CoinGecko: Could not find coin ID for {symbol}")
+                return []
+            
+            session = await self._get_session()
+            
+            # Calculate days needed for requested candles
+            # 1 day = 6 candles of 4h, so 168 candles = 28 days
+            days = (limit * 4) // 24 + 1
+            days = min(days, 90)  # CoinGecko free tier max is 90 days for hourly
+            
+            # Use market_chart endpoint for hourly data
+            url = f'{self.base_url}/coins/{coin_id}/market_chart'
+            params = {
+                'vs_currency': 'usd',
+                'days': days,
+                'interval': 'hourly'
+            }
+            
+            async with session.get(url, params=params, timeout=30) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    # CoinGecko market_chart returns: prices, market_caps, total_volumes
+                    # Each is array of [timestamp_ms, value]
+                    prices = data.get('prices', [])
+                    volumes = data.get('total_volumes', [])
+                    
+                    if not prices or len(prices) < 4:
+                        logger.warning(f"CoinGecko: Insufficient data for 4h candles for {symbol}")
+                        return []
+                    
+                    # Aggregate hourly data to 4h candles
+                    candles_4h = []
+                    
+                    # Process in groups of 4 hours
+                    for i in range(0, len(prices) - 3, 4):
+                        chunk_prices = prices[i:i+4]
+                        chunk_volumes = volumes[i:i+4] if i+4 <= len(volumes) else []
+                        
+                        if len(chunk_prices) < 4:
+                            continue
+                        
+                        # Extract OHLCV data
+                        timestamp = int(chunk_prices[0][0] / 1000)  # Convert ms to seconds
+                        open_price = chunk_prices[0][1]
+                        close_price = chunk_prices[-1][1]
+                        high_price = max([p[1] for p in chunk_prices])
+                        low_price = min([p[1] for p in chunk_prices])
+                        
+                        # Sum volumes for the 4-hour period
+                        volume = sum([v[1] for v in chunk_volumes]) if chunk_volumes else 0
+                        
+                        candles_4h.append({
+                            'timestamp': timestamp,
+                            'open': float(open_price),
+                            'high': float(high_price),
+                            'low': float(low_price),
+                            'close': float(close_price),
+                            'volume': float(volume)
+                        })
+                    
+                    # Return the most recent 'limit' candles
+                    result = candles_4h[-limit:] if len(candles_4h) > limit else candles_4h
+                    logger.info(f"CoinGecko: Aggregated {len(result)} 4h candles for {symbol}")
+                    return result
+                
+                elif response.status == 429:
+                    logger.warning(f"CoinGecko rate limit hit for 4h candles")
+                    raise Exception("Rate limit exceeded")
+                else:
+                    logger.warning(f"CoinGecko 4h candles error {response.status} for {symbol}")
+                    return []
+                    
+        except Exception as e:
+            logger.error(f"CoinGecko 4h candles exception for {symbol}: {e}")
+            return []
+    
     async def _get_coin_id(self, symbol: str) -> Optional[str]:
         """Get CoinGecko coin ID from symbol.
         
