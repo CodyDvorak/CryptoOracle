@@ -1,14 +1,20 @@
 #!/usr/bin/env python3
 """
-Contrarian Bots Testing Script for Crypto Oracle - Phase 3 Improvements
-Tests the 5 new contrarian/reversal bots added to balance long bias:
-1. RSI_ReversalBot - Short when RSI > 70, Long when RSI < 30
-2. MeanReversionBot - Fades extreme moves (>2 std dev from SMA)
-3. BollingerReversalBot - Trades at band extremes
-4. StochasticReversalBot - Reversal signals from Stochastic oscillator
-5. VolumeSpikeFadeBot - Fades volume spikes (contrarian)
+Contrarian Bots Testing Script - Option A Fixes
+Tests the specific fixes for contrarian bots:
+1. JSON Serialization Error Fix (NaN/Infinity handling)
+2. Bot Participation (contrarian bots appearing in results)
+3. SHORT Signal Generation (breaking 100% LONG bias)
+4. Relaxed Trigger Conditions (60/40 RSI, within 2% of bands, etc.)
+5. Bot Type Recognition (bot_type = "mean_reversion")
+6. Overall System Health (54 bots total)
 
-All bots should have bot_type = "mean_reversion" for regime-based weighting.
+Critical Test Cases:
+- GET /api/recommendations/{run_id}/CAKE/bot_details (should return 200, not 500)
+- GET /api/recommendations/{run_id}/ETHFI/bot_details (should return 200, not 500)
+- GET /api/recommendations/{run_id}/DEXE/bot_details (should return 200, not 500)
+- Scan results should show >0% SHORT signals (was 0%)
+- Contrarian bots should appear in bot_results
 """
 
 import asyncio
