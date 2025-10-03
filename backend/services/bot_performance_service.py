@@ -424,13 +424,14 @@ class BotPerformanceService:
             closed_predictions = [p for p in predictions if p.get('outcome_status') in ['win', 'partial_win', 'loss']]
             avg_pl = sum(p.get('profit_loss_percent', 0) for p in closed_predictions) / len(closed_predictions) if closed_predictions else 0.0
             
-            # Update bot performance
+            # Update bot performance (Phase 1: Added partial_wins)
             await self.db.bot_performance.update_one(
                 {'bot_name': bot_name},
                 {
                     '$set': {
                         'total_predictions': total,
                         'successful_predictions': wins,
+                        'partial_wins': partial_wins,  # Phase 1: Track partial wins
                         'failed_predictions': losses,
                         'pending_predictions': pending,
                         'accuracy_rate': accuracy,
@@ -440,7 +441,7 @@ class BotPerformanceService:
                 }
             )
             
-            logger.info(f"📈 {bot_name}: {total} predictions, {accuracy:.1f}% accuracy, {avg_pl:.1f}% avg P/L")
+            logger.info(f"📈 {bot_name}: {total} predictions ({wins}W/{partial_wins}PW/{losses}L), {accuracy:.1f}% accuracy, {avg_pl:.1f}% avg P/L")
     
     async def _recalculate_weights(self):
         """Recalculate performance weights for all bots based on accuracy and P/L.
