@@ -733,6 +733,48 @@ async def get_provider_status():
         "total_rate_limits": sum(p['rate_limits'] for p in stats['stats'].values())
     }
 
+
+@api_router.get("/futures-providers/status")
+async def get_futures_provider_status():
+    """Get status and statistics for futures/derivatives data API providers.
+    
+    Shows:
+    - Usage statistics for each futures provider (Bybit, OKX, Binance)
+    - Success/failure rates
+    - Which provider is used for which symbols
+    """
+    stats = scan_orchestrator.futures_client.get_stats()
+    
+    return {
+        "providers": {
+            "bybit": {
+                "name": "Bybit Futures",
+                "calls": stats['providers']['bybit']['calls'],
+                "success": stats['providers']['bybit']['success'],
+                "failures": stats['providers']['bybit']['failures'],
+                "success_rate": (stats['providers']['bybit']['success'] / stats['providers']['bybit']['calls'] * 100) if stats['providers']['bybit']['calls'] > 0 else 0
+            },
+            "okx": {
+                "name": "OKX Futures",
+                "calls": stats['providers']['okx']['calls'],
+                "success": stats['providers']['okx']['success'],
+                "failures": stats['providers']['okx']['failures'],
+                "success_rate": (stats['providers']['okx']['success'] / stats['providers']['okx']['calls'] * 100) if stats['providers']['okx']['calls'] > 0 else 0
+            },
+            "binance": {
+                "name": "Binance Futures",
+                "calls": stats['providers']['binance']['calls'],
+                "success": stats['providers']['binance']['success'],
+                "failures": stats['providers']['binance']['failures'],
+                "success_rate": (stats['providers']['binance']['success'] / stats['providers']['binance']['calls'] * 100) if stats['providers']['binance']['calls'] > 0 else 0
+            }
+        },
+        "symbol_providers": stats['symbol_providers'],
+        "total_calls": stats['total_calls'],
+        "total_success": stats['total_success'],
+        "overall_success_rate": (stats['total_success'] / stats['total_calls'] * 100) if stats['total_calls'] > 0 else 0
+    }
+
 @api_router.post("/bots/evaluate")
 async def trigger_evaluation(hours_old: int = 24):
     """Manually trigger evaluation of pending predictions.
