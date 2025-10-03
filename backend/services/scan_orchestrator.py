@@ -1060,7 +1060,13 @@ class ScanOrchestrator:
             bot_results = []
             bot_count = 0
             
-            for bot in self.bots:
+            # Filter bots: exclude AIAnalystBot if skip_sentiment is True (quick scans)
+            active_bots = self.bots
+            if skip_sentiment:
+                active_bots = [bot for bot in self.bots if bot.__class__.__name__ != 'AIAnalystBot']
+                logger.debug(f"⚡ Quick scan mode: using {len(active_bots)} bots (excluding AIAnalystBot)")
+            
+            for bot in active_bots:
                 try:
                     # Yield to event loop every 5 bots to prevent blocking
                     bot_count += 1
