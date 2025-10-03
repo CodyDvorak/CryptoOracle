@@ -36,7 +36,7 @@ class ScanOrchestrator:
         self.bots = get_all_bots()  # Now includes 50 bots (Layer 2 includes AIAnalystBot)
         
         logger.info(f"🤖 Scan Orchestrator initialized with {len(self.bots)} bots (including AI Analyst)")
-        logger.info(f"📊 Futures/derivatives data enabled: Bybit → OKX → Binance fallback")
+        logger.info("📊 Futures/derivatives data enabled: Bybit → OKX → Binance fallback")
         
     async def run_scan(self, filter_scope: str = 'all', min_price: Optional[float] = None, max_price: Optional[float] = None, custom_symbols: Optional[List[str]] = None, run_id: Optional[str] = None, user_id: Optional[str] = None, scan_type: str = 'full_scan') -> Dict:
         """Execute a scan with the specified strategy.
