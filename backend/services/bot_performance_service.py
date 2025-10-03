@@ -164,8 +164,26 @@ class BotPerformanceService:
                     predictions.append(prediction.dict())
             
             if predictions:
-                await self.db.bot_predictions.insert_many(predictions)
-                logger.info(f"💾 Saved {len(predictions)} bot predictions for run {run_id}")
+                # Log sample prediction for debugging
+                if len(predictions) > 0:
+                    logger.debug(f"Sample prediction keys: {list(predictions[0].keys())}")
+                    logger.debug(f"Sample prediction: {predictions[0]}")
+                
+                try:
+                    result = await self.db.bot_predictions.insert_many(predictions)
+                    actual_count = len(result.inserted_ids)
+                    logger.info(f"💾 Saved {actual_count} bot predictions for run {run_id}")
+                    
+                    # Verify they were saved
+                    verification_count = await self.db.bot_predictions.count_documents({'run_id': run_id})
+                    if verification_count != actual_count:
+                        logger.error(f"❌ Verification failed! Expected {actual_count}, found {verification_count}")
+                    else:
+                        logger.info(f"✅ Verified {verification_count} predictions in database")
+                    
+                except Exception as insert_error:
+                    logger.error(f"❌ insert_many failed: {insert_error}", exc_info=True)
+                    return 0
                 
                 # Update bot performance records with new prediction counts
                 await self._update_prediction_counts(predictions)
