@@ -190,10 +190,10 @@ class ScanOrchestrator:
             self.bots = original_bots
     
     async def _run_complete_market_scan(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
-        """Complete Market Scan: ALL 86 coins, 49 bots, optimized for speed + accuracy, ~9 minutes."""
-        logger.info("🌐 COMPLETE MARKET SCAN: 86 coins (6 concurrent), 49 bots, NO AI (~9 min)")
+        """Complete Market Scan: 250 coins, 48 bots, optimized for speed + accuracy, ~18-20 minutes."""
+        logger.info("🌐 COMPLETE MARKET SCAN: 250 coins (6 concurrent), 48 bots, NO AI (~18-20 min)")
         return await self._run_scan_with_config(scan_run, filter_scope, min_price, max_price, custom_symbols, user_id,
-                                               max_coins=86, skip_sentiment=True, parallel=True, batch_size=6)
+                                               max_coins=250, skip_sentiment=True, parallel=True, batch_size=6)
     
     async def _run_full_scan(self, scan_run: ScanRun, filter_scope: str, min_price: Optional[float], max_price: Optional[float], custom_symbols: Optional[List[str]], user_id: Optional[str]) -> Dict:
         """Full Scan: 86 coins with smart optimization (sentiment on top 15 only), ~65 minutes."""
