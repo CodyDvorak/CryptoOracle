@@ -27,6 +27,7 @@ const API = `${BACKEND_URL}/api`;
 function App() {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout, getAuthHeader } = useAuth();
+  const { toggleSidebar, unreadCount } = useNotifications();
   
   // State
   const [topConfidence, setTopConfidence] = useState([]);
