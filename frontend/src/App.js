@@ -432,6 +432,7 @@ function App() {
               setScanStartTime(null);
               
               toast.success(`✨ Scan completed in ${formatElapsedTime(finalTime)}! Recommendations loaded automatically!`);
+              addNotification(`Scan completed successfully in ${formatElapsedTime(finalTime)}`, 'success');
               console.log('✅ AUTO-REFRESH COMPLETE! Check the recommendations above.');
             } catch (err) {
               console.error('[AUTO-REFRESH] Error fetching recommendations:', err);
