@@ -13,10 +13,12 @@ import { Select, SelectOption } from './components/ui/select';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './components/ui/tabs';
 import { CoinRecommendationCard, BotStatusGrid, StatCard } from './components/DashboardComponents';
 import { useAuth } from './contexts/AuthContext';
+import { useNotifications } from './contexts/NotificationContext';
+import { NotificationSidebar } from './components/NotificationSidebar';
 import { 
   TrendingUp, Activity, Clock, Settings, Mail, FileSpreadsheet, 
   RefreshCw, Filter, Zap, Play, CheckCircle, Trash2, Edit, Calendar,
-  User, LogOut, History as HistoryIcon, LogIn
+  User, LogOut, History as HistoryIcon, LogIn, Bell
 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
