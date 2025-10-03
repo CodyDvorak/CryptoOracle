@@ -53,7 +53,7 @@ class CoinMarketCapClient:
                 'sort_dir': 'desc'
             }
             
-            async with session.get(url, params=params, timeout=30) as response:
+            async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=15)) as response:
                 if response.status == 200:
                     data = await response.json()
                     
@@ -127,7 +127,7 @@ class CoinMarketCapClient:
                 'convert': 'USD'
             }
             
-            async with session.get(url, params=params, timeout=30) as response:
+            async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=15)) as response:
                 if response.status == 200:
                     data = await response.json()
                     
@@ -186,7 +186,7 @@ class CoinMarketCapClient:
                 'limit': 1
             }
             
-            async with session.get(url, params=params, timeout=30) as response:
+            async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=15)) as response:
                 if response.status == 200:
                     data = await response.json()
                     coins = data.get('data', [])
