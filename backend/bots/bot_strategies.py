@@ -126,16 +126,26 @@ class SMA_CrossBot(BotStrategy):
         sma_50 = features['sma_50']
         price = features['current_price']
         
-        # Golden cross / Death cross
+        # Golden cross / Death cross (with safety checks)
         if sma_20 > sma_50:
             direction = 'long'
-            confidence = min(10, int(5 + ((sma_20 - sma_50) / sma_50) * 100))
+            try:
+                confidence = min(10, int(5 + ((sma_20 - sma_50) / sma_50) * 100)) if sma_50 > 0 else 5
+            except (ZeroDivisionError, ValueError, OverflowError):
+                confidence = 5
         else:
             direction = 'short'
-            confidence = min(10, int(5 + ((sma_50 - sma_20) / sma_50) * 100))
+            try:
+                confidence = min(10, int(5 + ((sma_50 - sma_20) / sma_50) * 100)) if sma_50 > 0 else 5
+            except (ZeroDivisionError, ValueError, OverflowError):
+                confidence = 5
         
-        # TP/SL based on distance between SMAs
-        volatility = abs(sma_20 - sma_50) / price
+        # TP/SL based on distance between SMAs (with safety)
+        try:
+            volatility = abs(sma_20 - sma_50) / price if price > 0 else 0.02
+            volatility = min(volatility, 0.5)  # Clamp max
+        except (ZeroDivisionError, ValueError, OverflowError):
+            volatility = 0.02
         tp_pct = 0.03 + volatility * 2
         sl_pct = 0.015 + volatility
         
