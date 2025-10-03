@@ -25,6 +25,20 @@ from services.outcome_tracker import OutcomeTracker
 from services.cryptocompare_client import CryptoCompareClient
 from services.scan_monitor import scan_monitor
 
+# Utility function to sanitize JSON output (prevent NaN/Infinity errors)
+def sanitize_for_json(obj):
+    """Recursively replace NaN, Infinity, and -Infinity with None or safe values."""
+    if isinstance(obj, dict):
+        return {k: sanitize_for_json(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [sanitize_for_json(item) for item in obj]
+    elif isinstance(obj, float):
+        if math.isnan(obj) or math.isinf(obj):
+            return None
+        return obj
+    else:
+        return obj
+
 # Setup
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
