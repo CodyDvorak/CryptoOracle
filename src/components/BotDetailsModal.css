@@ -48,6 +48,29 @@
   margin: 4px 0 0 0;
 }
 
+.modal-regime {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.regime-badge {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.regime-conf {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
 .modal-close {
   background: none;
   border: none;

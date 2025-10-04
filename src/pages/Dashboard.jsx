@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Play, Clock, Coins, Activity, CircleAlert as AlertCircle, CircleCheck as CheckCircle, Circle } from 'lucide-react'
 import { API_ENDPOINTS, getHeaders } from '../config/api'
+import BotDetailsModal from '../components/BotDetailsModal'
 import './Dashboard.css'
 
 const ALL_BOTS = [
@@ -93,6 +94,8 @@ function Dashboard() {
   const [activeRecTab, setActiveRecTab] = useState('confidence')
   const [scanStartTime, setScanStartTime] = useState(null)
   const [elapsedTime, setElapsedTime] = useState(0)
+  const [selectedRecommendation, setSelectedRecommendation] = useState(null)
+  const [showBotDetails, setShowBotDetails] = useState(false)
 
   useEffect(() => {
     fetchLatestRecommendations()
@@ -227,6 +230,16 @@ function Dashboard() {
     }
 
     return sorted.slice(0, 8)
+  }
+
+  const openBotDetails = (recommendation) => {
+    setSelectedRecommendation(recommendation)
+    setShowBotDetails(true)
+  }
+
+  const closeBotDetails = () => {
+    setShowBotDetails(false)
+    setSelectedRecommendation(null)
   }
 
   return (
@@ -403,10 +416,22 @@ function Dashboard() {
 
           <div className="recommendations-grid">
             {getTopRecommendations(recommendations, activeRecTab).map((rec, index) => (
-              <RecommendationCard key={index} recommendation={rec} rank={index + 1} />
+              <RecommendationCard
+                key={index}
+                recommendation={rec}
+                rank={index + 1}
+                onBotDetailsClick={openBotDetails}
+              />
             ))}
           </div>
         </div>
+      )}
+
+      {showBotDetails && selectedRecommendation && (
+        <BotDetailsModal
+          recommendation={selectedRecommendation}
+          onClose={closeBotDetails}
+        />
       )}
 
       <div className="info-cards">
@@ -468,9 +493,24 @@ function BotStatusCard({ botName, isActive }) {
   )
 }
 
-function RecommendationCard({ recommendation, rank }) {
+function RecommendationCard({ recommendation, rank, onBotDetailsClick }) {
   const isLong = recommendation.consensus_direction?.toUpperCase() === 'LONG'
   const confidenceScore = (recommendation.avg_confidence * 10).toFixed(1)
+
+  const calculateRisk = () => {
+    const stopLossDistance = Math.abs((recommendation.avg_stop_loss - recommendation.current_price) / recommendation.current_price) * 100
+    const takeProfitDistance = Math.abs((recommendation.avg_take_profit - recommendation.current_price) / recommendation.current_price) * 100
+    const riskRewardRatio = takeProfitDistance / stopLossDistance
+
+    return {
+      stopLossPercent: stopLossDistance.toFixed(2),
+      takeProfitPercent: takeProfitDistance.toFixed(2),
+      riskReward: riskRewardRatio.toFixed(2),
+      positionSize: Math.min((2 / stopLossDistance) * 100, 10).toFixed(2)
+    }
+  }
+
+  const risk = calculateRisk()
 
   const predicted24h = recommendation.avg_predicted_24h
   const predicted48h = recommendation.avg_predicted_48h
@@ -595,9 +635,48 @@ function RecommendationCard({ recommendation, rank }) {
         </div>
       </div>
 
+      <div className="rec-risk-calculator">
+        <div className="risk-header">Risk Calculator</div>
+        <div className="risk-grid">
+          <div className="risk-item">
+            <span className="risk-label">Stop Loss Distance</span>
+            <span className="risk-value" style={{ color: 'var(--accent-red)' }}>{risk.stopLossPercent}%</span>
+          </div>
+          <div className="risk-item">
+            <span className="risk-label">Take Profit Distance</span>
+            <span className="risk-value" style={{ color: 'var(--accent-green)' }}>{risk.takeProfitPercent}%</span>
+          </div>
+          <div className="risk-item">
+            <span className="risk-label">Risk/Reward Ratio</span>
+            <span className="risk-value" style={{ color: risk.riskReward >= 2 ? 'var(--accent-green)' : 'var(--accent-yellow)' }}>
+              1:{risk.riskReward}
+            </span>
+          </div>
+          <div className="risk-item">
+            <span className="risk-label">Suggested Position Size</span>
+            <span className="risk-value">{risk.positionSize}%</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="rec-regime-badge">
+        <span className="regime-label">Market Regime:</span>
+        <span className={`regime-value regime-${recommendation.market_regime?.toLowerCase()}`}>
+          {recommendation.market_regime === 'BULL' ? '🐂' : recommendation.market_regime === 'BEAR' ? '🐻' : '↔️'} {recommendation.market_regime}
+        </span>
+        <span className="regime-confidence">
+          ({(recommendation.regime_confidence * 100).toFixed(0)}% confidence)
+        </span>
+      </div>
+
       <div className="rec-actions">
         <button className="rec-btn rec-btn-secondary">Copy Trade</button>
-        <button className="rec-btn rec-btn-primary">Bot Details</button>
+        <button
+          className="rec-btn rec-btn-primary"
+          onClick={() => onBotDetailsClick(recommendation)}
+        >
+          Bot Details ({recommendation.bot_count})
+        </button>
       </div>
     </div>
   )

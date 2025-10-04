@@ -3,19 +3,19 @@ import { X, TrendingUp, TrendingDown, Target, Activity, CircleAlert as AlertCirc
 import { API_ENDPOINTS, getHeaders } from '../config/api'
 import './BotDetailsModal.css'
 
-export default function BotDetailsModal({ coin, runId, onClose }) {
+export default function BotDetailsModal({ recommendation, onClose }) {
   const [predictions, setPredictions] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchBotPredictions()
-  }, [coin, runId])
+  }, [recommendation])
 
   const fetchBotPredictions = async () => {
     try {
       setLoading(true)
       const response = await fetch(
-        `${API_ENDPOINTS.botPredictions}?runId=${runId}&coinSymbol=${coin.ticker}`,
+        `${API_ENDPOINTS.botPredictions}?runId=${recommendation.run_id}&coinSymbol=${recommendation.ticker}`,
         { headers: getHeaders() }
       )
       const data = await response.json()
@@ -41,10 +41,18 @@ export default function BotDetailsModal({ coin, runId, onClose }) {
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>
-            <h2>{coin.coin} Bot Analysis</h2>
+            <h2>{recommendation.coin} ({recommendation.ticker}) Analysis</h2>
             <p className="modal-subtitle">
-              {predictions.length} bots analyzed • Current price: ${coin.current_price?.toLocaleString()}
+              {predictions.length} bots analyzed • Current price: ${recommendation.current_price?.toFixed(8)}
             </p>
+            <div className="modal-regime">
+              <span className={`regime-badge regime-${recommendation.market_regime?.toLowerCase()}`}>
+                {recommendation.market_regime === 'BULL' ? '🐂' : recommendation.market_regime === 'BEAR' ? '🐻' : '↔️'} {recommendation.market_regime} Market
+              </span>
+              <span className="regime-conf">
+                {(recommendation.regime_confidence * 100).toFixed(0)}% confidence
+              </span>
+            </div>
           </div>
           <button className="modal-close" onClick={onClose}>
             <X size={24} />
