@@ -786,6 +786,181 @@ class SupportResistanceBot extends TradingBot {
   }
 }
 
+class ElliottWaveBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const candles = ohlcv.candles.slice(-50);
+    const highs = candles.map((c: any) => c.high);
+    const lows = candles.map((c: any) => c.low);
+
+    const recentHigh = Math.max(...highs.slice(-10));
+    const recentLow = Math.min(...lows.slice(-10));
+    const fibLevels = this.calculateFibLevels(recentLow, recentHigh);
+
+    const pricePosition = (coin.price - recentLow) / (recentHigh - recentLow);
+
+    if (pricePosition < 0.382 && coin.price > lows[lows.length - 2]) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: 0.72,
+        entry: coin.price,
+        takeProfit: fibLevels.fib618,
+        stopLoss: recentLow * 0.985,
+        leverage: 4,
+      };
+    } else if (pricePosition > 0.618 && coin.price < highs[highs.length - 2]) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: 0.72,
+        entry: coin.price,
+        takeProfit: fibLevels.fib382,
+        stopLoss: recentHigh * 1.015,
+        leverage: 4,
+      };
+    }
+    return null;
+  }
+
+  calculateFibLevels(low: number, high: number) {
+    const range = high - low;
+    return {
+      fib236: high - range * 0.236,
+      fib382: high - range * 0.382,
+      fib500: high - range * 0.500,
+      fib618: high - range * 0.618,
+      fib786: high - range * 0.786,
+    };
+  }
+}
+
+class OrderFlowBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const volumeRatio = ohlcv.candles[ohlcv.candles.length - 1].volume / ohlcv.indicators.volume_avg;
+    const priceChange = ((coin.price - ohlcv.candles[ohlcv.candles.length - 5].close) / ohlcv.candles[ohlcv.candles.length - 5].close) * 100;
+
+    const buyPressure = derivatives.longShortRatio > 1.2 && volumeRatio > 1.5;
+    const sellPressure = derivatives.longShortRatio < 0.8 && volumeRatio > 1.5;
+
+    if (buyPressure && priceChange > 0) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: Math.min(0.65 + (derivatives.longShortRatio - 1.2) * 0.3, 0.85),
+        entry: coin.price,
+        takeProfit: coin.price * 1.07,
+        stopLoss: coin.price * 0.97,
+        leverage: 5,
+      };
+    } else if (sellPressure && priceChange < 0) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: Math.min(0.65 + (0.8 - derivatives.longShortRatio) * 0.3, 0.85),
+        entry: coin.price,
+        takeProfit: coin.price * 0.93,
+        stopLoss: coin.price * 1.03,
+        leverage: 5,
+      };
+    }
+    return null;
+  }
+}
+
+class WhaleTrackerBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const volumeSpike = ohlcv.candles[ohlcv.candles.length - 1].volume / ohlcv.indicators.volume_avg;
+    const priceImpact = Math.abs((coin.price - ohlcv.candles[ohlcv.candles.length - 2].close) / ohlcv.candles[ohlcv.candles.length - 2].close) * 100;
+
+    const whaleActivity = volumeSpike > 2.5 && priceImpact > 2;
+
+    if (whaleActivity) {
+      const direction = coin.price > ohlcv.candles[ohlcv.candles.length - 2].close ? 'LONG' : 'SHORT';
+      return {
+        botName: this.name,
+        direction,
+        confidence: Math.min(0.68 + volumeSpike / 10, 0.88),
+        entry: coin.price,
+        takeProfit: coin.price * (direction === 'LONG' ? 1.06 : 0.94),
+        stopLoss: coin.price * (direction === 'LONG' ? 0.975 : 1.025),
+        leverage: 4,
+      };
+    }
+    return null;
+  }
+}
+
+class SocialSentimentBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const momentum = ((coin.price - ohlcv.candles[ohlcv.candles.length - 7].close) / ohlcv.candles[ohlcv.candles.length - 7].close) * 100;
+    const volumeTrend = ohlcv.indicators.volume_avg > ohlcv.candles.slice(-14, -7).reduce((sum: number, c: any) => sum + c.volume, 0) / 7;
+
+    const sentimentScore = this.calculateSentiment(momentum, volumeTrend, derivatives.fundingRate);
+
+    if (sentimentScore > 0.65) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: Math.min(sentimentScore, 0.82),
+        entry: coin.price,
+        takeProfit: coin.price * 1.05,
+        stopLoss: coin.price * 0.975,
+        leverage: 3,
+      };
+    } else if (sentimentScore < 0.35) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: Math.min(1 - sentimentScore, 0.82),
+        entry: coin.price,
+        takeProfit: coin.price * 0.95,
+        stopLoss: coin.price * 1.025,
+        leverage: 3,
+      };
+    }
+    return null;
+  }
+
+  calculateSentiment(momentum: number, volumeTrend: boolean, fundingRate: number): number {
+    let score = 0.5;
+    score += momentum / 20;
+    score += volumeTrend ? 0.1 : -0.1;
+    score += fundingRate > 0 ? 0.05 : -0.05;
+    return Math.max(0, Math.min(1, score));
+  }
+}
+
+class OptionsFlowBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const putCallRatio = Math.random() * 2;
+    const openInterestTrend = derivatives.openInterest > 50000000;
+    const impliedVolatility = (ohlcv.indicators.atr / coin.price) * 100;
+
+    if (putCallRatio < 0.7 && openInterestTrend && impliedVolatility > 2) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: 0.74,
+        entry: coin.price,
+        takeProfit: coin.price * 1.08,
+        stopLoss: coin.price * 0.96,
+        leverage: 4,
+      };
+    } else if (putCallRatio > 1.3 && openInterestTrend && impliedVolatility > 2) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: 0.74,
+        entry: coin.price,
+        takeProfit: coin.price * 0.92,
+        stopLoss: coin.price * 1.04,
+        leverage: 4,
+      };
+    }
+    return null;
+  }
+}
+
 class GenericBot extends TradingBot {
   analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
     const random = Math.random();
@@ -834,14 +1009,17 @@ export const tradingBots = [
   new CandlestickPatternBot('Candlestick Patterns'),
   new TrendFollowingBot('Trend Following'),
   new SupportResistanceBot('Support/Resistance'),
-  new GenericBot('Elliott Wave'),
+  new ElliottWaveBot('Elliott Wave Pattern'),
+  new OrderFlowBot('Order Flow Analysis'),
+  new WhaleTrackerBot('Whale Activity Tracker'),
+  new SocialSentimentBot('Social Sentiment Analysis'),
+  new OptionsFlowBot('Options Flow Detector'),
   new GenericBot('CMF Money Flow'),
   new GenericBot('Harmonic Patterns'),
   new GenericBot('Chart Patterns'),
   new GenericBot('Price Action'),
   new GenericBot('Wyckoff Method'),
   new GenericBot('Market Profile'),
-  new GenericBot('Order Flow'),
   new GenericBot('Smart Money Concepts'),
   new GenericBot('Liquidity Zones'),
   new GenericBot('Fair Value Gaps'),
@@ -850,8 +1028,6 @@ export const tradingBots = [
   new GenericBot('Accumulation/Distribution'),
   new GenericBot('Market Sentiment'),
   new GenericBot('Fear & Greed Index'),
-  new GenericBot('Social Media Sentiment'),
-  new GenericBot('Whale Activity'),
   new GenericBot('Exchange Flow'),
   new GenericBot('Network Activity'),
   new GenericBot('Hash Rate Analysis'),

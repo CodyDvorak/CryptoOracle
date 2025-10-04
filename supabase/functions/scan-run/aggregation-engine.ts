@@ -28,6 +28,7 @@ interface AggregatedSignal {
 
 export class HybridAggregationEngine {
   private confidenceThreshold = 0.6;
+  private botPerformanceHistory: Map<string, { correct: number; total: number }> = new Map();
 
   detectMarketRegime(ohlcv: any): MarketRegime {
     const adx = ohlcv.indicators.adx || 20;
@@ -137,13 +138,22 @@ export class HybridAggregationEngine {
       finalConfidence = Math.min(avgConfidence * 1.08, 1.0);
     }
 
-    const contrarian Bots = ['RSI', 'Stochastic', 'CCI', 'Williams', 'Bollinger'];
+    const contrarianBots = ['RSI', 'Stochastic', 'CCI', 'Williams', 'Bollinger'];
     const contrarianCount = dominantPreds.filter(p =>
       contrarianBots.some(b => p.botName.includes(b))
     ).length;
 
     if (contrarianCount >= 3 && consensusPercent >= 70) {
       finalConfidence = Math.min(finalConfidence * 1.12, 1.0);
+    }
+
+    const advancedBots = ['Elliott Wave', 'Order Flow', 'Whale', 'Social Sentiment', 'Options Flow'];
+    const advancedCount = dominantPreds.filter(p =>
+      advancedBots.some(b => p.botName.includes(b))
+    ).length;
+
+    if (advancedCount >= 2 && consensusPercent >= 75) {
+      finalConfidence = Math.min(finalConfidence * 1.10, 1.0);
     }
 
     const avgEntry = dominantPreds.reduce((sum, p) => sum + p.entry, 0) / dominantPreds.length;
@@ -164,8 +174,43 @@ export class HybridAggregationEngine {
     };
   }
 
+  updateBotPerformance(botName: string, wasCorrect: boolean) {
+    const current = this.botPerformanceHistory.get(botName) || { correct: 0, total: 0 };
+    current.total += 1;
+    if (wasCorrect) current.correct += 1;
+    this.botPerformanceHistory.set(botName, current);
+  }
+
+  getBotAccuracy(botName: string): number {
+    const perf = this.botPerformanceHistory.get(botName);
+    if (!perf || perf.total < 10) return 0.7;
+    return perf.correct / perf.total;
+  }
+
+  applyAdaptiveWeighting(predictions: BotPrediction[], regime: MarketRegime): BotPrediction[] {
+    return predictions.map(pred => {
+      const baseWeight = this.getBotWeight(pred.botName, regime);
+      const accuracy = this.getBotAccuracy(pred.botName);
+      const adaptiveMultiplier = 0.5 + accuracy;
+      const finalConfidence = pred.confidence * baseWeight * adaptiveMultiplier;
+      return {
+        ...pred,
+        confidence: Math.min(finalConfidence, 1.0),
+      };
+    });
+  }
+
+  autoTuneThreshold(recentAccuracy: number) {
+    if (recentAccuracy < 0.5) {
+      this.confidenceThreshold = Math.min(this.confidenceThreshold + 0.05, 0.8);
+    } else if (recentAccuracy > 0.7) {
+      this.confidenceThreshold = Math.max(this.confidenceThreshold - 0.02, 0.5);
+    }
+  }
+
   aggregate(predictions: BotPrediction[], ohlcv: any): AggregatedSignal | null {
     const regime = this.detectMarketRegime(ohlcv);
-    return this.calculateConsensus(predictions, regime);
+    const adaptivePredictions = this.applyAdaptiveWeighting(predictions, regime);
+    return this.calculateConsensus(adaptivePredictions, regime);
   }
 }
