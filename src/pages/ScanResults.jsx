@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { TrendingUp, TrendingDown, DollarSign, Percent, Activity, CircleAlert as AlertCircle } from 'lucide-react'
+import { API_ENDPOINTS, getHeaders } from '../config/api'
 import './ScanResults.css'
 
 function ScanResults() {
@@ -17,7 +18,9 @@ function ScanResults() {
     setError(null)
 
     try {
-      const response = await fetch('/api/scan/latest')
+      const response = await fetch(API_ENDPOINTS.scanLatest, {
+        headers: getHeaders(),
+      })
       if (!response.ok) {
         throw new Error('Failed to fetch results')
       }
@@ -59,12 +62,10 @@ function ScanResults() {
     )
   }
 
-  const { scan_run, recommendations } = results
+  const { scan, recommendations } = results
 
   const tabs = [
-    { id: 'confidence', label: 'Top Confidence', data: recommendations.top_confidence },
-    { id: 'percent', label: 'Top % Movers', data: recommendations.top_percent_movers },
-    { id: 'dollar', label: 'Top $ Movers', data: recommendations.top_dollar_movers }
+    { id: 'confidence', label: 'Top Confidence', data: recommendations || [] },
   ]
 
   const activeData = tabs.find(t => t.id === activeTab)?.data || []
@@ -81,27 +82,23 @@ function ScanResults() {
         </button>
       </div>
 
-      {scan_run && (
+      {scan && (
         <div className="scan-summary">
           <div className="summary-item">
             <span className="label">Scan Type</span>
-            <span className="value">{scan_run.scan_type}</span>
+            <span className="value">{scan.scan_type}</span>
           </div>
           <div className="summary-item">
             <span className="label">Status</span>
-            <span className={`badge ${scan_run.status}`}>{scan_run.status}</span>
-          </div>
-          <div className="summary-item">
-            <span className="label">Duration</span>
-            <span className="value">{scan_run.duration_seconds}s</span>
+            <span className={`badge ${scan.status}`}>{scan.status}</span>
           </div>
           <div className="summary-item">
             <span className="label">Coins Analyzed</span>
-            <span className="value">{scan_run.coins_analyzed} / {scan_run.total_coins}</span>
+            <span className="value">{scan.total_coins}</span>
           </div>
           <div className="summary-item">
             <span className="label">Completed</span>
-            <span className="value">{new Date(scan_run.completed_at).toLocaleString()}</span>
+            <span className="value">{new Date(scan.completed_at).toLocaleString()}</span>
           </div>
         </div>
       )}
@@ -134,8 +131,8 @@ function ScanResults() {
 }
 
 function RecommendationCard({ recommendation, rank }) {
-  const isLong = recommendation.consensus_direction === 'long'
-  const confidenceColor = recommendation.avg_confidence >= 7 ? 'high' : recommendation.avg_confidence >= 5 ? 'medium' : 'low'
+  const isLong = recommendation.consensus_direction?.toUpperCase() === 'LONG'
+  const confidenceColor = recommendation.avg_confidence >= 0.7 ? 'high' : recommendation.avg_confidence >= 0.5 ? 'medium' : 'low'
 
   return (
     <div className="recommendation-card">
@@ -159,7 +156,7 @@ function RecommendationCard({ recommendation, rank }) {
         <div className="stat">
           <span className="stat-label">Confidence</span>
           <span className={`stat-value confidence-${confidenceColor}`}>
-            {recommendation.avg_confidence?.toFixed(1)}/10
+            {(recommendation.avg_confidence * 10)?.toFixed(1)}/10
           </span>
         </div>
         <div className="stat">

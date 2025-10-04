@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Clock, CircleCheck as CheckCircle, Circle as XCircle, Activity, CircleAlert as AlertCircle } from 'lucide-react'
+import { API_ENDPOINTS, getHeaders } from '../config/api'
 import './History.css'
 
 function History() {
@@ -16,7 +17,9 @@ function History() {
     setError(null)
 
     try {
-      const response = await fetch('/api/scan/history?limit=50')
+      const response = await fetch(`${API_ENDPOINTS.scanHistory}?limit=50`, {
+        headers: getHeaders(),
+      })
       if (!response.ok) {
         throw new Error('Failed to fetch scan history')
       }
@@ -82,8 +85,8 @@ function ScanHistoryCard({ scan }) {
   const isFailed = scan.status === 'failed'
   const isRunning = scan.status === 'running'
 
-  const successRate = scan.coins_analyzed > 0
-    ? ((scan.coins_analyzed - (scan.coins_failed || 0)) / scan.coins_analyzed * 100).toFixed(1)
+  const successRate = scan.total_available_coins > 0
+    ? ((scan.total_available_coins / scan.total_coins) * 100).toFixed(1)
     : 0
 
   return (
@@ -117,12 +120,12 @@ function ScanHistoryCard({ scan }) {
           </div>
         )}
 
-        {scan.duration_seconds && (
+        {scan.completed_at && scan.started_at && (
           <div className="detail-row">
             <Clock size={16} />
             <span className="detail-label">Duration:</span>
             <span className="detail-value">
-              {Math.floor(scan.duration_seconds / 60)}m {scan.duration_seconds % 60}s
+              {Math.floor((new Date(scan.completed_at) - new Date(scan.started_at)) / 1000)}s
             </span>
           </div>
         )}
@@ -132,7 +135,7 @@ function ScanHistoryCard({ scan }) {
         <div className="history-stat">
           <span className="stat-label">Coins Analyzed</span>
           <span className="stat-value">
-            {scan.coins_analyzed || 0} / {scan.total_coins || 0}
+            {scan.total_available_coins || 0} / {scan.total_coins || 0}
           </span>
         </div>
 
@@ -143,22 +146,15 @@ function ScanHistoryCard({ scan }) {
           </div>
         )}
 
-        {scan.total_predictions && (
+        {scan.recommendationCount && (
           <div className="history-stat">
-            <span className="stat-label">Predictions</span>
-            <span className="stat-value">{scan.total_predictions}</span>
-          </div>
-        )}
-
-        {scan.coins_failed > 0 && (
-          <div className="history-stat">
-            <span className="stat-label">Failed</span>
-            <span className="stat-value error">{scan.coins_failed}</span>
+            <span className="stat-label">Recommendations</span>
+            <span className="stat-value">{scan.recommendationCount}</span>
           </div>
         )}
       </div>
 
-      {scan.coins_analyzed > 0 && (
+      {scan.total_available_coins > 0 && (
         <div className="success-rate">
           <span>Success Rate:</span>
           <div className="rate-bar">

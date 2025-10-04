@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Activity, TrendingUp, Target, Award, CircleAlert as AlertCircle } from 'lucide-react'
+import { API_ENDPOINTS, getHeaders } from '../config/api'
 import './BotPerformance.css'
 
 function BotPerformance() {
@@ -17,7 +18,9 @@ function BotPerformance() {
     setError(null)
 
     try {
-      const response = await fetch('/api/bots/performance')
+      const response = await fetch(API_ENDPOINTS.botPerformance, {
+        headers: getHeaders(),
+      })
       if (!response.ok) {
         throw new Error('Failed to fetch bot performance')
       }
@@ -52,7 +55,7 @@ function BotPerformance() {
   const sortedBots = [...bots].sort((a, b) => {
     switch (sortBy) {
       case 'accuracy':
-        return (b.accuracy || 0) - (a.accuracy || 0)
+        return (b.accuracy_rate || 0) - (a.accuracy_rate || 0)
       case 'predictions':
         return (b.total_predictions || 0) - (a.total_predictions || 0)
       case 'name':
@@ -86,7 +89,7 @@ function BotPerformance() {
               <h3>{bot.bot_name}</h3>
               <div className="performer-stat">
                 <Target size={20} />
-                <span>{(bot.accuracy * 100).toFixed(1)}% Accuracy</span>
+                <span>{bot.accuracy_rate?.toFixed(1)}% Accuracy</span>
               </div>
               <div className="performer-predictions">
                 {bot.total_predictions} predictions
@@ -124,7 +127,7 @@ function BotPerformance() {
 }
 
 function BotCard({ bot }) {
-  const accuracy = bot.accuracy || 0
+  const accuracy = (bot.accuracy_rate || 0) / 100
   const accuracyColor = accuracy >= 0.7 ? 'high' : accuracy >= 0.5 ? 'medium' : 'low'
 
   return (
@@ -145,12 +148,16 @@ function BotCard({ bot }) {
           <span className="stat-value">{bot.total_predictions || 0}</span>
         </div>
         <div className="bot-stat">
-          <span className="stat-label">Correct</span>
-          <span className="stat-value correct">{bot.correct_predictions || 0}</span>
+          <span className="stat-label">Successful</span>
+          <span className="stat-value correct">{bot.successful_predictions || 0}</span>
         </div>
         <div className="bot-stat">
-          <span className="stat-label">Incorrect</span>
-          <span className="stat-value incorrect">{bot.incorrect_predictions || 0}</span>
+          <span className="stat-label">Failed</span>
+          <span className="stat-value incorrect">{bot.failed_predictions || 0}</span>
+        </div>
+        <div className="bot-stat">
+          <span className="stat-label">Pending</span>
+          <span className="stat-value">{bot.pending_predictions || 0}</span>
         </div>
       </div>
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Play, Clock, Coins, Activity, CircleAlert as AlertCircle } from 'lucide-react'
+import { API_ENDPOINTS, getHeaders } from '../config/api'
 import './Dashboard.css'
 
 const SCAN_TYPES = [
@@ -31,13 +32,15 @@ function Dashboard() {
 
   const checkScanStatus = async () => {
     try {
-      const response = await fetch('/api/scan/is-running')
+      const response = await fetch(API_ENDPOINTS.scanStatus, {
+        headers: getHeaders(),
+      })
       const data = await response.json()
 
-      if (data.is_running) {
+      if (data.isRunning) {
         setIsScanning(true)
         setScanProgress(data.progress)
-        setScanStatus(data)
+        setScanStatus(data.currentScan)
       } else {
         setIsScanning(false)
         setScanProgress(null)
@@ -52,14 +55,13 @@ function Dashboard() {
     setIsScanning(true)
 
     try {
-      const response = await fetch('/api/scan/run', {
+      const response = await fetch(API_ENDPOINTS.scanRun, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getHeaders(),
         body: JSON.stringify({
-          scan_type: selectedScan,
-          scope: 'all'
+          scanType: selectedScan,
+          filterScope: 'all',
+          interval: '4h'
         })
       })
 
