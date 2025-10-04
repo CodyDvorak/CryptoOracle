@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNotifications } from '../contexts/NotificationContext';
-import { X, CheckCircle, AlertCircle, Info, Trash2, Check } from 'lucide-react';
+import { X, CircleCheck as CheckCircle, CircleAlert as AlertCircle, Info, Trash2, Check } from 'lucide-react';
 import { Button } from './ui/button';
 
 export const NotificationSidebar = () => {

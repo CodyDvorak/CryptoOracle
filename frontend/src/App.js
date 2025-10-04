@@ -15,11 +15,7 @@ import { CoinRecommendationCard, BotStatusGrid, StatCard } from './components/Da
 import { useAuth } from './contexts/AuthContext';
 import { useNotifications } from './contexts/NotificationContext';
 import { NotificationSidebar } from './components/NotificationSidebar';
-import { 
-  TrendingUp, Activity, Clock, Settings, Mail, FileSpreadsheet, 
-  RefreshCw, Filter, Zap, Play, CheckCircle, Trash2, Edit, Calendar,
-  User, LogOut, History as HistoryIcon, LogIn, Bell
-} from 'lucide-react';
+import { TrendingUp, Activity, Clock, Settings, Mail, FileSpreadsheet, RefreshCw, ListFilter as Filter, Zap, Play, CircleCheck as CheckCircle, Trash2, CreditCard as Edit, Calendar, User, LogOut, History as HistoryIcon, LogIn, Bell } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
