@@ -82,6 +82,8 @@ function Dashboard() {
   const [error, setError] = useState(null)
   const [recommendations, setRecommendations] = useState(null)
   const [activeRecTab, setActiveRecTab] = useState('confidence')
+  const [scanStartTime, setScanStartTime] = useState(null)
+  const [elapsedTime, setElapsedTime] = useState(0)
 
   useEffect(() => {
     checkScanStatus()
@@ -92,6 +94,20 @@ function Dashboard() {
     }, 5000)
     return () => clearInterval(interval)
   }, [])
+
+  useEffect(() => {
+    let timer
+    if (isScanning && scanStartTime) {
+      timer = setInterval(() => {
+        setElapsedTime(Math.floor((Date.now() - scanStartTime) / 1000))
+      }, 1000)
+    } else {
+      setElapsedTime(0)
+    }
+    return () => {
+      if (timer) clearInterval(timer)
+    }
+  }, [isScanning, scanStartTime])
 
   const checkScanStatus = async () => {
     try {
@@ -104,9 +120,13 @@ function Dashboard() {
         setIsScanning(true)
         setScanProgress(data.progress)
         setScanStatus(data.currentScan)
+        if (!scanStartTime) {
+          setScanStartTime(Date.now())
+        }
       } else {
         setIsScanning(false)
         setScanProgress(null)
+        setScanStartTime(null)
       }
     } catch (err) {
       console.error('Error checking scan status:', err)
@@ -131,6 +151,8 @@ function Dashboard() {
   const startScan = async () => {
     setError(null)
     setIsScanning(true)
+    setScanStartTime(Date.now())
+    setElapsedTime(0)
 
     try {
       const response = await fetch(API_ENDPOINTS.scanRun, {
@@ -152,10 +174,17 @@ function Dashboard() {
     } catch (err) {
       setError(err.message)
       setIsScanning(false)
+      setScanStartTime(null)
     }
   }
 
   const selectedScanInfo = SCAN_TYPES.find(s => s.id === selectedScan)
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
 
   const getTopRecommendations = (recs, tab) => {
     let sorted = [...recs]
@@ -264,7 +293,13 @@ function Dashboard() {
           disabled={isScanning}
         >
           <Play size={20} />
-          {isScanning ? 'Scan in Progress...' : 'Start Scan'}
+          {isScanning ? (
+            <span>
+              Scan in Progress... <span className="scan-timer">{formatTime(elapsedTime)}</span>
+            </span>
+          ) : (
+            'Start Scan'
+          )}
         </button>
 
         {isScanning && scanProgress && (
