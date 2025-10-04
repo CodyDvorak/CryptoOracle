@@ -7,14 +7,13 @@ import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Optional
-from motor.motor_asyncio import AsyncIOMotorDatabase
 
 logger = logging.getLogger(__name__)
 
 class OutcomeTracker:
     """Tracks recommendation outcomes by monitoring actual price movements"""
-    
-    def __init__(self, db: AsyncIOMotorDatabase, crypto_client):
+
+    def __init__(self, db, crypto_client):
         self.db = db
         self.crypto_client = crypto_client
     

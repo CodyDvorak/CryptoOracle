@@ -11,7 +11,6 @@ Handles:
 import asyncio
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Optional
-from motor.motor_asyncio import AsyncIOMotorDatabase
 import logging
 
 from models.models import BotPrediction, BotPerformance
@@ -21,8 +20,8 @@ logger = logging.getLogger(__name__)
 
 class BotPerformanceService:
     """Service for tracking and evaluating bot performance."""
-    
-    def __init__(self, db: AsyncIOMotorDatabase, crypto_client):
+
+    def __init__(self, db, crypto_client):
         self.db = db
         self.crypto_client = crypto_client
         logger.info("🤖 Bot Performance Service initialized")

@@ -1,7 +1,6 @@
 from fastapi import FastAPI, APIRouter, HTTPException, BackgroundTasks, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
 from pathlib import Path
 import os
@@ -43,10 +42,19 @@ def sanitize_for_json(obj):
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ.get('DB_NAME', 'crypto_oracle')]
+# Supabase connection
+from database.supabase_client import get_supabase_client
+supabase_client = get_supabase_client()
+
+# Database interface (MongoDB-like API)
+class DBInterface:
+    def __init__(self, client):
+        self._client = client
+
+    def __getattr__(self, name):
+        return self._client.collection(name)
+
+db = DBInterface(supabase_client)
 
 # Configure logging
 logging.basicConfig(
@@ -1384,13 +1392,10 @@ async def shutdown_event():
     # Shutdown scheduler
     if scheduler.running:
         scheduler.shutdown()
-    
-    # Close MongoDB connection
-    client.close()
-    
+
     # Close crypto client
     await scan_orchestrator.crypto_client.close()
-    
+
     logger.info("Application shutdown complete")
 
 
