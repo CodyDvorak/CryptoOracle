@@ -80,10 +80,16 @@ function Dashboard() {
   const [scanProgress, setScanProgress] = useState(null)
   const [scanStatus, setScanStatus] = useState(null)
   const [error, setError] = useState(null)
+  const [recommendations, setRecommendations] = useState(null)
+  const [activeRecTab, setActiveRecTab] = useState('confidence')
 
   useEffect(() => {
     checkScanStatus()
-    const interval = setInterval(checkScanStatus, 3000)
+    fetchLatestRecommendations()
+    const interval = setInterval(() => {
+      checkScanStatus()
+      fetchLatestRecommendations()
+    }, 5000)
     return () => clearInterval(interval)
   }, [])
 
@@ -104,6 +110,21 @@ function Dashboard() {
       }
     } catch (err) {
       console.error('Error checking scan status:', err)
+    }
+  }
+
+  const fetchLatestRecommendations = async () => {
+    try {
+      const response = await fetch(API_ENDPOINTS.scanLatest, {
+        headers: getHeaders(),
+      })
+      const data = await response.json()
+
+      if (data.recommendations && data.recommendations.length > 0) {
+        setRecommendations(data.recommendations)
+      }
+    } catch (err) {
+      console.error('Error fetching recommendations:', err)
     }
   }
 
@@ -135,6 +156,34 @@ function Dashboard() {
   }
 
   const selectedScanInfo = SCAN_TYPES.find(s => s.id === selectedScan)
+
+  const getTopRecommendations = (recs, tab) => {
+    let sorted = [...recs]
+
+    switch (tab) {
+      case 'confidence':
+        sorted.sort((a, b) => b.avg_confidence - a.avg_confidence)
+        break
+      case 'percent':
+        sorted.sort((a, b) => {
+          const aPercent = Math.abs(((a.avg_predicted_24h - a.current_price) / a.current_price) * 100)
+          const bPercent = Math.abs(((b.avg_predicted_24h - b.current_price) / b.current_price) * 100)
+          return bPercent - aPercent
+        })
+        break
+      case 'volume':
+        sorted.sort((a, b) => {
+          const aVolume = Math.abs(a.avg_predicted_24h - a.current_price)
+          const bVolume = Math.abs(b.avg_predicted_24h - b.current_price)
+          return bVolume - aVolume
+        })
+        break
+      default:
+        break
+    }
+
+    return sorted.slice(0, 8)
+  }
 
   return (
     <div className="dashboard">
@@ -274,6 +323,42 @@ function Dashboard() {
         </div>
       </div>
 
+      {recommendations && recommendations.length > 0 && (
+        <div className="recommendations-section">
+          <div className="recommendations-header">
+            <h2>Latest Recommendations</h2>
+            <p>Top opportunities from the latest scan</p>
+          </div>
+
+          <div className="recommendations-tabs">
+            <button
+              className={`rec-tab ${activeRecTab === 'confidence' ? 'active' : ''}`}
+              onClick={() => setActiveRecTab('confidence')}
+            >
+              Top 8 Most Confident
+            </button>
+            <button
+              className={`rec-tab ${activeRecTab === 'percent' ? 'active' : ''}`}
+              onClick={() => setActiveRecTab('percent')}
+            >
+              Top 8 % Movers
+            </button>
+            <button
+              className={`rec-tab ${activeRecTab === 'volume' ? 'active' : ''}`}
+              onClick={() => setActiveRecTab('volume')}
+            >
+              Top 8 $ Volume
+            </button>
+          </div>
+
+          <div className="recommendations-grid">
+            {getTopRecommendations(recommendations, activeRecTab).map((rec, index) => (
+              <RecommendationCard key={index} recommendation={rec} rank={index + 1} />
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="info-cards">
         <div className="info-card">
           <h3>How It Works</h3>
@@ -328,6 +413,141 @@ function BotStatusCard({ botName, isActive }) {
         <span className={`bot-status-label ${isActive ? 'active' : 'inactive'}`}>
           {isActive ? 'Operational' : 'Offline'}
         </span>
+      </div>
+    </div>
+  )
+}
+
+function RecommendationCard({ recommendation, rank }) {
+  const isLong = recommendation.consensus_direction?.toUpperCase() === 'LONG'
+  const confidenceScore = (recommendation.avg_confidence * 10).toFixed(1)
+
+  const predicted24h = recommendation.avg_predicted_24h
+  const predicted48h = recommendation.avg_predicted_48h
+  const predicted7d = recommendation.avg_predicted_7d
+  const currentPrice = recommendation.current_price
+
+  const change24h = ((predicted24h - currentPrice) / currentPrice) * 100
+  const change48h = ((predicted48h - currentPrice) / currentPrice) * 100
+  const change7d = ((predicted7d - currentPrice) / currentPrice) * 100
+
+  const getChangeColor = (change) => {
+    return change >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'
+  }
+
+  const confidencePercent = (recommendation.avg_confidence * 100).toFixed(0)
+
+  return (
+    <div className="rec-card">
+      <div className="rec-card-header">
+        <div className="rec-rank">#{rank}</div>
+        <div className="rec-coin-info">
+          <h3>{recommendation.ticker}</h3>
+          <span className="rec-coin-name">{recommendation.coin}</span>
+        </div>
+        <div className={`rec-direction-badge ${isLong ? 'bull' : 'bear'}`}>
+          <span className="direction-icon">{isLong ? '●' : '●'}</span>
+          {isLong ? 'BULL' : 'BEAR'}
+        </div>
+        <div className={`rec-position-badge ${isLong ? 'long' : 'short'}`}>
+          {isLong ? 'LONG' : 'SHORT'}
+        </div>
+      </div>
+
+      <div className="rec-confidence-gauge">
+        <svg viewBox="0 0 200 120" className="gauge-svg">
+          <defs>
+            <linearGradient id={`gauge-gradient-${rank}`} x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" style={{ stopColor: 'var(--accent-red)', stopOpacity: 1 }} />
+              <stop offset="50%" style={{ stopColor: 'var(--accent-yellow)', stopOpacity: 1 }} />
+              <stop offset="100%" style={{ stopColor: 'var(--accent-green)', stopOpacity: 1 }} />
+            </linearGradient>
+          </defs>
+          <path
+            d="M 20 100 A 80 80 0 0 1 180 100"
+            fill="none"
+            stroke="var(--bg-tertiary)"
+            strokeWidth="20"
+            strokeLinecap="round"
+          />
+          <path
+            d="M 20 100 A 80 80 0 0 1 180 100"
+            fill="none"
+            stroke={`url(#gauge-gradient-${rank})`}
+            strokeWidth="20"
+            strokeLinecap="round"
+            strokeDasharray={`${confidencePercent * 2.51} 251`}
+          />
+          <text x="100" y="85" textAnchor="middle" className="gauge-value">
+            {confidenceScore}/10
+          </text>
+          <text x="100" y="105" textAnchor="middle" className="gauge-label">
+            {confidencePercent}%
+          </text>
+        </svg>
+      </div>
+
+      <div className="rec-current-price">
+        <span className="rec-price-label">Current Price</span>
+        <span className="rec-price-value">${currentPrice.toFixed(8)}</span>
+      </div>
+
+      <div className="rec-predictions">
+        <div className="rec-prediction-header">AI Predicted Prices</div>
+        <div className="rec-prediction-item">
+          <span className="pred-timeframe">24h</span>
+          <span className="pred-price" style={{ color: getChangeColor(change24h) }}>
+            ${predicted24h.toFixed(8)}
+          </span>
+          <span className="pred-change" style={{ color: getChangeColor(change24h) }}>
+            ({change24h >= 0 ? '+' : ''}{change24h.toFixed(3)}%)
+          </span>
+        </div>
+        <div className="rec-prediction-item">
+          <span className="pred-timeframe">48h</span>
+          <span className="pred-price" style={{ color: getChangeColor(change48h) }}>
+            ${predicted48h.toFixed(8)}
+          </span>
+          <span className="pred-change" style={{ color: getChangeColor(change48h) }}>
+            ({change48h >= 0 ? '+' : ''}{change48h.toFixed(3)}%)
+          </span>
+        </div>
+        <div className="rec-prediction-item">
+          <span className="pred-timeframe">7d</span>
+          <span className="pred-price" style={{ color: getChangeColor(change7d) }}>
+            ${predicted7d.toFixed(8)}
+          </span>
+          <span className="pred-change" style={{ color: getChangeColor(change7d) }}>
+            ({change7d >= 0 ? '+' : ''}{change7d.toFixed(3)}%)
+          </span>
+        </div>
+      </div>
+
+      <div className="rec-tp-sl">
+        <div className="rec-tp-sl-header">Average TP/SL (from {recommendation.bot_count} bots)</div>
+        <div className="rec-tp-sl-item">
+          <span className="tp-sl-label">Take Profit</span>
+          <span className="tp-sl-value" style={{ color: 'var(--accent-green)' }}>
+            ${recommendation.avg_take_profit.toFixed(8)}
+          </span>
+          <span className="tp-sl-percent" style={{ color: 'var(--accent-green)' }}>
+            (+{(((recommendation.avg_take_profit - currentPrice) / currentPrice) * 100).toFixed(3)}%)
+          </span>
+        </div>
+        <div className="rec-tp-sl-item">
+          <span className="tp-sl-label">Stop Loss</span>
+          <span className="tp-sl-value" style={{ color: 'var(--accent-red)' }}>
+            ${recommendation.avg_stop_loss.toFixed(8)}
+          </span>
+          <span className="tp-sl-percent" style={{ color: 'var(--accent-red)' }}>
+            ({(((recommendation.avg_stop_loss - currentPrice) / currentPrice) * 100).toFixed(3)}%)
+          </span>
+        </div>
+      </div>
+
+      <div className="rec-actions">
+        <button className="rec-btn rec-btn-secondary">Copy Trade</button>
+        <button className="rec-btn rec-btn-primary">Bot Details</button>
       </div>
     </div>
   )

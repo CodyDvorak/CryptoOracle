@@ -383,6 +383,323 @@
   color: var(--text-secondary);
 }
 
+.recommendations-section {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 32px;
+}
+
+.recommendations-header {
+  margin-bottom: 24px;
+}
+
+.recommendations-header h2 {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.recommendations-header p {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.recommendations-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 0;
+}
+
+.rec-tab {
+  padding: 12px 24px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: -2px;
+}
+
+.rec-tab:hover {
+  color: var(--text-primary);
+}
+
+.rec-tab.active {
+  color: var(--accent-blue);
+  border-bottom-color: var(--accent-blue);
+}
+
+.recommendations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.rec-card {
+  background: linear-gradient(135deg, rgba(20, 25, 35, 0.95), rgba(15, 20, 30, 0.95));
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: all 0.3s ease;
+}
+
+.rec-card:hover {
+  border-color: var(--accent-blue);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.rec-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.rec-rank {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent-blue);
+  min-width: 40px;
+}
+
+.rec-coin-info {
+  flex: 1;
+  min-width: 100px;
+}
+
+.rec-coin-info h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.rec-coin-name {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rec-direction-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.5px;
+}
+
+.rec-direction-badge.bull {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--accent-green);
+}
+
+.rec-direction-badge.bear {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--accent-red);
+}
+
+.rec-position-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.rec-position-badge.long {
+  background: rgba(34, 197, 94, 0.2);
+  color: var(--accent-green);
+  border: 1px solid var(--accent-green);
+}
+
+.rec-position-badge.short {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--accent-red);
+  border: 1px solid var(--accent-red);
+}
+
+.rec-confidence-gauge {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px 0;
+}
+
+.gauge-svg {
+  width: 180px;
+  height: 110px;
+}
+
+.gauge-value {
+  font-size: 28px;
+  font-weight: 700;
+  fill: var(--text-primary);
+}
+
+.gauge-label {
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--text-secondary);
+}
+
+.rec-current-price {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+}
+
+.rec-price-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rec-price-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent-blue);
+}
+
+.rec-predictions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rec-prediction-header {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.rec-prediction-item {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+  align-items: center;
+}
+
+.pred-timeframe {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.pred-price {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.pred-change {
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.rec-tp-sl {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-color);
+}
+
+.rec-tp-sl-header {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.rec-tp-sl-item {
+  display: grid;
+  grid-template-columns: 100px 1fr auto;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+  align-items: center;
+}
+
+.tp-sl-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.tp-sl-value {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.tp-sl-percent {
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.rec-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.rec-btn {
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.rec-btn-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.rec-btn-secondary:hover {
+  background: var(--bg-secondary);
+  border-color: var(--accent-blue);
+}
+
+.rec-btn-primary {
+  background: var(--accent-blue);
+  color: white;
+}
+
+.rec-btn-primary:hover {
+  background: rgba(59, 130, 246, 0.8);
+}
+
 @media (max-width: 768px) {
   .dashboard-header {
     flex-direction: column;
@@ -407,5 +724,26 @@
 
   .bots-grid {
     grid-template-columns: 1fr;
+  }
+
+  .recommendations-section {
+    padding: 24px;
+  }
+
+  .recommendations-tabs {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .rec-tab {
+    text-align: left;
+  }
+
+  .recommendations-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rec-tp-sl-item {
+    grid-template-columns: 80px 1fr auto;
   }
 }
