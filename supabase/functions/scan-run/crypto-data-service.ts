@@ -47,7 +47,7 @@ interface DerivativesData {
   premiumIndex: number;
 }
 
-class CryptoDataService {
+export class CryptoDataService {
   private async fetchWithFallback(urls: string[]): Promise<any> {
     for (const url of urls) {
       try {
