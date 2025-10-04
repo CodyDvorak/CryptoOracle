@@ -115,50 +115,71 @@ Deno.serve(async (req: Request) => {
         const botPredictions = [];
 
         for (const coin of mockCoins) {
-          const isLong = Math.random() > 0.5;
-          const botCount = 20 + Math.floor(Math.random() * 15);
-          const confidence = 0.6 + Math.random() * 0.3;
-
           const regimes = ['BULL', 'BEAR', 'SIDEWAYS'];
           const marketRegime = regimes[Math.floor(Math.random() * regimes.length)];
           const regimeConfidence = 0.6 + Math.random() * 0.3;
 
-          const avgEntry = coin.price;
-          const avgTakeProfit = isLong ? coin.price * (1.03 + Math.random() * 0.07) : coin.price * (0.90 + Math.random() * 0.07);
-          const avgStopLoss = isLong ? coin.price * (0.95 - Math.random() * 0.03) : coin.price * (1.02 + Math.random() * 0.03);
+          let totalBotsVoting = 0;
+          let totalConfidence = 0;
+          let longVotes = 0;
+          let shortVotes = 0;
 
-          recommendations.push({
-            run_id: scanRun.id,
-            coin: coin.name,
-            ticker: coin.symbol,
-            current_price: coin.price,
-            consensus_direction: isLong ? 'LONG' : 'SHORT',
-            avg_confidence: confidence,
-            avg_entry: avgEntry,
-            avg_take_profit: avgTakeProfit,
-            avg_stop_loss: avgStopLoss,
-            avg_predicted_24h: isLong ? coin.price * (1.02 + Math.random() * 0.03) : coin.price * (0.97 - Math.random() * 0.03),
-            avg_predicted_48h: isLong ? coin.price * (1.04 + Math.random() * 0.04) : coin.price * (0.94 - Math.random() * 0.04),
-            avg_predicted_7d: isLong ? coin.price * (1.08 + Math.random() * 0.07) : coin.price * (0.88 - Math.random() * 0.07),
-            bot_count: botCount,
-            market_regime: marketRegime,
-            regime_confidence: regimeConfidence,
-          });
+          for (const botName of botNames) {
+            const willVote = Math.random() > 0.15;
 
-          for (let i = 0; i < botCount; i++) {
-            const botName = botNames[i % botNames.length];
-            botPredictions.push({
+            if (willVote) {
+              const isLong = Math.random() > 0.5;
+              const confidence = 0.6 + Math.random() * 0.3;
+
+              if (isLong) longVotes++;
+              else shortVotes++;
+
+              totalBotsVoting++;
+              totalConfidence += confidence;
+
+              const avgEntry = coin.price;
+              const avgTakeProfit = isLong ? coin.price * (1.03 + Math.random() * 0.07) : coin.price * (0.90 + Math.random() * 0.07);
+              const avgStopLoss = isLong ? coin.price * (0.95 - Math.random() * 0.03) : coin.price * (1.02 + Math.random() * 0.03);
+
+              botPredictions.push({
+                run_id: scanRun.id,
+                bot_name: botName,
+                coin_symbol: coin.symbol,
+                coin_name: coin.name,
+                entry_price: avgEntry,
+                target_price: avgTakeProfit,
+                stop_loss: avgStopLoss,
+                position_direction: isLong ? 'LONG' : 'SHORT',
+                confidence_score: confidence,
+                leverage: 3 + Math.floor(Math.random() * 5),
+                market_regime: marketRegime,
+              });
+            }
+          }
+
+          if (totalBotsVoting > 0) {
+            const isLong = longVotes > shortVotes;
+            const avgConfidence = totalConfidence / totalBotsVoting;
+            const avgEntry = coin.price;
+            const avgTakeProfit = isLong ? coin.price * (1.03 + Math.random() * 0.07) : coin.price * (0.90 + Math.random() * 0.07);
+            const avgStopLoss = isLong ? coin.price * (0.95 - Math.random() * 0.03) : coin.price * (1.02 + Math.random() * 0.03);
+
+            recommendations.push({
               run_id: scanRun.id,
-              bot_name: botName,
-              coin_symbol: coin.symbol,
-              coin_name: coin.name,
-              entry_price: avgEntry,
-              target_price: avgTakeProfit,
-              stop_loss: avgStopLoss,
-              position_direction: isLong ? 'LONG' : 'SHORT',
-              confidence_score: confidence + (Math.random() * 0.2 - 0.1),
-              leverage: 3 + Math.floor(Math.random() * 5),
+              coin: coin.name,
+              ticker: coin.symbol,
+              current_price: coin.price,
+              consensus_direction: isLong ? 'LONG' : 'SHORT',
+              avg_confidence: avgConfidence,
+              avg_entry: avgEntry,
+              avg_take_profit: avgTakeProfit,
+              avg_stop_loss: avgStopLoss,
+              avg_predicted_24h: isLong ? coin.price * (1.02 + Math.random() * 0.03) : coin.price * (0.97 - Math.random() * 0.03),
+              avg_predicted_48h: isLong ? coin.price * (1.04 + Math.random() * 0.04) : coin.price * (0.94 - Math.random() * 0.04),
+              avg_predicted_7d: isLong ? coin.price * (1.08 + Math.random() * 0.07) : coin.price * (0.88 - Math.random() * 0.07),
+              bot_count: totalBotsVoting,
               market_regime: marketRegime,
+              regime_confidence: regimeConfidence,
             });
           }
         }
