@@ -29,7 +29,7 @@ googleapis-common-protos==1.70.0
 grpcio==1.75.1
 grpcio-status==1.71.2
 gspread==6.2.1
-h11==0.16.0
+h11==0.14.0
 hf-xet==1.1.10
 httpcore==0.18.0
 httplib2==0.31.0
