@@ -161,6 +161,25 @@ function BotCard({ bot }) {
         </div>
       </div>
 
+      <div className="bot-metrics">
+        {bot.win_loss_ratio !== undefined && (
+          <div className="bot-metric">
+            <span className="metric-label">Win/Loss Ratio</span>
+            <span className={`metric-value ${bot.win_loss_ratio >= 1.5 ? 'high' : bot.win_loss_ratio >= 1 ? 'medium' : 'low'}`}>
+              {bot.win_loss_ratio.toFixed(2)}x
+            </span>
+          </div>
+        )}
+        {bot.avg_profit_loss !== undefined && (
+          <div className="bot-metric">
+            <span className="metric-label">Avg P/L</span>
+            <span className={`metric-value ${bot.avg_profit_loss >= 0 ? 'correct' : 'incorrect'}`}>
+              {bot.avg_profit_loss >= 0 ? '+' : ''}{bot.avg_profit_loss.toFixed(2)}%
+            </span>
+          </div>
+        )}
+      </div>
+
       {bot.avg_confidence && (
         <div className="bot-confidence">
           <span>Avg Confidence:</span>

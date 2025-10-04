@@ -38,18 +38,43 @@ Deno.serve(async (req: Request) => {
           accuracy_rate: 0,
           avg_profit_loss: 0,
           total_profit_loss: 0,
+          win_loss_ratio: 0,
+          total_confidence: 0,
+          confidence_count: 0,
+          avg_confidence: 0,
+          regime_stats: {
+            BULL: { total: 0, success: 0, failed: 0 },
+            BEAR: { total: 0, success: 0, failed: 0 },
+            SIDEWAYS: { total: 0, success: 0, failed: 0 },
+          },
         });
       }
 
       const stats = botStats.get(pred.bot_name);
       stats.total_predictions++;
 
+      if (pred.confidence_score) {
+        stats.total_confidence += pred.confidence_score;
+        stats.confidence_count++;
+      }
+
+      const regime = pred.market_regime || 'SIDEWAYS';
+      if (stats.regime_stats[regime]) {
+        stats.regime_stats[regime].total++;
+      }
+
       if (pred.outcome_status === 'success') {
         stats.successful_predictions++;
         stats.total_profit_loss += pred.profit_loss_percent || 0;
+        if (stats.regime_stats[regime]) {
+          stats.regime_stats[regime].success++;
+        }
       } else if (pred.outcome_status === 'failed') {
         stats.failed_predictions++;
         stats.total_profit_loss += pred.profit_loss_percent || 0;
+        if (stats.regime_stats[regime]) {
+          stats.regime_stats[regime].failed++;
+        }
       } else {
         stats.pending_predictions++;
       }
@@ -59,8 +84,35 @@ Deno.serve(async (req: Request) => {
       const completed = stats.successful_predictions + stats.failed_predictions;
       stats.accuracy_rate = completed > 0 ? (stats.successful_predictions / completed) * 100 : 0;
       stats.avg_profit_loss = completed > 0 ? stats.total_profit_loss / completed : 0;
+      stats.win_loss_ratio = stats.failed_predictions > 0 
+        ? stats.successful_predictions / stats.failed_predictions 
+        : stats.successful_predictions > 0 ? stats.successful_predictions : 0;
+      stats.avg_confidence = stats.confidence_count > 0
+        ? stats.total_confidence / stats.confidence_count
+        : 0;
+
+      const market_regime_performance = {};
+      Object.entries(stats.regime_stats).forEach(([regime, regimeData]: [string, any]) => {
+        if (regimeData.total > 0) {
+          const regimeCompleted = regimeData.success + regimeData.failed;
+          market_regime_performance[regime] = {
+            accuracy: regimeCompleted > 0 ? regimeData.success / regimeCompleted : 0,
+            total: regimeData.total,
+            success: regimeData.success,
+            failed: regimeData.failed,
+          };
+        }
+      });
+
       delete stats.total_profit_loss;
-      return stats;
+      delete stats.total_confidence;
+      delete stats.confidence_count;
+      delete stats.regime_stats;
+
+      return {
+        ...stats,
+        market_regime_performance,
+      };
     });
 
     performanceData.sort((a, b) => b.accuracy_rate - a.accuracy_rate);

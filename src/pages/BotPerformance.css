@@ -234,6 +234,54 @@
   color: var(--accent-red);
 }
 
+.bot-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+}
+
+.bot-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bot-metric .metric-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.bot-metric .metric-value {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.bot-metric .metric-value.high {
+  color: var(--accent-green);
+}
+
+.bot-metric .metric-value.medium {
+  color: var(--accent-blue);
+}
+
+.bot-metric .metric-value.low {
+  color: var(--accent-red);
+}
+
+.bot-metric .metric-value.correct {
+  color: var(--accent-green);
+}
+
+.bot-metric .metric-value.incorrect {
+  color: var(--accent-red);
+}
+
 .bot-confidence {
   display: flex;
   align-items: center;
