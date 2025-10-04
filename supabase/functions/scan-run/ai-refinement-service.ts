@@ -1,5 +1,3 @@
-import { OpenAI } from 'npm:openai@4.20.1';
-
 interface AIAnalysis {
   refinedConfidence: number;
   reasoning: string;
@@ -9,14 +7,15 @@ interface AIAnalysis {
 }
 
 class AIRefinementService {
-  private openai: OpenAI;
+  private groqApiKey: string;
+  private groqApiUrl = 'https://api.groq.com/openai/v1/chat/completions';
 
   constructor() {
-    const apiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!apiKey) {
-      throw new Error('OPENAI_API_KEY not set');
+    this.groqApiKey = Deno.env.get('GROQ_API_KEY') || '';
+
+    if (!this.groqApiKey) {
+      console.warn('GROQ_API_KEY not set. AI refinement will use rule-based fallback.');
     }
-    this.openai = new OpenAI({ apiKey });
   }
 
   async analyzeSignal(data: {
@@ -33,25 +32,27 @@ class AIRefinementService {
     timeframe?: any;
   }): Promise<AIAnalysis | null> {
     try {
-      const longPredictions = data.botPredictions.filter(
-        p => p.direction === 'LONG'
-      );
-      const shortPredictions = data.botPredictions.filter(
-        p => p.direction === 'SHORT'
-      );
+      const longPredictions = data.botPredictions.filter(p => p.direction === 'LONG');
+      const shortPredictions = data.botPredictions.filter(p => p.direction === 'SHORT');
 
-      const prompt = this.buildPrompt(
-        data,
-        longPredictions,
-        shortPredictions
-      );
+      if (!this.groqApiKey) {
+        return this.ruleBasedAnalysis(data, longPredictions, shortPredictions);
+      }
 
-      const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4',
-        messages: [
-          {
-            role: 'system',
-            content: `You are an expert crypto trading analyst with deep knowledge of technical analysis, market psychology, and risk management. Your role is to analyze trading signals and provide actionable insights.
+      const prompt = this.buildPrompt(data, longPredictions, shortPredictions);
+
+      const response = await fetch(this.groqApiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.groqApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'llama-3.1-70b-versatile',
+          messages: [
+            {
+              role: 'system',
+              content: `You are an expert crypto trading analyst with deep knowledge of technical analysis, market psychology, and risk management. Your role is to analyze trading signals and provide actionable insights.
 
 You must respond in valid JSON format with the following structure:
 {
@@ -61,39 +62,140 @@ You must respond in valid JSON format with the following structure:
   "riskAssessment": "<potential risks and how to mitigate them>",
   "marketContext": "<broader market context and relevant factors>"
 }`,
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 1000,
+            },
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          temperature: 0.7,
+          max_tokens: 1000,
+        }),
       });
 
-      const response = completion.choices[0]?.message?.content;
-      if (!response) {
-        return null;
+      if (!response.ok) {
+        console.error('Groq API error:', response.status);
+        return this.ruleBasedAnalysis(data, longPredictions, shortPredictions);
       }
 
-      const analysis = JSON.parse(response);
+      const result = await response.json();
+      const content = result.choices?.[0]?.message?.content;
+
+      if (!content) {
+        return this.ruleBasedAnalysis(data, longPredictions, shortPredictions);
+      }
+
+      const analysis = JSON.parse(content);
 
       return {
-        refinedConfidence: Math.max(
-          0,
-          Math.min(1, analysis.refinedConfidence)
-        ),
+        refinedConfidence: Math.max(0, Math.min(1, analysis.refinedConfidence)),
         reasoning: analysis.reasoning || 'No reasoning provided',
         actionPlan: analysis.actionPlan || 'No action plan provided',
-        riskAssessment:
-          analysis.riskAssessment || 'No risk assessment provided',
-        marketContext:
-          analysis.marketContext || 'No market context provided',
+        riskAssessment: analysis.riskAssessment || 'No risk assessment provided',
+        marketContext: analysis.marketContext || 'No market context provided',
       };
     } catch (error) {
       console.error('AI refinement error:', error);
-      return null;
+      return this.ruleBasedAnalysis(data, longPredictions, shortPredictions);
     }
+  }
+
+  private ruleBasedAnalysis(
+    data: any,
+    longPredictions: any[],
+    shortPredictions: any[]
+  ): AIAnalysis {
+    const totalVotes = data.botPredictions.length;
+    const longVotes = longPredictions.length;
+    const shortVotes = shortPredictions.length;
+    const voteRatio = Math.max(longVotes, shortVotes) / totalVotes;
+
+    let baseConfidence = data.botConfidence;
+
+    const reasons = [];
+    const risks = [];
+    const actions = [];
+
+    if (voteRatio > 0.8) {
+      baseConfidence *= 1.15;
+      reasons.push(`Strong consensus (${(voteRatio * 100).toFixed(0)}% agreement)`);
+    } else if (voteRatio < 0.6) {
+      baseConfidence *= 0.9;
+      reasons.push(`Weak consensus (${(voteRatio * 100).toFixed(0)}% agreement)`);
+      risks.push('High uncertainty due to conflicting bot signals');
+    }
+
+    if (data.regimeConfidence > 0.8) {
+      baseConfidence *= 1.1;
+      reasons.push(`Strong ${data.regime} regime (${(data.regimeConfidence * 100).toFixed(0)}% confidence)`);
+    }
+
+    if (data.timeframe?.alignment?.isAligned) {
+      baseConfidence *= 1.15;
+      reasons.push(`Multi-timeframe alignment confirmed`);
+      actions.push('Higher confidence due to timeframe confluence');
+    } else if (data.timeframe?.alignment?.conflictLevel === 'HIGH') {
+      baseConfidence *= 0.85;
+      reasons.push(`Timeframe conflict detected`);
+      risks.push('Different timeframes show conflicting regimes');
+    }
+
+    if (data.sentiment) {
+      if (data.sentiment.sentiment === 'VERY_BULLISH' && data.consensus === 'LONG') {
+        baseConfidence *= 1.08;
+        reasons.push(`Bullish social sentiment confirms signal`);
+      } else if (data.sentiment.sentiment === 'VERY_BEARISH' && data.consensus === 'SHORT') {
+        baseConfidence *= 1.08;
+        reasons.push(`Bearish social sentiment confirms signal`);
+      } else if (
+        (data.sentiment.sentiment === 'VERY_BULLISH' && data.consensus === 'SHORT') ||
+        (data.sentiment.sentiment === 'VERY_BEARISH' && data.consensus === 'LONG')
+      ) {
+        baseConfidence *= 0.9;
+        reasons.push(`Social sentiment conflicts with signal`);
+        risks.push('Market sentiment opposes bot consensus');
+      }
+    }
+
+    if (data.onchain) {
+      if (data.onchain.overallSignal === 'BULLISH' && data.consensus === 'LONG') {
+        baseConfidence *= 1.05;
+        reasons.push(`On-chain data supports bullish outlook`);
+      } else if (data.onchain.overallSignal === 'BEARISH' && data.consensus === 'SHORT') {
+        baseConfidence *= 1.05;
+        reasons.push(`On-chain data supports bearish outlook`);
+      }
+    }
+
+    baseConfidence = Math.max(0.1, Math.min(0.95, baseConfidence));
+
+    if (baseConfidence > 0.75) {
+      actions.push(`Strong signal - consider ${data.consensus} position`);
+      actions.push(`Entry: $${data.currentPrice.toFixed(8)}`);
+      actions.push(`Position size: 3-5% of portfolio`);
+    } else if (baseConfidence > 0.6) {
+      actions.push(`Moderate signal - use smaller position size`);
+      actions.push(`Position size: 1-2% of portfolio`);
+    } else {
+      actions.push(`Weak signal - wait for better setup`);
+      actions.push(`Consider sitting out this trade`);
+    }
+
+    risks.push(`Stop loss required at ${data.consensus === 'LONG' ? 'support' : 'resistance'} levels`);
+    risks.push(`Monitor regime changes that could invalidate signal`);
+
+    const marketContext = `${data.coin} in ${data.regime} regime. ` +
+      `${longVotes} bots bullish, ${shortVotes} bearish. ` +
+      `${data.timeframe ? `Timeframe alignment: ${data.timeframe.alignment?.description}. ` : ''}` +
+      `Current market conditions ${baseConfidence > 0.7 ? 'favorable' : 'mixed'} for this trade.`;
+
+    return {
+      refinedConfidence: baseConfidence,
+      reasoning: reasons.join('. '),
+      actionPlan: actions.join('\n'),
+      riskAssessment: risks.join('. '),
+      marketContext,
+    };
   }
 
   private buildPrompt(
@@ -108,14 +210,8 @@ You must respond in valid JSON format with the following structure:
       `Market Regime: ${data.regime} (${(data.regimeConfidence * 100).toFixed(0)}% confidence)`,
       ``,
       `Bot Voting:`,
-      `- ${longPredictions.length} bots voting LONG (${(
-        (longPredictions.length / data.botPredictions.length) *
-        100
-      ).toFixed(0)}%)`,
-      `- ${shortPredictions.length} bots voting SHORT (${(
-        (shortPredictions.length / data.botPredictions.length) *
-        100
-      ).toFixed(0)}%)`,
+      `- ${longPredictions.length} bots voting LONG (${((longPredictions.length / data.botPredictions.length) * 100).toFixed(0)}%)`,
+      `- ${shortPredictions.length} bots voting SHORT (${((shortPredictions.length / data.botPredictions.length) * 100).toFixed(0)}%)`,
       `- Consensus: ${data.consensus}`,
       `- Average Bot Confidence: ${(data.botConfidence * 100).toFixed(1)}%`,
       ``,
@@ -147,8 +243,8 @@ You must respond in valid JSON format with the following structure:
       lines.push(
         `On-Chain Data:`,
         `- Overall Signal: ${data.onchain.overallSignal}`,
-        `- Whale Activity: ${data.onchain.whaleActivity.signal} (${data.onchain.whaleActivity.largeTransactions} large txs)`,
-        `- Exchange Flows: ${data.onchain.exchangeFlows.signal} (net: ${data.onchain.exchangeFlows.netFlow.toFixed(0)})`,
+        `- Whale Activity: ${data.onchain.whaleActivity.signal}`,
+        `- Exchange Flows: ${data.onchain.exchangeFlows.signal}`,
         `- Network Activity: ${data.onchain.networkActivity.trend}`,
         ``
       );
@@ -157,29 +253,15 @@ You must respond in valid JSON format with the following structure:
     lines.push(
       `Top 5 LONG Bots:`,
       ...longPredictions.slice(0, 5).map(
-        p =>
-          `- ${p.botName}: ${(p.confidence * 100).toFixed(0)}% confidence, Target: $${p.takeProfit}, Stop: $${p.stopLoss}`
+        p => `- ${p.botName}: ${(p.confidence * 100).toFixed(0)}% confidence`
       ),
       ``,
       `Top 5 SHORT Bots:`,
       ...shortPredictions.slice(0, 5).map(
-        p =>
-          `- ${p.botName}: ${(p.confidence * 100).toFixed(0)}% confidence, Target: $${p.takeProfit}, Stop: $${p.stopLoss}`
+        p => `- ${p.botName}: ${(p.confidence * 100).toFixed(0)}% confidence`
       ),
       ``,
-      `Please analyze this signal and provide:`,
-      `1. A refined confidence score (0-1) accounting for all factors`,
-      `2. Detailed reasoning for your assessment`,
-      `3. A specific action plan for traders`,
-      `4. A thorough risk assessment`,
-      `5. Relevant market context`,
-      ``,
-      `Consider:`,
-      `- Are all indicators aligned or conflicting?`,
-      `- Does the market regime support this trade?`,
-      `- What are the key risks?`,
-      `- What would invalidate this signal?`,
-      `- Is there sufficient confluence across timeframes?`
+      `Provide refined confidence (0-1), reasoning, action plan, risk assessment, and market context.`
     );
 
     return lines.join('\n');
@@ -192,30 +274,46 @@ You must respond in valid JSON format with the following structure:
     botPredictions: any[];
     regime: string;
   }): Promise<string> {
+    if (!this.groqApiKey) {
+      const diff = Math.abs(data.longVotes - data.shortVotes);
+      if (diff < 5) {
+        return `${data.coin} shows extreme uncertainty with nearly equal LONG/SHORT votes (${data.longVotes}/${data.shortVotes}). This suggests the market is at a critical decision point in the ${data.regime} regime. Consider waiting for clearer direction.`;
+      }
+      return `${data.coin} has mixed signals with ${data.longVotes} LONG vs ${data.shortVotes} SHORT votes. The conflict likely stems from different bot strategies reacting to various timeframes or indicators. Trade with caution or reduce position size.`;
+    }
+
     try {
       const prompt = `${data.coin} has conflicting signals: ${data.longVotes} LONG vs ${data.shortVotes} SHORT votes in a ${data.regime} market. Provide a brief (2-3 sentences) explanation of why this conflict exists and what it means for traders.`;
 
-      const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4',
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You are a concise crypto trading analyst. Provide brief, actionable insights.',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 150,
+      const response = await fetch(this.groqApiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.groqApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'llama-3.1-8b-instant',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a concise crypto trading analyst. Provide brief, actionable insights.',
+            },
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          temperature: 0.7,
+          max_tokens: 150,
+        }),
       });
 
-      return (
-        completion.choices[0]?.message?.content ||
-        'Unable to analyze conflict'
-      );
+      if (!response.ok) {
+        return 'Unable to analyze conflict';
+      }
+
+      const result = await response.json();
+      return result.choices?.[0]?.message?.content || 'Unable to analyze conflict';
     } catch (error) {
       console.error('Conflict analysis error:', error);
       return 'Unable to analyze signal conflict';
