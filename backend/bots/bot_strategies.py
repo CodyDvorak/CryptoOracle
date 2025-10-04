@@ -2339,7 +2339,7 @@ class AIAnalystBot(BotStrategy):
         
         try:
             # Import here to avoid import errors if library not installed
-            from emergentintegrations.llm.chat import LlmChat, UserMessage
+            from services.llm_wrapper import LlmChat, UserMessage
             import asyncio
             
             # Check if there's already a running event loop
@@ -2366,7 +2366,7 @@ class AIAnalystBot(BotStrategy):
     
     async def _async_analysis(self, features: Dict) -> Optional[Dict]:
         """Async analysis using ChatGPT-5."""
-        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        from services.llm_wrapper import LlmChat, UserMessage
         
         price = features.get('current_price', 0)
         if price == 0:
