@@ -6,6 +6,32 @@
   margin: 0 auto;
 }
 
+.profile-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 16px;
+  color: var(--text-secondary);
+}
+
+.profile-loading .spinner {
+  animation: spin 1s linear infinite;
+}
+
+.profile-error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--accent-red);
+  border-radius: 8px;
+  color: var(--accent-red);
+  font-size: 14px;
+}
+
 .profile-header h1 {
   font-size: 32px;
   font-weight: 700;

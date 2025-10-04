@@ -496,6 +496,296 @@ class ParabolicSARBot extends TradingBot {
   }
 }
 
+class FibonacciBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const candles = ohlcv.candles;
+    const high = Math.max(...candles.slice(-20).map((c: any) => c.high));
+    const low = Math.min(...candles.slice(-20).map((c: any) => c.low));
+    const range = high - low;
+
+    const fib382 = high - range * 0.382;
+    const fib618 = high - range * 0.618;
+
+    if (Math.abs(coin.price - fib618) / coin.price < 0.01) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: 0.75,
+        entry: coin.price,
+        takeProfit: fib382,
+        stopLoss: low * 0.99,
+        leverage: 4,
+      };
+    } else if (Math.abs(coin.price - fib382) / coin.price < 0.01) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: 0.72,
+        entry: coin.price,
+        takeProfit: fib618,
+        stopLoss: high * 1.01,
+        leverage: 4,
+      };
+    }
+    return null;
+  }
+}
+
+class PivotPointBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const lastCandle = ohlcv.candles[ohlcv.candles.length - 1];
+    const pivot = (lastCandle.high + lastCandle.low + lastCandle.close) / 3;
+    const r1 = 2 * pivot - lastCandle.low;
+    const s1 = 2 * pivot - lastCandle.high;
+
+    const distanceToS1 = ((coin.price - s1) / coin.price) * 100;
+    const distanceToR1 = ((r1 - coin.price) / coin.price) * 100;
+
+    if (distanceToS1 < 1 && distanceToS1 > -1) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: 0.71,
+        entry: coin.price,
+        takeProfit: pivot,
+        stopLoss: s1 * 0.98,
+        leverage: 4,
+      };
+    } else if (distanceToR1 < 1 && distanceToR1 > -1) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: 0.71,
+        entry: coin.price,
+        takeProfit: pivot,
+        stopLoss: r1 * 1.02,
+        leverage: 4,
+      };
+    }
+    return null;
+  }
+}
+
+class BreakoutBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const candles = ohlcv.candles.slice(-20);
+    const highs = candles.map((c: any) => c.high);
+    const lows = candles.map((c: any) => c.low);
+    const resistance = Math.max(...highs.slice(0, -1));
+    const support = Math.min(...lows.slice(0, -1));
+
+    const lastCandle = candles[candles.length - 1];
+    const volumeRatio = lastCandle.volume / ohlcv.indicators.volume_avg;
+
+    if (coin.price > resistance && volumeRatio > 1.3) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: Math.min(0.65 + volumeRatio / 5, 0.85),
+        entry: coin.price,
+        takeProfit: coin.price * 1.08,
+        stopLoss: resistance * 0.99,
+        leverage: 5,
+      };
+    } else if (coin.price < support && volumeRatio > 1.3) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: Math.min(0.65 + volumeRatio / 5, 0.85),
+        entry: coin.price,
+        takeProfit: coin.price * 0.92,
+        stopLoss: support * 1.01,
+        leverage: 5,
+      };
+    }
+    return null;
+  }
+}
+
+class MeanReversionBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const sma20 = ohlcv.indicators.sma20 || coin.price;
+    const deviation = ((coin.price - sma20) / sma20) * 100;
+    const atr = ohlcv.indicators.atr || 0;
+
+    if (deviation < -3 && atr > 0) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: Math.min(Math.abs(deviation) / 5, 0.8),
+        entry: coin.price,
+        takeProfit: sma20,
+        stopLoss: coin.price - atr,
+        leverage: 3,
+      };
+    } else if (deviation > 3 && atr > 0) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: Math.min(deviation / 5, 0.8),
+        entry: coin.price,
+        takeProfit: sma20,
+        stopLoss: coin.price + atr,
+        leverage: 3,
+      };
+    }
+    return null;
+  }
+}
+
+class MomentumBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const candles = ohlcv.candles;
+    const momentum = ((coin.price - candles[candles.length - 10].close) / candles[candles.length - 10].close) * 100;
+    const volumeTrend = ohlcv.indicators.volume_avg > candles[candles.length - 10].volume ? 1 : -1;
+
+    if (momentum > 5 && volumeTrend > 0) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: Math.min(momentum / 10 + 0.5, 0.85),
+        entry: coin.price,
+        takeProfit: coin.price * 1.08,
+        stopLoss: coin.price * 0.96,
+        leverage: 5,
+      };
+    } else if (momentum < -5 && volumeTrend < 0) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: Math.min(Math.abs(momentum) / 10 + 0.5, 0.85),
+        entry: coin.price,
+        takeProfit: coin.price * 0.92,
+        stopLoss: coin.price * 1.04,
+        leverage: 5,
+      };
+    }
+    return null;
+  }
+}
+
+class CandlestickPatternBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const candles = ohlcv.candles;
+    const last = candles[candles.length - 1];
+    const prev = candles[candles.length - 2];
+
+    const body = Math.abs(last.close - last.open);
+    const range = last.high - last.low;
+    const bodyRatio = body / range;
+
+    const isBullishEngulfing = prev.close < prev.open && last.close > last.open &&
+                                last.close > prev.open && last.open < prev.close;
+    const isBearishEngulfing = prev.close > prev.open && last.close < last.open &&
+                                last.close < prev.open && last.open > prev.close;
+    const isHammer = bodyRatio < 0.3 && (last.close > last.open) &&
+                     (last.low < Math.min(last.open, last.close) - body * 2);
+    const isShootingStar = bodyRatio < 0.3 && (last.close < last.open) &&
+                           (last.high > Math.max(last.open, last.close) + body * 2);
+
+    if (isBullishEngulfing || isHammer) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: 0.73,
+        entry: coin.price,
+        takeProfit: coin.price * 1.05,
+        stopLoss: last.low * 0.99,
+        leverage: 4,
+      };
+    } else if (isBearishEngulfing || isShootingStar) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: 0.73,
+        entry: coin.price,
+        takeProfit: coin.price * 0.95,
+        stopLoss: last.high * 1.01,
+        leverage: 4,
+      };
+    }
+    return null;
+  }
+}
+
+class TrendFollowingBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const ema20 = ohlcv.indicators.ema20;
+    const ema50 = ohlcv.indicators.ema50;
+    const ema200 = ohlcv.indicators.ema200 || ema50;
+    const adx = ohlcv.indicators.adx || 20;
+
+    const strongUptrend = ema20 > ema50 && ema50 > ema200 && adx > 25;
+    const strongDowntrend = ema20 < ema50 && ema50 < ema200 && adx > 25;
+
+    if (strongUptrend && coin.price > ema20) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: Math.min(0.7 + adx / 100, 0.88),
+        entry: coin.price,
+        takeProfit: coin.price * 1.10,
+        stopLoss: ema20 * 0.98,
+        leverage: 5,
+      };
+    } else if (strongDowntrend && coin.price < ema20) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: Math.min(0.7 + adx / 100, 0.88),
+        entry: coin.price,
+        takeProfit: coin.price * 0.90,
+        stopLoss: ema20 * 1.02,
+        leverage: 5,
+      };
+    }
+    return null;
+  }
+}
+
+class SupportResistanceBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const candles = ohlcv.candles.slice(-50);
+    const levels = this.findKeyLevels(candles);
+
+    for (const level of levels) {
+      const distancePercent = Math.abs((coin.price - level) / coin.price) * 100;
+
+      if (distancePercent < 0.5) {
+        const isSupport = coin.price > level;
+        return {
+          botName: this.name,
+          direction: isSupport ? 'LONG' : 'SHORT',
+          confidence: 0.69,
+          entry: coin.price,
+          takeProfit: coin.price * (isSupport ? 1.04 : 0.96),
+          stopLoss: level * (isSupport ? 0.99 : 1.01),
+          leverage: 4,
+        };
+      }
+    }
+    return null;
+  }
+
+  findKeyLevels(candles: any[]): number[] {
+    const prices = candles.map(c => (c.high + c.low) / 2);
+    const levels: number[] = [];
+
+    for (let i = 2; i < prices.length - 2; i++) {
+      if (prices[i] > prices[i-1] && prices[i] > prices[i-2] &&
+          prices[i] > prices[i+1] && prices[i] > prices[i+2]) {
+        levels.push(prices[i]);
+      }
+      if (prices[i] < prices[i-1] && prices[i] < prices[i-2] &&
+          prices[i] < prices[i+1] && prices[i] < prices[i+2]) {
+        levels.push(prices[i]);
+      }
+    }
+
+    return levels.slice(-5);
+  }
+}
+
 class GenericBot extends TradingBot {
   analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
     const random = Math.random();
@@ -536,18 +826,18 @@ export const tradingBots = [
   new VWAPBot('VWAP Trader'),
   new IchimokuBot('Ichimoku Cloud'),
   new ParabolicSARBot('Parabolic SAR'),
-  new GenericBot('Momentum Trader'),
-  new GenericBot('Mean Reversion'),
-  new GenericBot('Trend Following'),
-  new GenericBot('Breakout Hunter'),
-  new GenericBot('Support/Resistance'),
-  new GenericBot('Fibonacci Retracement'),
+  new FibonacciBot('Fibonacci Retracement'),
+  new PivotPointBot('Pivot Points'),
+  new BreakoutBot('Breakout Hunter'),
+  new MeanReversionBot('Mean Reversion'),
+  new MomentumBot('Momentum Trader'),
+  new CandlestickPatternBot('Candlestick Patterns'),
+  new TrendFollowingBot('Trend Following'),
+  new SupportResistanceBot('Support/Resistance'),
   new GenericBot('Elliott Wave'),
   new GenericBot('CMF Money Flow'),
-  new GenericBot('Pivot Points'),
   new GenericBot('Harmonic Patterns'),
   new GenericBot('Chart Patterns'),
-  new GenericBot('Candlestick Patterns'),
   new GenericBot('Price Action'),
   new GenericBot('Wyckoff Method'),
   new GenericBot('Market Profile'),

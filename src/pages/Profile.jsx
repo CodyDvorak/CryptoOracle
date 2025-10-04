@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react'
-import { User, Bell, Clock, Mail, Save, RefreshCw } from 'lucide-react'
+import { User, Bell, Clock, Mail, Save, RefreshCw, AlertCircle } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 import './Profile.css'
 
 export default function Profile() {
-  const [loading, setLoading] = useState(false)
+  const { user, supabase } = useAuth()
+  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
   const [profile, setProfile] = useState({
-    email: 'user@example.com',
+    email: user?.email || '',
     timezone: 'America/New_York',
     notification_preferences: {
       email_enabled: true,
@@ -24,12 +27,77 @@ export default function Profile() {
     is_active: true
   })
 
+  useEffect(() => {
+    if (user) {
+      fetchProfile()
+      fetchScheduledScans()
+    }
+  }, [user])
+
+  const fetchProfile = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (error) throw error
+
+      if (data) {
+        setProfile({
+          email: user.email,
+          timezone: data.timezone || 'America/New_York',
+          notification_preferences: data.notification_preferences || profile.notification_preferences
+        })
+      }
+    } catch (err) {
+      console.error('Failed to fetch profile:', err)
+      setError('Failed to load profile')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchScheduledScans = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('scheduled_scans')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+
+      setScheduledScans(data || [])
+    } catch (err) {
+      console.error('Failed to fetch scheduled scans:', err)
+    }
+  }
+
   const handleProfileUpdate = async () => {
     setSaving(true)
-    setTimeout(() => {
-      setSaving(false)
+    setError('')
+
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .upsert({
+          user_id: user.id,
+          timezone: profile.timezone,
+          notification_preferences: profile.notification_preferences,
+          updated_at: new Date().toISOString()
+        })
+
+      if (error) throw error
+
       alert('Profile updated successfully!')
-    }, 1000)
+    } catch (err) {
+      console.error('Failed to update profile:', err)
+      setError('Failed to save profile changes')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleNotificationChange = (key, value) => {
@@ -57,24 +125,105 @@ export default function Profile() {
     })
   }
 
-  const handleAddSchedule = () => {
-    const schedule = {
-      id: Date.now(),
-      ...newScan,
-      next_run: 'Tomorrow at ' + newScan.time
+  const handleAddSchedule = async () => {
+    try {
+      const nextRun = calculateNextRun(newScan.interval, newScan.time)
+
+      const { data, error } = await supabase
+        .from('scheduled_scans')
+        .insert({
+          user_id: user.id,
+          interval: newScan.interval,
+          cron_expression: convertToCron(newScan.interval, newScan.time),
+          time_of_day: newScan.time,
+          is_active: newScan.is_active,
+          next_run: nextRun
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      setScheduledScans([data, ...scheduledScans])
+      setNewScan({ interval: 'daily', time: '09:00', is_active: true })
+    } catch (err) {
+      console.error('Failed to add schedule:', err)
+      setError('Failed to create schedule')
     }
-    setScheduledScans([...scheduledScans, schedule])
-    setNewScan({ interval: 'daily', time: '09:00', is_active: true })
   }
 
-  const handleDeleteSchedule = (id) => {
-    setScheduledScans(scheduledScans.filter(s => s.id !== id))
+  const handleDeleteSchedule = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('scheduled_scans')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+
+      setScheduledScans(scheduledScans.filter(s => s.id !== id))
+    } catch (err) {
+      console.error('Failed to delete schedule:', err)
+      setError('Failed to delete schedule')
+    }
   }
 
-  const handleToggleSchedule = (id) => {
-    setScheduledScans(scheduledScans.map(s =>
-      s.id === id ? { ...s, is_active: !s.is_active } : s
-    ))
+  const handleToggleSchedule = async (id) => {
+    try {
+      const schedule = scheduledScans.find(s => s.id === id)
+      const { error } = await supabase
+        .from('scheduled_scans')
+        .update({ is_active: !schedule.is_active })
+        .eq('id', id)
+
+      if (error) throw error
+
+      setScheduledScans(scheduledScans.map(s =>
+        s.id === id ? { ...s, is_active: !s.is_active } : s
+      ))
+    } catch (err) {
+      console.error('Failed to toggle schedule:', err)
+      setError('Failed to update schedule')
+    }
+  }
+
+  const calculateNextRun = (interval, time) => {
+    const now = new Date()
+    const [hours, minutes] = time.split(':')
+    const next = new Date()
+    next.setHours(parseInt(hours), parseInt(minutes), 0, 0)
+
+    if (interval === 'hourly') {
+      next.setHours(now.getHours() + 1)
+    } else if (interval === '4h') {
+      next.setHours(now.getHours() + 4)
+    } else if (interval === 'daily') {
+      if (next <= now) next.setDate(next.getDate() + 1)
+    } else if (interval === 'weekly') {
+      if (next <= now) next.setDate(next.getDate() + 7)
+    }
+
+    return next.toISOString()
+  }
+
+  const convertToCron = (interval, time) => {
+    const [hours, minutes] = time.split(':')
+
+    if (interval === 'hourly') return `${minutes} * * * *`
+    if (interval === '4h') return `${minutes} */4 * * *`
+    if (interval === 'daily') return `${minutes} ${hours} * * *`
+    if (interval === 'weekly') return `${minutes} ${hours} * * 0`
+
+    return `0 9 * * *`
+  }
+
+  if (loading) {
+    return (
+      <div className="profile-loading">
+        <RefreshCw className="spinner" size={48} />
+        <p>Loading profile...</p>
+      </div>
+    )
   }
 
   return (
@@ -83,6 +232,13 @@ export default function Profile() {
         <h1>Profile & Settings</h1>
         <p>Manage your account preferences and notification settings</p>
       </div>
+
+      {error && (
+        <div className="profile-error">
+          <AlertCircle size={20} />
+          <span>{error}</span>
+        </div>
+      )}
 
       <div className="profile-content">
         <div className="settings-section">
