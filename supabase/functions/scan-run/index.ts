@@ -111,122 +111,122 @@ Deno.serve(async (req: Request) => {
 
     if (scanError) throw scanError;
 
-    (async () => {
-      try {
-        const recommendations = [];
-        const botPredictions = [];
+    // Process scan synchronously
+    const recommendations = [];
+    const botPredictions = [];
 
-        const coinsToAnalyze = mockCoins.slice(0, Math.min(actualCoinLimit, mockCoins.length));
+    try {
+      const coinsToAnalyze = mockCoins.slice(0, Math.min(actualCoinLimit, mockCoins.length));
 
-        for (const coin of coinsToAnalyze) {
-          const regimes = ['BULL', 'BEAR', 'SIDEWAYS'];
-          const marketRegime = regimes[Math.floor(Math.random() * regimes.length)];
-          const regimeConfidence = 0.6 + Math.random() * 0.3;
+      for (const coin of coinsToAnalyze) {
+        const regimes = ['BULL', 'BEAR', 'SIDEWAYS'];
+        const marketRegime = regimes[Math.floor(Math.random() * regimes.length)];
+        const regimeConfidence = 0.6 + Math.random() * 0.3;
 
-          let totalBotsVoting = 0;
-          let totalConfidence = 0;
-          let longVotes = 0;
-          let shortVotes = 0;
+        let totalBotsVoting = 0;
+        let totalConfidence = 0;
+        let longVotes = 0;
+        let shortVotes = 0;
 
-          for (const botName of botNames) {
-            const willVote = Math.random() > 0.15;
+        for (const botName of botNames) {
+          const willVote = Math.random() > 0.15;
 
-            if (willVote) {
-              const isLong = Math.random() > 0.5;
-              const confidence = 0.6 + Math.random() * 0.3;
+          if (willVote) {
+            const isLong = Math.random() > 0.5;
+            const confidence = 0.6 + Math.random() * 0.3;
 
-              if (isLong) longVotes++;
-              else shortVotes++;
+            if (isLong) longVotes++;
+            else shortVotes++;
 
-              totalBotsVoting++;
-              totalConfidence += confidence;
+            totalBotsVoting++;
+            totalConfidence += confidence;
 
-              const avgEntry = coin.price;
-              const avgTakeProfit = isLong ? coin.price * (1.03 + Math.random() * 0.07) : coin.price * (0.90 + Math.random() * 0.07);
-              const avgStopLoss = isLong ? coin.price * (0.95 - Math.random() * 0.03) : coin.price * (1.02 + Math.random() * 0.03);
-
-              botPredictions.push({
-                run_id: scanRun.id,
-                bot_name: botName,
-                coin_symbol: coin.symbol,
-                coin_name: coin.name,
-                entry_price: avgEntry,
-                target_price: avgTakeProfit,
-                stop_loss: avgStopLoss,
-                position_direction: isLong ? 'LONG' : 'SHORT',
-                confidence_score: confidence,
-                leverage: 3 + Math.floor(Math.random() * 5),
-                market_regime: marketRegime,
-              });
-            }
-          }
-
-          if (totalBotsVoting > 0) {
-            const isLong = longVotes > shortVotes;
-            const avgConfidence = totalConfidence / totalBotsVoting;
             const avgEntry = coin.price;
             const avgTakeProfit = isLong ? coin.price * (1.03 + Math.random() * 0.07) : coin.price * (0.90 + Math.random() * 0.07);
             const avgStopLoss = isLong ? coin.price * (0.95 - Math.random() * 0.03) : coin.price * (1.02 + Math.random() * 0.03);
 
-            recommendations.push({
+            botPredictions.push({
               run_id: scanRun.id,
-              coin: coin.name,
-              ticker: coin.symbol,
-              current_price: coin.price,
-              consensus_direction: isLong ? 'LONG' : 'SHORT',
-              avg_confidence: avgConfidence,
-              avg_entry: avgEntry,
-              avg_take_profit: avgTakeProfit,
-              avg_stop_loss: avgStopLoss,
-              avg_predicted_24h: isLong ? coin.price * (1.02 + Math.random() * 0.03) : coin.price * (0.97 - Math.random() * 0.03),
-              avg_predicted_48h: isLong ? coin.price * (1.04 + Math.random() * 0.04) : coin.price * (0.94 - Math.random() * 0.04),
-              avg_predicted_7d: isLong ? coin.price * (1.08 + Math.random() * 0.07) : coin.price * (0.88 - Math.random() * 0.07),
-              bot_count: totalBotsVoting,
+              bot_name: botName,
+              coin_symbol: coin.symbol,
+              coin_name: coin.name,
+              entry_price: avgEntry,
+              target_price: avgTakeProfit,
+              stop_loss: avgStopLoss,
+              position_direction: isLong ? 'LONG' : 'SHORT',
+              confidence_score: confidence,
+              leverage: 3 + Math.floor(Math.random() * 5),
               market_regime: marketRegime,
-              regime_confidence: regimeConfidence,
             });
           }
         }
 
-        if (recommendations.length > 0) {
-          const { error: recError } = await supabase.from('recommendations').insert(recommendations);
-          if (recError) console.error('Recommendations error:', recError);
+        if (totalBotsVoting > 0) {
+          const isLong = longVotes > shortVotes;
+          const avgConfidence = totalConfidence / totalBotsVoting;
+          const avgEntry = coin.price;
+          const avgTakeProfit = isLong ? coin.price * (1.03 + Math.random() * 0.07) : coin.price * (0.90 + Math.random() * 0.07);
+          const avgStopLoss = isLong ? coin.price * (0.95 - Math.random() * 0.03) : coin.price * (1.02 + Math.random() * 0.03);
+
+          recommendations.push({
+            run_id: scanRun.id,
+            coin: coin.name,
+            ticker: coin.symbol,
+            current_price: coin.price,
+            consensus_direction: isLong ? 'LONG' : 'SHORT',
+            avg_confidence: avgConfidence,
+            avg_entry: avgEntry,
+            avg_take_profit: avgTakeProfit,
+            avg_stop_loss: avgStopLoss,
+            avg_predicted_24h: isLong ? coin.price * (1.02 + Math.random() * 0.03) : coin.price * (0.97 - Math.random() * 0.03),
+            avg_predicted_48h: isLong ? coin.price * (1.04 + Math.random() * 0.04) : coin.price * (0.94 - Math.random() * 0.04),
+            avg_predicted_7d: isLong ? coin.price * (1.08 + Math.random() * 0.07) : coin.price * (0.88 - Math.random() * 0.07),
+            bot_count: totalBotsVoting,
+            market_regime: marketRegime,
+            regime_confidence: regimeConfidence,
+          });
         }
-
-        if (botPredictions.length > 0) {
-          const { error: predError } = await supabase.from('bot_predictions').insert(botPredictions);
-          if (predError) console.error('Predictions error:', predError);
-        }
-
-        await supabase
-          .from('scan_runs')
-          .update({
-            status: 'completed',
-            completed_at: new Date().toISOString(),
-            total_available_coins: mockCoins.length,
-            total_coins: coinsToAnalyze.length,
-            total_bots: 59,
-            total_signals: recommendations.length,
-          })
-          .eq('id', scanRun.id);
-
-      } catch (error) {
-        console.error('Background error:', error);
-        await supabase
-          .from('scan_runs')
-          .update({
-            status: 'failed',
-            completed_at: new Date().toISOString(),
-            error_message: error.message,
-          })
-          .eq('id', scanRun.id);
       }
-    })();
 
-    return new Response(JSON.stringify({ 
-      success: true, 
+      if (recommendations.length > 0) {
+        const { error: recError } = await supabase.from('recommendations').insert(recommendations);
+        if (recError) console.error('Recommendations error:', recError);
+      }
+
+      if (botPredictions.length > 0) {
+        const { error: predError } = await supabase.from('bot_predictions').insert(botPredictions);
+        if (predError) console.error('Predictions error:', predError);
+      }
+
+      await supabase
+        .from('scan_runs')
+        .update({
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          total_available_coins: mockCoins.length,
+          total_coins: coinsToAnalyze.length,
+          total_bots: 59,
+          total_signals: recommendations.length,
+        })
+        .eq('id', scanRun.id);
+
+    } catch (error) {
+      console.error('Scan error:', error);
+      await supabase
+        .from('scan_runs')
+        .update({
+          status: 'failed',
+          completed_at: new Date().toISOString(),
+          error_message: error.message,
+        })
+        .eq('id', scanRun.id);
+    }
+
+    return new Response(JSON.stringify({
+      success: true,
       runId: scanRun.id,
-      message: 'Scan started successfully'
+      message: 'Scan completed successfully',
+      totalSignals: recommendations.length
     }), {
       status: 200,
       headers: {
