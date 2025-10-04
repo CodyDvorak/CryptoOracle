@@ -2872,6 +2872,15 @@ class VolumeSpikeFadeBot(BotStrategy):
         }
 
 
+# Import Phase 2 specialized bots
+from bots.specialized_bots import (
+    ElliottWaveBot,
+    OrderFlowBot,
+    WhaleTrackerBot,
+    SocialSentimentBot,
+    OptionsFlowBot
+)
+
 # Bot Registry
 ALL_BOTS = [
     # Original 21 bots
@@ -2931,6 +2940,12 @@ ALL_BOTS = [
     BollingerReversalBot(),
     StochasticReversalBot(),
     VolumeSpikeFadeBot(),
+    # Phase 2: 5 NEW SPECIALIZED BOTS (Total: 55 bots!)
+    ElliottWaveBot(),  # Elliott Wave pattern recognition
+    OrderFlowBot(),  # Bid/ask order book imbalance analysis
+    WhaleTrackerBot(),  # Large wallet movement monitoring
+    SocialSentimentBot(),  # Twitter/Reddit/News sentiment aggregation
+    OptionsFlowBot(),  # Options market positioning analysis
 ]
 
 def get_all_bots():
