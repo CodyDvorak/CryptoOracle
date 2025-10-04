@@ -100,7 +100,7 @@ function Dashboard() {
     const interval = setInterval(() => {
       checkScanStatus()
       fetchLatestRecommendations()
-    }, 5000)
+    }, 10000)
     return () => clearInterval(interval)
   }, [])
 
