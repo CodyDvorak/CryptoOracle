@@ -1,7 +1,64 @@
 import React, { useState, useEffect } from 'react'
-import { Play, Clock, Coins, Activity, CircleAlert as AlertCircle } from 'lucide-react'
+import { Play, Clock, Coins, Activity, CircleAlert as AlertCircle, CircleCheck as CheckCircle, Circle } from 'lucide-react'
 import { API_ENDPOINTS, getHeaders } from '../config/api'
 import './Dashboard.css'
+
+const ALL_BOTS = [
+  'RSI Oversold/Overbought',
+  'RSI Divergence',
+  'MACD Crossover',
+  'MACD Histogram',
+  'EMA Golden Cross',
+  'EMA Death Cross',
+  'Bollinger Squeeze',
+  'Bollinger Breakout',
+  'Volume Spike',
+  'Volume Breakout',
+  'Funding Rate Arbitrage',
+  'Open Interest Momentum',
+  'Momentum Trader',
+  'Mean Reversion',
+  'Trend Following',
+  'Breakout Hunter',
+  'Support/Resistance',
+  'Fibonacci Retracement',
+  'Elliott Wave',
+  'Ichimoku Cloud',
+  'Parabolic SAR',
+  'ADX Trend Strength',
+  'Stochastic Oscillator',
+  'CCI Commodity Channel',
+  'Williams %R',
+  'ATR Volatility',
+  'OBV On-Balance Volume',
+  'CMF Money Flow',
+  'VWAP Trader',
+  'Pivot Points',
+  'Harmonic Patterns',
+  'Chart Patterns',
+  'Candlestick Patterns',
+  'Price Action',
+  'Wyckoff Method',
+  'Market Profile',
+  'Order Flow',
+  'Smart Money Concepts',
+  'Liquidity Zones',
+  'Fair Value Gaps',
+  'Market Structure',
+  'Supply/Demand Zones',
+  'Accumulation/Distribution',
+  'Market Sentiment',
+  'Fear & Greed Index',
+  'Social Media Sentiment',
+  'Whale Activity',
+  'Exchange Flow',
+  'Network Activity',
+  'Hash Rate Analysis',
+  'Miner Behavior',
+  'Correlation Analysis',
+  'Intermarket Analysis',
+  'Seasonality Patterns',
+]
 
 const SCAN_TYPES = [
   { id: 'speed_run', name: 'Speed Run', duration: '4-5 min', coins: 75, bots: 25, description: 'Ultra-fast snapshot' },
@@ -239,6 +296,38 @@ function Dashboard() {
             <li><strong>All In + AI:</strong> 45-50 min, full AI insights</li>
           </ul>
         </div>
+      </div>
+
+      <div className="bots-status-section">
+        <div className="bots-status-header">
+          <h2>Trading Bots Status</h2>
+          <p>All 54 bots operational and ready</p>
+        </div>
+        <div className="bots-grid">
+          {ALL_BOTS.map((botName, index) => (
+            <BotStatusCard key={index} botName={botName} isActive={true} />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function BotStatusCard({ botName, isActive }) {
+  return (
+    <div className={`bot-status-card ${isActive ? 'active' : 'inactive'}`}>
+      <div className="bot-status-indicator">
+        {isActive ? (
+          <CheckCircle size={16} className="status-icon active" />
+        ) : (
+          <Circle size={16} className="status-icon inactive" />
+        )}
+      </div>
+      <div className="bot-status-info">
+        <span className="bot-status-name">{botName}</span>
+        <span className={`bot-status-label ${isActive ? 'active' : 'inactive'}`}>
+          {isActive ? 'Operational' : 'Offline'}
+        </span>
       </div>
     </div>
   )

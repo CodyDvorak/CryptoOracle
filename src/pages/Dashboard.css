@@ -284,6 +284,105 @@
   color: var(--text-primary);
 }
 
+.bots-status-section {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 32px;
+}
+
+.bots-status-header {
+  margin-bottom: 24px;
+}
+
+.bots-status-header h2 {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.bots-status-header p {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.bots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.bot-status-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.bot-status-card:hover {
+  border-color: var(--accent-blue);
+  transform: translateY(-1px);
+}
+
+.bot-status-card.active {
+  border-left: 3px solid var(--accent-green);
+}
+
+.bot-status-card.inactive {
+  border-left: 3px solid var(--text-secondary);
+  opacity: 0.6;
+}
+
+.bot-status-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.bot-status-indicator .status-icon.active {
+  color: var(--accent-green);
+}
+
+.bot-status-indicator .status-icon.inactive {
+  color: var(--text-secondary);
+}
+
+.bot-status-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.bot-status-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bot-status-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.bot-status-label.active {
+  color: var(--accent-green);
+}
+
+.bot-status-label.inactive {
+  color: var(--text-secondary);
+}
+
 @media (max-width: 768px) {
   .dashboard-header {
     flex-direction: column;
@@ -299,6 +398,14 @@
   }
 
   .info-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .bots-status-section {
+    padding: 24px;
+  }
+
+  .bots-grid {
     grid-template-columns: 1fr;
   }
 }
