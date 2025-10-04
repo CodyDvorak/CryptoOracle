@@ -87,7 +87,7 @@ class ScanOrchestrator:
             scan_type=scan_type,
             status='running'
         )
-        await self.db.collection("scan_runs").insert_one(scan_run.dict())
+        await self.db.scan_runs.insert_one(scan_run.dict())
         
         # Route to appropriate scan strategy
         logger.info(f"🚀 Starting {scan_type.upper()} run {scan_run.id}")
@@ -128,7 +128,7 @@ class ScanOrchestrator:
             scan_run.status = 'failed'
             scan_run.error_message = str(e)
             scan_run.completed_at = datetime.now(timezone.utc)
-            await self.db.collection("scan_runs").update_one(
+            await self.db.scan_runs.update_one(
                 {'id': scan_run.id},
                 {'$set': scan_run.dict()}
             )
@@ -467,7 +467,7 @@ class ScanOrchestrator:
                     user_id=user_id,
                     **rec_data
                 )
-                await self.db.collection("recommendations").insert_one(recommendation.dict())
+                await self.db.recommendations.insert_one(recommendation.dict())
             
             # 5.5. Save individual bot predictions for learning (NEW!)
             logger.info("💾 Saving individual bot predictions for performance tracking...")
@@ -486,7 +486,7 @@ class ScanOrchestrator:
             # 6. Update scan run status
             scan_run.status = 'completed'
             scan_run.completed_at = datetime.now(timezone.utc)
-            await self.db.collection("scan_runs").update_one(
+            await self.db.scan_runs.update_one(
                 {'id': scan_run.id},
                 {'$set': scan_run.dict()}
             )
@@ -531,7 +531,7 @@ class ScanOrchestrator:
             scan_run.status = 'failed'
             scan_run.error_message = str(e)
             scan_run.completed_at = datetime.now(timezone.utc)
-            await self.db.collection("scan_runs").update_one(
+            await self.db.scan_runs.update_one(
                 {'id': scan_run.id},
                 {'$set': scan_run.dict()}
             )
@@ -994,7 +994,7 @@ class ScanOrchestrator:
                 ticker=symbol,
                 **result
             )
-            await self.db.collection("recommendations").insert_one(recommendation.dict())
+            await self.db.recommendations.insert_one(recommendation.dict())
             
             logger.info(f"✓ {symbol}: AI-only analysis, confidence={confidence:.1f}, AI grades T:{trader_grade:.0f}/I:{investor_grade:.0f}")
             return result
@@ -1488,7 +1488,7 @@ class ScanOrchestrator:
         logger.info(f"📬 notify_results called for run_id: {run_id}")
         
         # Fetch recommendations
-        recommendations = await self.db.collection("recommendations").find({'run_id': run_id}).to_list(5)
+        recommendations = await self.db.recommendations.find({'run_id': run_id}).to_list(5)
         
         if not recommendations:
             logger.warning(f"⚠️ No recommendations found for run {run_id}")
