@@ -67,21 +67,21 @@ const ALL_BOTS = [
 ]
 
 const SCAN_TYPES = [
-  { id: 'quick_scan', name: 'Quick Scan', duration: '45-60 sec', coins: 100, bots: 59, description: 'Fast analysis of top 100 coins. High-confidence signals only.', aiEnabled: false },
-  { id: 'deep_analysis', name: 'Deep Analysis', duration: '2-3 min', coins: 50, bots: 59, description: 'AI-powered analysis using GPT-4 for advanced insights.', aiEnabled: true },
-  { id: 'top200_scan', name: 'Top 200 Scan', duration: '2-3 min', coins: 200, bots: 59, description: 'Extensive market scan covering top 200 coins.', aiEnabled: false },
-  { id: 'top500_scan', name: 'Top 500 Scan', duration: '4-5 min', coins: 500, bots: 59, description: 'Complete market coverage. Find hidden gems.', aiEnabled: false },
-  { id: 'high_conviction', name: 'High Conviction', duration: '2-3 min', coins: 200, bots: 59, description: '80%+ bot consensus. Ultra-selective signals.', aiEnabled: false },
-  { id: 'trending_coins', name: 'Trending Markets', duration: '2-3 min', coins: 200, bots: 59, description: 'Targets strong trending markets (ADX > 30).', aiEnabled: false },
-  { id: 'reversal_opportunities', name: 'Reversal Opportunities', duration: '2-3 min', coins: 200, bots: 59, description: 'Oversold/overbought conditions and mean-reversion.', aiEnabled: false },
-  { id: 'volatile_markets', name: 'Volatile Markets', duration: '2-3 min', coins: 200, bots: 59, description: 'High-volatility coins (ATR > 4%). Higher risk/reward.', aiEnabled: false },
-  { id: 'whale_activity', name: 'Whale Activity', duration: '2-3 min', coins: 200, bots: 59, description: 'Large volume spikes and institutional movements.', aiEnabled: false },
-  { id: 'futures_signals', name: 'Futures Signals', duration: '2-3 min', coins: 200, bots: 59, description: 'Funding rates, open interest, long/short ratios.', aiEnabled: false },
-  { id: 'breakout_hunter', name: 'Breakout Hunter', duration: '2-3 min', coins: 200, bots: 59, description: 'Resistance/support breaks with volume confirmation.', aiEnabled: false },
-  { id: 'ai_powered_scan', name: 'AI-Powered Full Scan', duration: '3-4 min', coins: 100, bots: 59, description: 'All 59 bots + GPT-4 deep analysis. Ultimate scan.', aiEnabled: true },
-  { id: 'low_cap_gems', name: 'Low Cap Gems', duration: '3-4 min', coins: 300, bots: 59, description: 'Coins ranked 201-500. Discover small-cap opportunities.', aiEnabled: false },
-  { id: 'elliott_wave_scan', name: 'Elliott Wave Scan', duration: '2-3 min', coins: 200, bots: 59, description: 'Elliott Wave + Fibonacci analysis. Wave completions.', aiEnabled: false },
-  { id: 'custom_scan', name: 'Custom Scan', duration: 'Varies', coins: 'Custom', bots: 59, description: 'Fully customizable parameters.', aiEnabled: false },
+  { id: 'quick_scan', name: 'Quick Scan', duration: '3-5 min', coins: 100, bots: 59, description: 'Real-time TA analysis of top 100 coins. Market regime classification with confidence gating.', aiEnabled: false },
+  { id: 'deep_analysis', name: 'Deep Analysis', duration: '4-6 min', coins: 50, bots: 59, description: 'Comprehensive OHLCV + derivatives analysis with regime-aware bot weighting.', aiEnabled: true },
+  { id: 'top200_scan', name: 'Top 200 Scan', duration: '8-12 min', coins: 200, bots: 59, description: 'Extensive market scan with real API data across CMC, CoinGecko, CryptoCompare.', aiEnabled: false },
+  { id: 'top500_scan', name: 'Top 500 Scan', duration: '15-20 min', coins: 500, bots: 59, description: 'Complete market coverage. Multi-provider fallback ensures data quality.', aiEnabled: false },
+  { id: 'high_conviction', name: 'High Conviction', duration: '8-12 min', coins: 200, bots: 59, description: '80%+ bot consensus detection. Strong agreement signals only.', aiEnabled: false },
+  { id: 'trending_coins', name: 'Trending Markets', duration: '8-12 min', coins: 200, bots: 59, description: 'BULL regime detection (ADX > 25, golden alignment, momentum confirmation).', aiEnabled: false },
+  { id: 'reversal_opportunities', name: 'Reversal Opportunities', duration: '8-12 min', coins: 200, bots: 59, description: 'Mean-reversion in SIDEWAYS regimes. RSI divergence + Bollinger squeeze.', aiEnabled: false },
+  { id: 'volatile_markets', name: 'Volatile Markets', duration: '8-12 min', coins: 200, bots: 59, description: 'High ATR (>4%) with real volatility indicators. Expanded Bollinger Bands.', aiEnabled: false },
+  { id: 'whale_activity', name: 'Whale Activity', duration: '8-12 min', coins: 200, bots: 59, description: 'Volume spike detection (>2.5x average). Large price impact tracking.', aiEnabled: false },
+  { id: 'futures_signals', name: 'Futures Signals', duration: '8-12 min', coins: 200, bots: 59, description: 'Real derivatives data: OKX funding rates, Binance OI, long/short ratios.', aiEnabled: false },
+  { id: 'breakout_hunter', name: 'Breakout Hunter', duration: '8-12 min', coins: 200, bots: 59, description: 'Support/resistance breaks with volume confirmation (>1.3x average).', aiEnabled: false },
+  { id: 'ai_powered_scan', name: 'AI-Powered Full Scan', duration: '5-8 min', coins: 100, bots: 59, description: 'All 59 bots + market regime classification + consensus detection.', aiEnabled: true },
+  { id: 'low_cap_gems', name: 'Low Cap Gems', duration: '10-15 min', coins: 300, bots: 59, description: 'Coins ranked 201-500 with full technical analysis and regime detection.', aiEnabled: false },
+  { id: 'elliott_wave_scan', name: 'Elliott Wave Scan', duration: '8-12 min', coins: 200, bots: 59, description: 'Fibonacci retracement levels + wave pattern detection + price structure.', aiEnabled: false },
+  { id: 'custom_scan', name: 'Custom Scan', duration: 'Varies', coins: 'Custom', bots: 59, description: 'Fully customizable with all 59 bots and regime-aware weighting.', aiEnabled: false },
 ]
 
 function Dashboard() {
