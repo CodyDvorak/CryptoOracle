@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Play, Clock, Coins, Activity, CircleAlert as AlertCircle, CircleCheck as CheckCircle, Circle } from 'lucide-react'
 import { API_ENDPOINTS, getHeaders } from '../config/api'
 import BotDetailsModal from '../components/BotDetailsModal'
+import { supabase } from '../config/api'
 import './Dashboard.css'
 
 const ALL_BOTS = [
@@ -99,14 +100,66 @@ function Dashboard() {
 
   useEffect(() => {
     fetchLatestRecommendations()
+
+    const recommendationsChannel = supabase
+      .channel('recommendations-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'recommendations'
+        },
+        (payload) => {
+          console.log('New recommendation:', payload.new)
+          setRecommendations(prev => [payload.new, ...prev].slice(0, 50))
+        }
+      )
+      .subscribe()
+
+    const scanRunsChannel = supabase
+      .channel('scan-runs-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'scan_runs'
+        },
+        (payload) => {
+          console.log('Scan status update:', payload)
+          if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
+            const scan = payload.new
+            if (scan.status === 'running') {
+              setIsScanning(true)
+              setScanProgress(scan.progress)
+              setScanStatus(scan.scan_type)
+              if (!scanStartTime) {
+                setScanStartTime(Date.now())
+              }
+            } else if (scan.status === 'completed' || scan.status === 'failed') {
+              setIsScanning(false)
+              setScanProgress(null)
+              setScanStartTime(null)
+              fetchLatestRecommendations()
+            }
+          }
+        }
+      )
+      .subscribe()
+
     const interval = setInterval(() => {
       if (isScanning) {
         checkScanStatus()
       }
-      fetchLatestRecommendations()
-    }, 10000)
-    return () => clearInterval(interval)
-  }, [isScanning])
+    }, 30000)
+
+    return () => {
+      clearInterval(interval)
+      supabase.removeChannel(recommendationsChannel)
+      supabase.removeChannel(scanRunsChannel)
+    }
+  }, [isScanning, scanStartTime])
 
   useEffect(() => {
     let timer
