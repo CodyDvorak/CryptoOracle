@@ -23,6 +23,8 @@ from services.auth_service import hash_password, verify_password, create_access_
 from services.outcome_tracker import OutcomeTracker
 from services.cryptocompare_client import CryptoCompareClient
 from services.scan_monitor import scan_monitor
+from services.portfolio_service import PortfolioService
+from services.alert_service import AlertService
 
 # Utility function to sanitize JSON output (prevent NaN/Infinity errors)
 def sanitize_for_json(obj):
@@ -80,6 +82,8 @@ app.add_middleware(
 scan_orchestrator = ScanOrchestrator(db)
 crypto_client = CryptoCompareClient()
 outcome_tracker = OutcomeTracker(db, crypto_client)
+portfolio_service = PortfolioService(db, crypto_client)
+alert_service = AlertService(db, crypto_client)
 scheduler = AsyncIOScheduler()
 current_scan_task: Optional[asyncio.Task] = None
 bot_statuses = {}
@@ -1397,6 +1401,141 @@ async def shutdown_event():
     await scan_orchestrator.crypto_client.close()
 
     logger.info("Application shutdown complete")
+
+
+# ==================== Portfolio Endpoints ====================
+
+@api_router.get("/portfolio")
+async def get_portfolio(user: dict = Depends(get_current_user)):
+    """Get user's portfolio with current values."""
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    portfolio = await portfolio_service.get_portfolio(user['id'])
+
+    if not portfolio:
+        return {
+            'user_id': user['id'],
+            'holdings': [],
+            'total_value': 0,
+            'total_cost': 0,
+            'total_profit_loss': 0,
+            'total_profit_loss_pct': 0
+        }
+
+    return sanitize_for_json(portfolio)
+
+
+@api_router.post("/portfolio/holdings")
+async def add_holding(
+    symbol: str,
+    quantity: float,
+    buy_price: float,
+    user: dict = Depends(get_current_user)
+):
+    """Add or update a holding in portfolio."""
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    result = await portfolio_service.add_holding(user['id'], symbol, quantity, buy_price)
+
+    if not result.get('success'):
+        raise HTTPException(status_code=400, detail=result.get('error', 'Failed to add holding'))
+
+    return result
+
+
+@api_router.delete("/portfolio/holdings/{symbol}")
+async def remove_holding(
+    symbol: str,
+    quantity: Optional[float] = None,
+    user: dict = Depends(get_current_user)
+):
+    """Remove or reduce a holding from portfolio."""
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    result = await portfolio_service.remove_holding(user['id'], symbol, quantity)
+
+    if not result.get('success'):
+        raise HTTPException(status_code=400, detail=result.get('error', 'Failed to remove holding'))
+
+    return result
+
+
+@api_router.get("/portfolio/analysis")
+async def analyze_portfolio(user: dict = Depends(get_current_user)):
+    """Get AI-powered portfolio analysis."""
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    analysis = await portfolio_service.analyze_portfolio_with_ai(user['id'])
+    return sanitize_for_json(analysis)
+
+
+# ==================== Alert Endpoints ====================
+
+@api_router.post("/alerts")
+async def create_alert(
+    symbol: str,
+    alert_type: str,
+    condition: dict,
+    notification_channels: Optional[List[str]] = None,
+    user: dict = Depends(get_current_user)
+):
+    """Create a new price or pattern alert."""
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    result = await alert_service.create_alert(
+        user['id'],
+        symbol,
+        alert_type,
+        condition,
+        notification_channels
+    )
+
+    if not result.get('success'):
+        raise HTTPException(status_code=400, detail=result.get('error', 'Failed to create alert'))
+
+    return result
+
+
+@api_router.get("/alerts")
+async def get_alerts(
+    status: Optional[str] = None,
+    user: dict = Depends(get_current_user)
+):
+    """Get all alerts for the user."""
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    alerts = await alert_service.get_user_alerts(user['id'], status)
+    return sanitize_for_json({'alerts': alerts})
+
+
+@api_router.delete("/alerts/{alert_id}")
+async def delete_alert(
+    alert_id: str,
+    user: dict = Depends(get_current_user)
+):
+    """Delete an alert."""
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    result = await alert_service.delete_alert(user['id'], alert_id)
+
+    if not result.get('success'):
+        raise HTTPException(status_code=400, detail=result.get('error', 'Failed to delete alert'))
+
+    return result
+
+
+@api_router.post("/alerts/check")
+async def check_alerts_now(background_tasks: BackgroundTasks):
+    """Manually trigger alert checking (admin only)."""
+    background_tasks.add_task(alert_service.check_alerts)
+    return {'message': 'Alert check triggered'}
 
 
 # Include router
