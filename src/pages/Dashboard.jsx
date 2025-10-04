@@ -95,14 +95,15 @@ function Dashboard() {
   const [elapsedTime, setElapsedTime] = useState(0)
 
   useEffect(() => {
-    checkScanStatus()
     fetchLatestRecommendations()
     const interval = setInterval(() => {
-      checkScanStatus()
+      if (isScanning) {
+        checkScanStatus()
+      }
       fetchLatestRecommendations()
     }, 10000)
     return () => clearInterval(interval)
-  }, [])
+  }, [isScanning])
 
   useEffect(() => {
     let timer
@@ -349,7 +350,7 @@ function Dashboard() {
           </div>
           <div className="stat-content">
             <span className="stat-label">Total Bots</span>
-            <span className="stat-value">54</span>
+            <span className="stat-value">59</span>
           </div>
         </div>
         <div className="stat-card">
@@ -412,7 +413,7 @@ function Dashboard() {
         <div className="info-card">
           <h3>How It Works</h3>
           <ul>
-            <li>54 specialized trading bots analyze market data</li>
+            <li>59 specialized trading bots analyze market data</li>
             <li>Each bot votes on direction (long/short) with confidence (1-10)</li>
             <li>Consensus recommendations are generated from bot votes</li>
             <li>Market regime detection weighs predictions</li>
@@ -435,7 +436,7 @@ function Dashboard() {
       <div className="bots-status-section">
         <div className="bots-status-header">
           <h2>Trading Bots Status</h2>
-          <p>All 54 bots operational and ready</p>
+          <p>All 59 bots operational and ready</p>
         </div>
         <div className="bots-grid">
           {ALL_BOTS.map((botName, index) => (
