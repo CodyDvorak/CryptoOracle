@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Clock, CheckCircle, XCircle, Activity, AlertCircle } from 'lucide-react'
+import { Clock, CircleCheck as CheckCircle, Circle as XCircle, Activity, CircleAlert as AlertCircle } from 'lucide-react'
 import './History.css'
 
 function History() {

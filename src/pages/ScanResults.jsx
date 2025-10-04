@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { TrendingUp, TrendingDown, DollarSign, Percent, Activity, AlertCircle } from 'lucide-react'
+import { TrendingUp, TrendingDown, DollarSign, Percent, Activity, CircleAlert as AlertCircle } from 'lucide-react'
 import './ScanResults.css'
 
 function ScanResults() {

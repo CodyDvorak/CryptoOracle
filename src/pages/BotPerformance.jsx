@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Activity, TrendingUp, Target, Award, AlertCircle } from 'lucide-react'
+import { Activity, TrendingUp, Target, Award, CircleAlert as AlertCircle } from 'lucide-react'
 import './BotPerformance.css'
 
 function BotPerformance() {

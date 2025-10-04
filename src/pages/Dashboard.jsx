@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Play, Clock, Coins, Activity, AlertCircle } from 'lucide-react'
+import { Play, Clock, Coins, Activity, CircleAlert as AlertCircle } from 'lucide-react'
 import './Dashboard.css'
 
 const SCAN_TYPES = [
