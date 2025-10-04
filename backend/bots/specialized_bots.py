@@ -83,7 +83,7 @@ class ElliottWaveBot(BotStrategy):
 
             else:
                 # Sideways - corrective ABC pattern
-                if current_price near fib_0618:
+                if abs(current_price - fib_0618) < (current_price * 0.02):
                     direction = 'long' if rsi < 50 else 'short'
                     confidence = 6
                     rationale = f"ABC correction at 0.618 retracement. {'Wave C complete' if rsi < 50 else 'Wave B resistance'}."
