@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Activity, TrendingUp, Target, Award, CircleAlert as AlertCircle } from 'lucide-react'
+import { Activity, TrendingUp, TrendingDown, Target, Award, CircleAlert as AlertCircle, BarChart3, CircleCheck as CheckCircle, Circle as XCircle } from 'lucide-react'
 import { API_ENDPOINTS, getHeaders } from '../config/api'
 import './BotPerformance.css'
 
@@ -66,6 +66,25 @@ function BotPerformance() {
   })
 
   const topBots = sortedBots.slice(0, 5)
+  const bottomBots = sortedBots.slice(-5).reverse()
+
+  const botsWithData = bots.filter(b => (b.successful_predictions || 0) + (b.failed_predictions || 0) > 0)
+  const totalPredictions = bots.reduce((sum, b) => sum + (b.total_predictions || 0), 0)
+  const totalSuccessful = bots.reduce((sum, b) => sum + (b.successful_predictions || 0), 0)
+  const totalFailed = bots.reduce((sum, b) => sum + (b.failed_predictions || 0), 0)
+  const totalPending = bots.reduce((sum, b) => sum + (b.pending_predictions || 0), 0)
+  const avgAccuracy = botsWithData.length > 0
+    ? botsWithData.reduce((sum, b) => sum + (b.accuracy_rate || 0), 0) / botsWithData.length
+    : 0
+  const avgWinLoss = botsWithData.length > 0
+    ? botsWithData.reduce((sum, b) => sum + (b.win_loss_ratio || 0), 0) / botsWithData.length
+    : 0
+
+  const highPerformers = bots.filter(b => (b.accuracy_rate || 0) >= 60).length
+  const needsAttention = bots.filter(b => {
+    const completed = (b.successful_predictions || 0) + (b.failed_predictions || 0)
+    return completed > 0 && (b.accuracy_rate || 0) < 40
+  }).length
 
   return (
     <div className="bot-performance">
@@ -79,23 +98,122 @@ function BotPerformance() {
         </button>
       </div>
 
-      <div className="top-performers">
-        <h2>Top 5 Performers</h2>
-        <div className="performers-grid">
-          {topBots.map((bot, index) => (
-            <div key={bot.bot_name} className="performer-card">
-              <div className="performer-rank">#{index + 1}</div>
-              <Award className="performer-icon" size={32} />
-              <h3>{bot.bot_name}</h3>
-              <div className="performer-stat">
-                <Target size={20} />
-                <span>{bot.accuracy_rate?.toFixed(1)}% Accuracy</span>
-              </div>
-              <div className="performer-predictions">
-                {bot.total_predictions} predictions
+      <div className="performance-overview">
+        <div className="overview-header">
+          <BarChart3 size={24} />
+          <h2>System Performance Overview</h2>
+        </div>
+        <p className="overview-subtitle">Overall system health and trends</p>
+
+        <div className="overview-grid">
+          <div className="overview-card">
+            <div className="overview-label">System Accuracy</div>
+            <div className={`overview-value ${avgAccuracy >= 50 ? 'high' : avgAccuracy >= 40 ? 'medium' : 'low'}`}>
+              {avgAccuracy.toFixed(1)}%
+            </div>
+            <div className="overview-detail">Weighted average</div>
+          </div>
+
+          <div className="overview-card">
+            <div className="overview-label">Win/Loss Ratio</div>
+            <div className={`overview-value ${avgWinLoss >= 1.5 ? 'high' : avgWinLoss >= 1 ? 'medium' : 'low'}`}>
+              {avgWinLoss.toFixed(2)}x
+            </div>
+            <div className="overview-detail">Average across bots</div>
+          </div>
+
+          <div className="overview-card">
+            <div className="overview-label">Total Evaluated</div>
+            <div className="overview-value">{totalSuccessful + totalFailed}</div>
+            <div className="overview-detail">Predictions assessed</div>
+          </div>
+
+          <div className="overview-card">
+            <div className="overview-label">Pending</div>
+            <div className="overview-value pending">{totalPending}</div>
+            <div className="overview-detail">Awaiting evaluation</div>
+          </div>
+        </div>
+
+        <div className="overview-insights">
+          <div className="insight-row">
+            <CheckCircle className="insight-icon success" size={20} />
+            <div>
+              <strong>{highPerformers} high-performing bots</strong>
+              <span> (≥60% accuracy) leading the system</span>
+            </div>
+          </div>
+          {needsAttention > 0 && (
+            <div className="insight-row warning">
+              <AlertCircle className="insight-icon" size={20} />
+              <div>
+                <strong>{needsAttention} bots need attention</strong>
+                <span> (&lt;40% accuracy) - consider parameter adjustment</span>
               </div>
             </div>
-          ))}
+          )}
+          <div className="insight-row">
+            <Activity className="insight-icon" size={20} />
+            <div>
+              <strong>{bots.length} total bots</strong>
+              <span> actively tracking across {totalPredictions} predictions</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="performers-section">
+        <div className="top-performers">
+          <div className="performers-header">
+            <Award size={20} />
+            <h2>Top 5 Performers</h2>
+          </div>
+          <div className="performers-grid">
+            {topBots.map((bot, index) => (
+              <div key={bot.bot_name} className="performer-card top">
+                <div className="performer-rank top">#{index + 1}</div>
+                <TrendingUp className="performer-icon" size={28} />
+                <h3>{bot.bot_name}</h3>
+                <div className="performer-stat">
+                  <span className="stat-big">{bot.accuracy_rate?.toFixed(1)}%</span>
+                  <span className="stat-label">Accuracy</span>
+                </div>
+                <div className="performer-meta">
+                  <span>{bot.total_predictions} predictions</span>
+                  {bot.win_loss_ratio && <span>{bot.win_loss_ratio.toFixed(2)}x W/L</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bottom-performers">
+          <div className="performers-header">
+            <AlertCircle size={20} />
+            <h2>Needs Improvement</h2>
+          </div>
+          <div className="performers-grid">
+            {bottomBots.filter(b => (b.successful_predictions || 0) + (b.failed_predictions || 0) > 0).map((bot, index) => (
+              <div key={bot.bot_name} className="performer-card bottom">
+                <div className="performer-rank bottom">#{sortedBots.length - index}</div>
+                <TrendingDown className="performer-icon" size={28} />
+                <h3>{bot.bot_name}</h3>
+                <div className="performer-stat">
+                  <span className="stat-big">{bot.accuracy_rate?.toFixed(1)}%</span>
+                  <span className="stat-label">Accuracy</span>
+                </div>
+                <div className="performer-meta">
+                  <span>{bot.total_predictions} predictions</span>
+                  {bot.win_loss_ratio && <span>{bot.win_loss_ratio.toFixed(2)}x W/L</span>}
+                </div>
+                <div className="improvement-hint">
+                  {bot.accuracy_rate < 30 ? 'Critical - Review strategy' :
+                   bot.accuracy_rate < 40 ? 'Adjust parameters' :
+                   'Monitor closely'}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
