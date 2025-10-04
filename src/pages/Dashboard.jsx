@@ -22,7 +22,11 @@ const ALL_BOTS = [
   'Breakout Hunter',
   'Support/Resistance',
   'Fibonacci Retracement',
-  'Elliott Wave',
+  'Elliott Wave Pattern',
+  'Order Flow Analysis',
+  'Whale Activity Tracker',
+  'Social Sentiment Analysis',
+  'Options Flow Detector',
   'Ichimoku Cloud',
   'Parabolic SAR',
   'ADX Trend Strength',
@@ -40,7 +44,6 @@ const ALL_BOTS = [
   'Price Action',
   'Wyckoff Method',
   'Market Profile',
-  'Order Flow',
   'Smart Money Concepts',
   'Liquidity Zones',
   'Fair Value Gaps',
@@ -49,8 +52,6 @@ const ALL_BOTS = [
   'Accumulation/Distribution',
   'Market Sentiment',
   'Fear & Greed Index',
-  'Social Media Sentiment',
-  'Whale Activity',
   'Exchange Flow',
   'Network Activity',
   'Hash Rate Analysis',
@@ -58,20 +59,28 @@ const ALL_BOTS = [
   'Correlation Analysis',
   'Intermarket Analysis',
   'Seasonality Patterns',
+  'Long/Short Ratio Tracker',
+  '4H Trend Analyzer',
+  'Multi-Timeframe Confluence',
+  'Volume Profile Analysis',
 ]
 
 const SCAN_TYPES = [
-  { id: 'speed_run', name: 'Speed Run', duration: '4-5 min', coins: 75, bots: 25, description: 'Ultra-fast snapshot' },
-  { id: 'quick_scan', name: 'Quick Scan', duration: '7-10 min', coins: 100, bots: 48, description: 'Standard quick check' },
-  { id: 'fast_parallel', name: 'Fast Parallel', duration: '8-10 min', coins: 100, bots: 48, description: 'Faster quick check' },
-  { id: 'focused_scan', name: 'Focused Scan', duration: '10-12 min', coins: 50, bots: 48, description: 'Top 50 deep dive' },
-  { id: 'focused_ai', name: 'Focused AI', duration: '25-28 min', coins: 20, bots: 49, description: 'AI deep dive top 20' },
-  { id: 'full_scan_lite', name: 'Full Scan Lite', duration: '15-18 min', coins: 200, bots: 48, description: 'Broad coverage' },
-  { id: 'complete_market_scan', name: 'Complete Market', duration: '18-20 min', coins: 250, bots: 48, description: 'Market overview' },
-  { id: 'all_in_lite', name: 'All In Lite', duration: '18-20 min', coins: 250, bots: 48, description: 'Wide coverage' },
-  { id: 'all_in_under_5_lite', name: 'All In Under $5 Lite', duration: '15-18 min', coins: '250 <$5', bots: 48, description: 'Low-price gems' },
-  { id: 'all_in', name: 'All In', duration: '30-35 min', coins: 500, bots: 48, description: 'Maximum coverage' },
-  { id: 'all_in_ai', name: 'All In + AI', duration: '45-50 min', coins: 500, bots: 49, description: 'Max + AI insights' },
+  { id: 'quick_scan', name: 'Quick Scan', duration: '45-60 sec', coins: 100, bots: 59, description: 'Fast analysis of top 100 coins. High-confidence signals only.', aiEnabled: false },
+  { id: 'deep_analysis', name: 'Deep Analysis', duration: '2-3 min', coins: 50, bots: 59, description: 'AI-powered analysis using GPT-4 for advanced insights.', aiEnabled: true },
+  { id: 'top200_scan', name: 'Top 200 Scan', duration: '2-3 min', coins: 200, bots: 59, description: 'Extensive market scan covering top 200 coins.', aiEnabled: false },
+  { id: 'top500_scan', name: 'Top 500 Scan', duration: '4-5 min', coins: 500, bots: 59, description: 'Complete market coverage. Find hidden gems.', aiEnabled: false },
+  { id: 'high_conviction', name: 'High Conviction', duration: '2-3 min', coins: 200, bots: 59, description: '80%+ bot consensus. Ultra-selective signals.', aiEnabled: false },
+  { id: 'trending_coins', name: 'Trending Markets', duration: '2-3 min', coins: 200, bots: 59, description: 'Targets strong trending markets (ADX > 30).', aiEnabled: false },
+  { id: 'reversal_opportunities', name: 'Reversal Opportunities', duration: '2-3 min', coins: 200, bots: 59, description: 'Oversold/overbought conditions and mean-reversion.', aiEnabled: false },
+  { id: 'volatile_markets', name: 'Volatile Markets', duration: '2-3 min', coins: 200, bots: 59, description: 'High-volatility coins (ATR > 4%). Higher risk/reward.', aiEnabled: false },
+  { id: 'whale_activity', name: 'Whale Activity', duration: '2-3 min', coins: 200, bots: 59, description: 'Large volume spikes and institutional movements.', aiEnabled: false },
+  { id: 'futures_signals', name: 'Futures Signals', duration: '2-3 min', coins: 200, bots: 59, description: 'Funding rates, open interest, long/short ratios.', aiEnabled: false },
+  { id: 'breakout_hunter', name: 'Breakout Hunter', duration: '2-3 min', coins: 200, bots: 59, description: 'Resistance/support breaks with volume confirmation.', aiEnabled: false },
+  { id: 'ai_powered_scan', name: 'AI-Powered Full Scan', duration: '3-4 min', coins: 100, bots: 59, description: 'All 59 bots + GPT-4 deep analysis. Ultimate scan.', aiEnabled: true },
+  { id: 'low_cap_gems', name: 'Low Cap Gems', duration: '3-4 min', coins: 300, bots: 59, description: 'Coins ranked 201-500. Discover small-cap opportunities.', aiEnabled: false },
+  { id: 'elliott_wave_scan', name: 'Elliott Wave Scan', duration: '2-3 min', coins: 200, bots: 59, description: 'Elliott Wave + Fibonacci analysis. Wave completions.', aiEnabled: false },
+  { id: 'custom_scan', name: 'Custom Scan', duration: 'Varies', coins: 'Custom', bots: 59, description: 'Fully customizable parameters.', aiEnabled: false },
 ]
 
 function Dashboard() {
@@ -154,6 +163,9 @@ function Dashboard() {
     setScanStartTime(Date.now())
     setElapsedTime(0)
 
+    const scanConfig = SCAN_TYPES.find(s => s.id === selectedScan)
+    const coinLimit = typeof scanConfig?.coins === 'number' ? scanConfig.coins : 100
+
     try {
       const response = await fetch(API_ENDPOINTS.scanRun, {
         method: 'POST',
@@ -161,7 +173,9 @@ function Dashboard() {
         body: JSON.stringify({
           scanType: selectedScan,
           filterScope: 'all',
-          interval: '4h'
+          interval: '4h',
+          coinLimit: coinLimit,
+          useDeepAI: scanConfig?.aiEnabled || false
         })
       })
 

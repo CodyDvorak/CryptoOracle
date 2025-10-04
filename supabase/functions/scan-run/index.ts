@@ -90,7 +90,9 @@ Deno.serve(async (req: Request) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const body = await req.json();
-    const { interval = '4h', filterScope = 'all', minPrice, maxPrice, scanType = 'full_scan' } = body;
+    const { interval = '4h', filterScope = 'all', minPrice, maxPrice, scanType = 'quick_scan', coinLimit = 100 } = body;
+
+    const actualCoinLimit = typeof coinLimit === 'number' ? coinLimit : 100;
 
     const { data: scanRun, error: scanError } = await supabase
       .from('scan_runs')
@@ -101,8 +103,8 @@ Deno.serve(async (req: Request) => {
         max_price: maxPrice,
         scan_type: scanType,
         status: 'running',
-        total_bots: 54,
-        total_coins: mockCoins.length,
+        total_bots: 59,
+        total_coins: actualCoinLimit,
       })
       .select()
       .single();
@@ -114,7 +116,9 @@ Deno.serve(async (req: Request) => {
         const recommendations = [];
         const botPredictions = [];
 
-        for (const coin of mockCoins) {
+        const coinsToAnalyze = mockCoins.slice(0, Math.min(actualCoinLimit, mockCoins.length));
+
+        for (const coin of coinsToAnalyze) {
           const regimes = ['BULL', 'BEAR', 'SIDEWAYS'];
           const marketRegime = regimes[Math.floor(Math.random() * regimes.length)];
           const regimeConfidence = 0.6 + Math.random() * 0.3;
@@ -200,6 +204,9 @@ Deno.serve(async (req: Request) => {
             status: 'completed',
             completed_at: new Date().toISOString(),
             total_available_coins: mockCoins.length,
+            total_coins: coinsToAnalyze.length,
+            total_bots: 59,
+            total_signals: recommendations.length,
           })
           .eq('id', scanRun.id);
 

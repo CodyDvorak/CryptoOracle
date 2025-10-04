@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { User, Bell, Clock, Mail, Save, RefreshCw, AlertCircle } from 'lucide-react'
+import { User, Bell, Clock, Mail, Save, RefreshCw, CircleAlert as AlertCircle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import './Profile.css'
 
@@ -24,8 +24,27 @@ export default function Profile() {
   const [newScan, setNewScan] = useState({
     interval: 'daily',
     time: '09:00',
+    scan_type: 'quick_scan',
     is_active: true
   })
+
+  const SCAN_TYPES = [
+    { id: 'quick_scan', name: 'Quick Scan (100 coins, 59 bots)' },
+    { id: 'deep_analysis', name: 'Deep Analysis (50 coins + AI)' },
+    { id: 'top200_scan', name: 'Top 200 Scan' },
+    { id: 'top500_scan', name: 'Top 500 Scan' },
+    { id: 'high_conviction', name: 'High Conviction Signals' },
+    { id: 'trending_coins', name: 'Trending Markets' },
+    { id: 'reversal_opportunities', name: 'Reversal Opportunities' },
+    { id: 'volatile_markets', name: 'Volatile Markets' },
+    { id: 'whale_activity', name: 'Whale Activity' },
+    { id: 'futures_signals', name: 'Futures Signals' },
+    { id: 'breakout_hunter', name: 'Breakout Hunter' },
+    { id: 'ai_powered_scan', name: 'AI-Powered Full Scan' },
+    { id: 'low_cap_gems', name: 'Low Cap Gems' },
+    { id: 'elliott_wave_scan', name: 'Elliott Wave Scan' },
+    { id: 'custom_scan', name: 'Custom Scan' },
+  ]
 
   useEffect(() => {
     if (user) {
@@ -134,6 +153,7 @@ export default function Profile() {
         .insert({
           user_id: user.id,
           interval: newScan.interval,
+          scan_type: newScan.scan_type,
           cron_expression: convertToCron(newScan.interval, newScan.time),
           time_of_day: newScan.time,
           is_active: newScan.is_active,
@@ -145,7 +165,7 @@ export default function Profile() {
       if (error) throw error
 
       setScheduledScans([data, ...scheduledScans])
-      setNewScan({ interval: 'daily', time: '09:00', is_active: true })
+      setNewScan({ interval: 'daily', time: '09:00', scan_type: 'quick_scan', is_active: true })
     } catch (err) {
       console.error('Failed to add schedule:', err)
       setError('Failed to create schedule')
@@ -395,6 +415,18 @@ export default function Profile() {
             <div className="schedule-creator">
               <div className="form-row">
                 <div className="form-group">
+                  <label>Scan Type</label>
+                  <select
+                    value={newScan.scan_type}
+                    onChange={(e) => setNewScan({ ...newScan, scan_type: e.target.value })}
+                    className="form-select"
+                  >
+                    {SCAN_TYPES.map(scan => (
+                      <option key={scan.id} value={scan.id}>{scan.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
                   <label>Interval</label>
                   <select
                     value={newScan.interval}
@@ -433,6 +465,7 @@ export default function Profile() {
                 scheduledScans.map((schedule) => (
                   <div key={schedule.id} className="schedule-item">
                     <div className="schedule-info">
+                      <div className="schedule-type">{SCAN_TYPES.find(s => s.id === schedule.scan_type)?.name || schedule.scan_type || 'Quick Scan'}</div>
                       <div className="schedule-interval">{schedule.interval}</div>
                       <div className="schedule-time">{schedule.time}</div>
                       <div className="schedule-next">Next: {schedule.next_run}</div>

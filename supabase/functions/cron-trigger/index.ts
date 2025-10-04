@@ -97,12 +97,18 @@ Deno.serve(async (req: Request) => {
 
     const processedEmails = await processEmailQueue(supabase);
 
+    let performanceEvaluated = 0;
+    if (now.getMinutes() % 30 === 0) {
+      performanceEvaluated = await evaluateBotPerformance(supabase);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         scans_processed: dueScans?.length || 0,
         results,
         emails_processed: processedEmails,
+        performance_evaluated: performanceEvaluated,
         timestamp: now.toISOString(),
       }),
       {
@@ -168,6 +174,28 @@ async function processEmailQueue(supabase: any): Promise<number> {
     }
   } catch (error) {
     console.error('Email processing failed:', error);
+  }
+
+  return 0;
+}
+
+async function evaluateBotPerformance(supabase: any): Promise<number> {
+  try {
+    const performanceEvaluatorUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/bot-performance-evaluator`;
+    const response = await fetch(performanceEvaluatorUrl + '?hours=24', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+      },
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log(`Bot performance evaluation: ${result.evaluated} predictions evaluated`);
+      return result.evaluated || 0;
+    }
+  } catch (error) {
+    console.error('Bot performance evaluation failed:', error);
   }
 
   return 0;
