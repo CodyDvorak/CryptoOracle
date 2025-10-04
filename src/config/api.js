@@ -10,6 +10,8 @@ export const API_ENDPOINTS = {
   scanLatest: `${API_BASE_URL}/scan-latest`,
   scanHistory: `${API_BASE_URL}/scan-history`,
   botPerformance: `${API_BASE_URL}/bot-performance`,
+  botPredictions: `${API_BASE_URL}/bot-predictions`,
+  botLearning: `${API_BASE_URL}/bot-learning`,
 };
 
 export const getHeaders = () => ({

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Activity, TrendingUp, TrendingDown, Target, Award, CircleAlert as AlertCircle, BarChart3, CircleCheck as CheckCircle, Circle as XCircle } from 'lucide-react'
+import { Activity, TrendingUp, TrendingDown, Target, Award, CircleAlert as AlertCircle, BarChart3, CircleCheck as CheckCircle, Brain, Lightbulb, Sparkles } from 'lucide-react'
 import { API_ENDPOINTS, getHeaders } from '../config/api'
 import './BotPerformance.css'
 
@@ -8,6 +8,9 @@ function BotPerformance() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [sortBy, setSortBy] = useState('accuracy')
+  const [aiInsights, setAiInsights] = useState([])
+  const [learningMetrics, setLearningMetrics] = useState([])
+  const [analyzingAI, setAnalyzingAI] = useState(false)
 
   useEffect(() => {
     fetchBotPerformance()
@@ -26,10 +29,49 @@ function BotPerformance() {
       }
       const data = await response.json()
       setBots(data.bots || [])
+      await fetchAIInsights()
     } catch (err) {
       setError(err.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchAIInsights = async () => {
+    try {
+      const [insightsRes, metricsRes] = await Promise.all([
+        fetch(`${API_ENDPOINTS.botLearning}/insights`, { headers: getHeaders() }),
+        fetch(`${API_ENDPOINTS.botLearning}/metrics`, { headers: getHeaders() })
+      ])
+
+      if (insightsRes.ok) {
+        const insightsData = await insightsRes.json()
+        setAiInsights(insightsData.insights || [])
+      }
+
+      if (metricsRes.ok) {
+        const metricsData = await metricsRes.json()
+        setLearningMetrics(metricsData.metrics || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch AI insights:', err)
+    }
+  }
+
+  const runAIAnalysis = async () => {
+    setAnalyzingAI(true)
+    try {
+      const response = await fetch(API_ENDPOINTS.botLearning, {
+        method: 'POST',
+        headers: getHeaders(),
+      })
+      if (response.ok) {
+        await fetchAIInsights()
+      }
+    } catch (err) {
+      console.error('AI analysis failed:', err)
+    } finally {
+      setAnalyzingAI(false)
     }
   }
 
@@ -216,6 +258,42 @@ function BotPerformance() {
           </div>
         </div>
       </div>
+
+      {aiInsights.length > 0 && (
+        <div className="ai-insights-section">
+          <div className="ai-insights-header">
+            <Brain size={24} />
+            <div>
+              <h2>AI Learning Insights</h2>
+              <p className="ai-subtitle">Automated analysis and recommendations</p>
+            </div>
+            <button className="ai-analyze-btn" onClick={runAIAnalysis} disabled={analyzingAI}>
+              {analyzingAI ? <Activity className="spinner" size={16} /> : <Sparkles size={16} />}
+              {analyzingAI ? 'Analyzing...' : 'Run AI Analysis'}
+            </button>
+          </div>
+
+          <div className="insights-grid">
+            {aiInsights.slice(0, 6).map((insight, index) => (
+              <div key={index} className={`insight-card ${insight.insight_type}`}>
+                <div className="insight-header">
+                  {insight.insight_type === 'strength' && <Award size={20} />}
+                  {insight.insight_type === 'weakness' && <AlertCircle size={20} />}
+                  {insight.insight_type === 'trend' && <TrendingUp size={20} />}
+                  {insight.insight_type === 'recommendation' && <Lightbulb size={20} />}
+                  <span className="insight-type">{insight.insight_type}</span>
+                  <span className="insight-confidence">{insight.confidence_score?.toFixed(0)}%</span>
+                </div>
+                <h4>{insight.bot_name}</h4>
+                <p className="insight-text">{insight.insight_text}</p>
+                <div className="insight-timestamp">
+                  {new Date(insight.created_at).toLocaleDateString()}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="bot-controls">
         <div className="sort-control">

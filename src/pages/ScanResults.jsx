@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { TrendingUp, TrendingDown, DollarSign, Percent, Activity, CircleAlert as AlertCircle } from 'lucide-react'
+import { TrendingUp, TrendingDown, DollarSign, Percent, Activity, CircleAlert as AlertCircle, Info } from 'lucide-react'
 import { API_ENDPOINTS, getHeaders } from '../config/api'
+import BotDetailsModal from '../components/BotDetailsModal'
 import './ScanResults.css'
 
 function ScanResults() {
@@ -8,6 +9,7 @@ function ScanResults() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [activeTab, setActiveTab] = useState('confidence')
+  const [selectedCoin, setSelectedCoin] = useState(null)
 
   useEffect(() => {
     fetchLatestResults()
@@ -117,9 +119,23 @@ function ScanResults() {
 
       <div className="recommendations-grid">
         {activeData.map((rec, index) => (
-          <RecommendationCard key={index} recommendation={rec} rank={index + 1} />
+          <RecommendationCard
+            key={index}
+            recommendation={rec}
+            rank={index + 1}
+            runId={scan?.id}
+            onShowDetails={setSelectedCoin}
+          />
         ))}
       </div>
+
+      {selectedCoin && (
+        <BotDetailsModal
+          coin={selectedCoin}
+          runId={scan?.id}
+          onClose={() => setSelectedCoin(null)}
+        />
+      )}
 
       {activeData.length === 0 && (
         <div className="no-recommendations">
@@ -130,7 +146,7 @@ function ScanResults() {
   )
 }
 
-function RecommendationCard({ recommendation, rank }) {
+function RecommendationCard({ recommendation, rank, runId, onShowDetails }) {
   const isLong = recommendation.consensus_direction?.toUpperCase() === 'LONG'
   const confidenceColor = recommendation.avg_confidence >= 0.7 ? 'high' : recommendation.avg_confidence >= 0.5 ? 'medium' : 'low'
 
@@ -209,6 +225,14 @@ function RecommendationCard({ recommendation, rank }) {
           <p>{recommendation.rationale}</p>
         </div>
       )}
+
+      <button
+        className="bot-details-btn"
+        onClick={() => onShowDetails(recommendation)}
+      >
+        <Info size={16} />
+        View Bot Details ({recommendation.bot_count} bots)
+      </button>
     </div>
   )
 }

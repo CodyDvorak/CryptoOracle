@@ -358,6 +358,34 @@
   color: var(--text-secondary);
 }
 
+.bot-details-btn {
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px;
+  background: var(--accent-blue);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.bot-details-btn:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.bot-details-btn:active {
+  transform: translateY(0);
+}
+
 @media (max-width: 768px) {
   .recommendations-grid {
     grid-template-columns: 1fr;

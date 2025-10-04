@@ -310,6 +310,165 @@
   text-align: center;
 }
 
+.ai-insights-section {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 24px;
+}
+
+.ai-insights-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.ai-insights-header svg:first-child {
+  color: var(--accent-blue);
+  flex-shrink: 0;
+}
+
+.ai-insights-header h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.ai-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 2px 0 0 0;
+}
+
+.ai-analyze-btn {
+  margin-left: auto;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, var(--accent-blue), #6366f1);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.ai-analyze-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.ai-analyze-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.insight-card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.2s ease;
+}
+
+.insight-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.insight-card.strength {
+  border-left: 3px solid var(--accent-green);
+}
+
+.insight-card.weakness {
+  border-left: 3px solid var(--accent-red);
+}
+
+.insight-card.trend {
+  border-left: 3px solid var(--accent-blue);
+}
+
+.insight-card.recommendation {
+  border-left: 3px solid var(--accent-orange);
+}
+
+.insight-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.insight-header svg {
+  flex-shrink: 0;
+}
+
+.insight-card.strength .insight-header svg {
+  color: var(--accent-green);
+}
+
+.insight-card.weakness .insight-header svg {
+  color: var(--accent-red);
+}
+
+.insight-card.trend .insight-header svg {
+  color: var(--accent-blue);
+}
+
+.insight-card.recommendation .insight-header svg {
+  color: var(--accent-orange);
+}
+
+.insight-type {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.insight-confidence {
+  margin-left: auto;
+  padding: 4px 8px;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-blue);
+}
+
+.insight-card h4 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+}
+
+.insight-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0 0 12px 0;
+}
+
+.insight-timestamp {
+  font-size: 11px;
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
 .bot-controls {
   display: flex;
   justify-content: space-between;
