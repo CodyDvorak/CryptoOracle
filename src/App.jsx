@@ -4,8 +4,9 @@ import Dashboard from './pages/Dashboard'
 import ScanResults from './pages/ScanResults'
 import BotPerformance from './pages/BotPerformance'
 import History from './pages/History'
+import Profile from './pages/Profile'
 import NotificationCenter from './components/NotificationCenter'
-import { Activity, TrendingUp, BarChart3, History as HistoryIcon } from 'lucide-react'
+import { Activity, TrendingUp, BarChart3, History as HistoryIcon, User } from 'lucide-react'
 import './App.css'
 
 function Navigation() {
@@ -15,7 +16,8 @@ function Navigation() {
     { path: '/', icon: Activity, label: 'Dashboard' },
     { path: '/results', icon: TrendingUp, label: 'Results' },
     { path: '/bots', icon: BarChart3, label: 'Bot Performance' },
-    { path: '/history', icon: HistoryIcon, label: 'History' }
+    { path: '/history', icon: HistoryIcon, label: 'History' },
+    { path: '/profile', icon: User, label: 'Profile' }
   ]
 
   return (
@@ -54,6 +56,7 @@ function App() {
             <Route path="/results" element={<ScanResults />} />
             <Route path="/bots" element={<BotPerformance />} />
             <Route path="/history" element={<History />} />
+            <Route path="/profile" element={<Profile />} />
           </Routes>
         </main>
       </div>

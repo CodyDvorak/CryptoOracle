@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Clock, CircleCheck as CheckCircle, Circle as XCircle, Activity, CircleAlert as AlertCircle } from 'lucide-react'
+import { Clock, CircleCheck as CheckCircle, Circle as XCircle, Activity, CircleAlert as AlertCircle, ChevronDown, ChevronUp, TrendingUp, TrendingDown } from 'lucide-react'
 import { API_ENDPOINTS, getHeaders } from '../config/api'
 import './History.css'
 
@@ -81,6 +81,10 @@ function History() {
 }
 
 function ScanHistoryCard({ scan }) {
+  const [expanded, setExpanded] = useState(false)
+  const [recommendations, setRecommendations] = useState([])
+  const [loadingDetails, setLoadingDetails] = useState(false)
+
   const isCompleted = scan.status === 'completed'
   const isFailed = scan.status === 'failed'
   const isRunning = scan.status === 'running'
@@ -88,6 +92,32 @@ function ScanHistoryCard({ scan }) {
   const successRate = scan.total_available_coins > 0
     ? ((scan.total_available_coins / scan.total_coins) * 100).toFixed(1)
     : 0
+
+  const fetchRecommendations = async () => {
+    if (recommendations.length > 0) return
+
+    setLoadingDetails(true)
+    try {
+      const response = await fetch(`${API_ENDPOINTS.scanLatest}?runId=${scan.id}`, {
+        headers: getHeaders(),
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setRecommendations(data.recommendations || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch recommendations:', err)
+    } finally {
+      setLoadingDetails(false)
+    }
+  }
+
+  const handleToggle = () => {
+    if (!expanded && recommendations.length === 0) {
+      fetchRecommendations()
+    }
+    setExpanded(!expanded)
+  }
 
   return (
     <div className="history-card">
@@ -173,6 +203,84 @@ function ScanHistoryCard({ scan }) {
           <span>{scan.error_message}</span>
         </div>
       )}
+
+      {isCompleted && (
+        <>
+          <button
+            className="expand-btn"
+            onClick={handleToggle}
+          >
+            {expanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            {expanded ? 'Hide' : 'Show'} Recommendations
+          </button>
+
+          {expanded && (
+            <div className="scan-details">
+              {loadingDetails ? (
+                <div className="details-loading">
+                  <Activity className="spinner" size={24} />
+                  <span>Loading recommendations...</span>
+                </div>
+              ) : recommendations.length > 0 ? (
+                <div className="recommendations-grid">
+                  {recommendations.map((rec, idx) => (
+                    <RecommendationDetail key={idx} recommendation={rec} />
+                  ))}
+                </div>
+              ) : (
+                <div className="no-recommendations">
+                  <p>No recommendations found for this scan</p>
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+function RecommendationDetail({ recommendation }) {
+  const isLong = recommendation.consensus_direction === 'LONG'
+  const confidencePercent = (recommendation.avg_confidence * 10).toFixed(1)
+  const consensusPercent = recommendation.consensus_percent?.toFixed(1) || 0
+
+  return (
+    <div className="recommendation-detail">
+      <div className="rec-header">
+        <div className="rec-title">
+          <span className="rec-coin">{recommendation.coin}</span>
+          <span className="rec-ticker">{recommendation.ticker}</span>
+        </div>
+        <div className={`rec-direction ${isLong ? 'long' : 'short'}`}>
+          {isLong ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+          {recommendation.consensus_direction}
+        </div>
+      </div>
+
+      <div className="rec-metrics">
+        <div className="rec-metric">
+          <span className="metric-label">Price</span>
+          <span className="metric-value">${recommendation.current_price?.toFixed(6)}</span>
+        </div>
+        <div className="rec-metric">
+          <span className="metric-label">Confidence</span>
+          <span className="metric-value">{confidencePercent}/10</span>
+        </div>
+        <div className="rec-metric">
+          <span className="metric-label">Consensus</span>
+          <span className="metric-value">{consensusPercent}%</span>
+        </div>
+      </div>
+
+      <div className="rec-bots">
+        <span className="bots-label">Bot Analysis:</span>
+        <div className="bots-breakdown">
+          <span className="bot-count long">{recommendation.long_bots} LONG</span>
+          <span className="bot-separator">•</span>
+          <span className="bot-count short">{recommendation.short_bots} SHORT</span>
+        </div>
+      </div>
     </div>
   )
 }
