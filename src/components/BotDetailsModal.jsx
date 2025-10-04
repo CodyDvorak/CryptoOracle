@@ -8,14 +8,19 @@ export default function BotDetailsModal({ recommendation, onClose }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchBotPredictions()
+    if (recommendation) {
+      fetchBotPredictions()
+    }
   }, [recommendation])
 
   const fetchBotPredictions = async () => {
+    if (!recommendation) return
+
     try {
       setLoading(true)
+      const coinSymbol = recommendation.coin_symbol || recommendation.ticker
       const response = await fetch(
-        `${API_ENDPOINTS.botPredictions}?runId=${recommendation.run_id}&coinSymbol=${recommendation.ticker}`,
+        `${API_ENDPOINTS.botPredictions}?runId=${recommendation.run_id}&coinSymbol=${coinSymbol}`,
         { headers: getHeaders() }
       )
       const data = await response.json()
@@ -25,6 +30,10 @@ export default function BotDetailsModal({ recommendation, onClose }) {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (!recommendation) {
+    return null
   }
 
   const longPredictions = predictions.filter(p => p.position_direction === 'LONG')
@@ -41,16 +50,16 @@ export default function BotDetailsModal({ recommendation, onClose }) {
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>
-            <h2>{recommendation.coin} ({recommendation.ticker}) Analysis</h2>
+            <h2>{recommendation.coin || recommendation.coin_symbol || 'Unknown'} ({recommendation.ticker || recommendation.coin_symbol || 'N/A'}) Analysis</h2>
             <p className="modal-subtitle">
-              {predictions.length} bots analyzed • Current price: ${recommendation.current_price?.toFixed(8)}
+              {predictions.length} bots analyzed • Current price: ${recommendation.current_price?.toFixed(8) || 'N/A'}
             </p>
             <div className="modal-regime">
-              <span className={`regime-badge regime-${recommendation.market_regime?.toLowerCase()}`}>
-                {recommendation.market_regime === 'BULL' ? '🐂' : recommendation.market_regime === 'BEAR' ? '🐻' : '↔️'} {recommendation.market_regime} Market
+              <span className={`regime-badge regime-${(recommendation.market_regime || recommendation.regime || 'SIDEWAYS').toLowerCase()}`}>
+                {(recommendation.market_regime || recommendation.regime) === 'BULL' ? '🐂' : (recommendation.market_regime || recommendation.regime) === 'BEAR' ? '🐻' : '↔️'} {recommendation.market_regime || recommendation.regime || 'SIDEWAYS'} Market
               </span>
               <span className="regime-conf">
-                {(recommendation.regime_confidence * 100).toFixed(0)}% confidence
+                {((recommendation.regime_confidence || 0) * 100).toFixed(0)}% confidence
               </span>
             </div>
           </div>
