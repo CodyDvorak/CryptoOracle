@@ -64,6 +64,13 @@
   color: white;
 }
 
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
 .main-content {
   flex: 1;
   padding: 32px;

@@ -12,6 +12,8 @@ export const API_ENDPOINTS = {
   botPerformance: `${API_BASE_URL}/bot-performance`,
   botPredictions: `${API_BASE_URL}/bot-predictions`,
   botLearning: `${API_BASE_URL}/bot-learning`,
+  notifications: `${API_BASE_URL}/notifications`,
+  scheduledScan: `${API_BASE_URL}/scheduled-scan`,
 };
 
 export const getHeaders = () => ({

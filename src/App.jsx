@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard'
 import ScanResults from './pages/ScanResults'
 import BotPerformance from './pages/BotPerformance'
 import History from './pages/History'
+import NotificationCenter from './components/NotificationCenter'
 import { Activity, TrendingUp, BarChart3, History as HistoryIcon } from 'lucide-react'
 import './App.css'
 
@@ -34,6 +35,9 @@ function Navigation() {
             <span>{label}</span>
           </Link>
         ))}
+      </div>
+      <div className="nav-actions">
+        <NotificationCenter />
       </div>
     </nav>
   )
