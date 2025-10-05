@@ -141,7 +141,9 @@ function Dashboard() {
               setIsScanning(false)
               setScanProgress(null)
               setScanStartTime(null)
-              fetchLatestRecommendations()
+              setTimeout(() => {
+                fetchLatestRecommendations()
+              }, 1000)
             }
           }
         }
@@ -152,7 +154,7 @@ function Dashboard() {
       if (isScanning) {
         checkScanStatus()
       }
-    }, 30000)
+    }, 5000)
 
     return () => {
       clearInterval(interval)
@@ -190,9 +192,15 @@ function Dashboard() {
           setScanStartTime(Date.now())
         }
       } else {
-        setIsScanning(false)
-        setScanProgress(null)
-        setScanStartTime(null)
+        if (isScanning) {
+          console.log('Scan completed, fetching recommendations...')
+          setIsScanning(false)
+          setScanProgress(null)
+          setScanStartTime(null)
+          setTimeout(() => {
+            fetchLatestRecommendations()
+          }, 1000)
+        }
       }
     } catch (err) {
       console.error('Error checking scan status:', err)
@@ -201,16 +209,26 @@ function Dashboard() {
 
   const fetchLatestRecommendations = async () => {
     try {
+      console.log('Fetching latest recommendations...')
       const response = await fetch(API_ENDPOINTS.scanLatest, {
         headers: getHeaders(),
       })
       const data = await response.json()
 
-      if (data.recommendations && data.recommendations.length > 0) {
-        setRecommendations(data.recommendations)
+      console.log('Recommendations response:', data)
+
+      if (data.recommendations) {
+        if (data.recommendations.length > 0) {
+          console.log(`Found ${data.recommendations.length} recommendations`)
+          setRecommendations(data.recommendations)
+        } else {
+          console.log('Scan completed but no recommendations found')
+          setRecommendations([])
+        }
       }
     } catch (err) {
       console.error('Error fetching recommendations:', err)
+      setError('Failed to fetch recommendations: ' + err.message)
     }
   }
 
