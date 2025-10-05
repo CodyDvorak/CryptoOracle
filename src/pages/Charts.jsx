@@ -113,6 +113,47 @@ export default function Charts() {
     (r) => r.ticker === selectedCoin
   );
 
+  if (loading) {
+    return (
+      <div className="charts-page">
+        <div className="charts-header">
+          <div className="header-left">
+            <Activity size={32} />
+            <div>
+              <h1>Advanced Charts</h1>
+              <p>Interactive TradingView charts with bot signals</p>
+            </div>
+          </div>
+        </div>
+        <div className="loading-chart">
+          <Activity size={48} className="spin" />
+          <p>Loading recommendations...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (recommendations.length === 0) {
+    return (
+      <div className="charts-page">
+        <div className="charts-header">
+          <div className="header-left">
+            <Activity size={32} />
+            <div>
+              <h1>Advanced Charts</h1>
+              <p>Interactive TradingView charts with bot signals</p>
+            </div>
+          </div>
+        </div>
+        <div className="no-data-message">
+          <Activity size={48} style={{ color: '#3b82f6', marginBottom: '1rem' }} />
+          <p>No recommendations available yet.</p>
+          <p style={{ marginTop: '0.5rem', fontSize: '0.95rem' }}>Please run a scan from the Dashboard to see charts and analysis.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="charts-page">
       <div className="charts-header">
@@ -124,12 +165,6 @@ export default function Charts() {
           </div>
         </div>
       </div>
-
-      {!loading && recommendations.length === 0 && (
-        <div className="no-data-message">
-          <p>No recommendations available yet. Please run a scan first from the Dashboard.</p>
-        </div>
-      )}
 
       {recommendations.length > 0 && (
         <div className="charts-controls">
