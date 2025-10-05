@@ -440,6 +440,11 @@ export class CryptoDataService {
     return await derivativesDataService.getDerivativesData(symbol);
   }
 
+  async getOptionsData(symbol: string): Promise<any | null> {
+    const { optionsDataService } = await import('./options-data-service.ts');
+    return await optionsDataService.getOptionsData(symbol);
+  }
+
   private calculateRSI(prices: number[], period = 14): number {
     if (prices.length < period + 1) return 50;
 

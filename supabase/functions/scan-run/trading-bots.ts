@@ -11,7 +11,7 @@ interface BotPrediction {
 class TradingBot {
   constructor(public name: string) {}
 
-  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+  analyze(ohlcv: any, derivatives: any, coin: any, options?: any): BotPrediction | null {
     return null;
   }
 }
@@ -931,32 +931,78 @@ class SocialSentimentBot extends TradingBot {
 }
 
 class OptionsFlowBot extends TradingBot {
-  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
-    const putCallRatio = Math.random() * 2;
-    const openInterestTrend = derivatives.openInterest > 50000000;
-    const impliedVolatility = (ohlcv.indicators.atr / coin.price) * 100;
+  analyze(ohlcv: any, derivatives: any, coin: any, options?: any): BotPrediction | null {
+    if (!options || !options.supported) {
+      return null;
+    }
 
-    if (putCallRatio < 0.7 && openInterestTrend && impliedVolatility > 2) {
+    const putCallRatio = options.putCallRatio.volume;
+    const putCallSignal = options.putCallRatio.signal;
+    const unusualActivity = options.unusualActivity.detected;
+    const optionsFlow = options.optionsFlow.institutionalDirection;
+    const impliedVol = options.impliedVolatility.current;
+    const ivTrend = options.impliedVolatility.trend;
+
+    const baseConfidence = options.confidence;
+
+    if (putCallSignal === 'BULLISH' && optionsFlow === 'BULLISH') {
+      const confidence = Math.min(baseConfidence + 0.1, 0.88);
+      const leverage = unusualActivity ? 5 : 4;
+
       return {
         botName: this.name,
         direction: 'LONG',
-        confidence: 0.74,
+        confidence,
         entry: coin.price,
-        takeProfit: coin.price * 1.08,
+        takeProfit: coin.price * (1.06 + (unusualActivity ? 0.02 : 0)),
         stopLoss: coin.price * 0.96,
-        leverage: 4,
+        leverage,
       };
-    } else if (putCallRatio > 1.3 && openInterestTrend && impliedVolatility > 2) {
+    } else if (putCallSignal === 'BEARISH' && optionsFlow === 'BEARISH') {
+      const confidence = Math.min(baseConfidence + 0.1, 0.88);
+      const leverage = unusualActivity ? 5 : 4;
+
       return {
         botName: this.name,
         direction: 'SHORT',
-        confidence: 0.74,
+        confidence,
         entry: coin.price,
-        takeProfit: coin.price * 0.92,
+        takeProfit: coin.price * (0.94 - (unusualActivity ? 0.02 : 0)),
         stopLoss: coin.price * 1.04,
-        leverage: 4,
+        leverage,
+      };
+    } else if (unusualActivity && ivTrend === 'RISING') {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: 0.72,
+        entry: coin.price,
+        takeProfit: coin.price * 0.96,
+        stopLoss: coin.price * 1.03,
+        leverage: 3,
+      };
+    } else if (putCallRatio < 0.7 && optionsFlow === 'BULLISH') {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: 0.70,
+        entry: coin.price,
+        takeProfit: coin.price * 1.05,
+        stopLoss: coin.price * 0.97,
+        leverage: 3,
+      };
+    } else if (putCallRatio > 1.3 && optionsFlow === 'BEARISH') {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: 0.70,
+        entry: coin.price,
+        takeProfit: coin.price * 0.95,
+        stopLoss: coin.price * 1.03,
+        leverage: 3,
       };
     }
+
     return null;
   }
 }

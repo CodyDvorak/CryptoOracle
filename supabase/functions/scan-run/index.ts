@@ -80,6 +80,7 @@ Deno.serve(async (req: Request) => {
         }
 
         const derivativesData = await cryptoService.getDerivativesData(coin.symbol);
+        const optionsData = await cryptoService.getOptionsData(coin.symbol);
 
         let longVotes = 0;
         let shortVotes = 0;
@@ -89,7 +90,7 @@ Deno.serve(async (req: Request) => {
 
         for (const bot of tradingBots) {
           try {
-            const prediction = bot.analyze(ohlcvData, derivativesData, coin);
+            const prediction = bot.analyze(ohlcvData, derivativesData, coin, optionsData);
 
             if (prediction) {
               totalBotsVoting++;
