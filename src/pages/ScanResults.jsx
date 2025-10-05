@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { TrendingUp, TrendingDown, DollarSign, Percent, Activity, CircleAlert as AlertCircle, Info } from 'lucide-react'
 import { API_ENDPOINTS, getHeaders } from '../config/api'
 import BotDetailsModal from '../components/BotDetailsModal'
+import BotPredictionsPanel from '../components/BotPredictionsPanel'
 import './ScanResults.css'
 
 function ScanResults() {
@@ -141,6 +142,10 @@ function ScanResults() {
         <div className="no-recommendations">
           <p>No recommendations available in this category</p>
         </div>
+      )}
+
+      {scan?.id && (
+        <BotPredictionsPanel runId={scan.id} />
       )}
     </div>
   )
