@@ -1009,7 +1009,10 @@ class OptionsFlowBot extends TradingBot {
 
 class CMFBot extends TradingBot {
   analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
-    const { close, high, low, volume } = ohlcv;
+    const close = ohlcv.candles.map((c: any) => c.close);
+    const high = ohlcv.candles.map((c: any) => c.high);
+    const low = ohlcv.candles.map((c: any) => c.low);
+    const volume = ohlcv.candles.map((c: any) => c.volume);
     if (close.length < 20) return null;
 
     const moneyFlowMultiplier = close.map((c: number, i: number) =>
@@ -1077,7 +1080,7 @@ class LongShortRatioBot extends TradingBot {
 
 class TrendAnalyzer4HBot extends TradingBot {
   analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
-    const { close } = ohlcv;
+    const close = ohlcv.candles.map((c: any) => c.close);
     const { ema20, ema50, ema200 } = ohlcv.indicators;
 
     if (!ema20 || !ema50 || !ema200) return null;
@@ -1150,7 +1153,8 @@ class MultiTimeframeConfluenceBot extends TradingBot {
 
 class VolumeProfileBot extends TradingBot {
   analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
-    const { close, volume } = ohlcv;
+    const close = ohlcv.candles.map((c: any) => c.close);
+    const volume = ohlcv.candles.map((c: any) => c.volume);
     if (volume.length < 20) return null;
 
     const avgVolume = volume.slice(-20).reduce((a: number, b: number) => a + b) / 20;
@@ -1185,7 +1189,9 @@ class VolumeProfileBot extends TradingBot {
 
 class HarmonicPatternsBot extends TradingBot {
   analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
-    const { close, high, low } = ohlcv;
+    const close = ohlcv.candles.map((c: any) => c.close);
+    const high = ohlcv.candles.map((c: any) => c.high);
+    const low = ohlcv.candles.map((c: any) => c.low);
     if (close.length < 50) return null;
 
     const recent = close.slice(-50);
@@ -1224,7 +1230,9 @@ class HarmonicPatternsBot extends TradingBot {
 
 class ChartPatternsBot extends TradingBot {
   analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
-    const { close, high, low } = ohlcv;
+    const close = ohlcv.candles.map((c: any) => c.close);
+    const high = ohlcv.candles.map((c: any) => c.high);
+    const low = ohlcv.candles.map((c: any) => c.low);
     if (close.length < 30) return null;
 
     const recentClose = close.slice(-30);
@@ -1273,7 +1281,9 @@ class ChartPatternsBot extends TradingBot {
 
 class PriceActionBot extends TradingBot {
   analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
-    const { close, high, low } = ohlcv;
+    const close = ohlcv.candles.map((c: any) => c.close);
+    const high = ohlcv.candles.map((c: any) => c.high);
+    const low = ohlcv.candles.map((c: any) => c.low);
     if (close.length < 10) return null;
 
     const last5 = close.slice(-5);
@@ -1311,7 +1321,8 @@ class PriceActionBot extends TradingBot {
 
 class WyckoffBot extends TradingBot {
   analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
-    const { close, volume } = ohlcv;
+    const close = ohlcv.candles.map((c: any) => c.close);
+    const volume = ohlcv.candles.map((c: any) => c.volume);
     if (close.length < 30 || volume.length < 30) return null;
 
     const priceRange = Math.max(...close.slice(-30)) - Math.min(...close.slice(-30));
@@ -1348,7 +1359,10 @@ class WyckoffBot extends TradingBot {
 
 class MarketProfileBot extends TradingBot {
   analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
-    const { close, high, low, volume } = ohlcv;
+    const close = ohlcv.candles.map((c: any) => c.close);
+    const high = ohlcv.candles.map((c: any) => c.high);
+    const low = ohlcv.candles.map((c: any) => c.low);
+    const volume = ohlcv.candles.map((c: any) => c.volume);
     if (close.length < 20) return null;
 
     const valueArea = this.calculateValueArea(close, volume);
@@ -1393,7 +1407,10 @@ class MarketProfileBot extends TradingBot {
 
 class SmartMoneyConceptsBot extends TradingBot {
   analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
-    const { close, high, low, volume } = ohlcv;
+    const close = ohlcv.candles.map((c: any) => c.close);
+    const high = ohlcv.candles.map((c: any) => c.high);
+    const low = ohlcv.candles.map((c: any) => c.low);
+    const volume = ohlcv.candles.map((c: any) => c.volume);
     if (close.length < 20) return null;
 
     const avgVolume = volume.slice(-20).reduce((a: number, b: number) => a + b) / 20;
@@ -1420,7 +1437,10 @@ class SmartMoneyConceptsBot extends TradingBot {
 
 class LiquidityZonesBot extends TradingBot {
   analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
-    const { close, high, low, volume } = ohlcv;
+    const close = ohlcv.candles.map((c: any) => c.close);
+    const high = ohlcv.candles.map((c: any) => c.high);
+    const low = ohlcv.candles.map((c: any) => c.low);
+    const volume = ohlcv.candles.map((c: any) => c.volume);
     if (close.length < 30) return null;
 
     const liquidityZones = this.identifyLiquidityZones(close, volume);
@@ -1470,7 +1490,9 @@ class LiquidityZonesBot extends TradingBot {
 
 class FairValueGapsBot extends TradingBot {
   analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
-    const { close, high, low } = ohlcv;
+    const close = ohlcv.candles.map((c: any) => c.close);
+    const high = ohlcv.candles.map((c: any) => c.high);
+    const low = ohlcv.candles.map((c: any) => c.low);
     if (close.length < 10) return null;
 
     for (let i = close.length - 3; i > close.length - 8; i--) {
@@ -1511,7 +1533,9 @@ class FairValueGapsBot extends TradingBot {
 
 class MarketStructureBot extends TradingBot {
   analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
-    const { close, high, low } = ohlcv;
+    const close = ohlcv.candles.map((c: any) => c.close);
+    const high = ohlcv.candles.map((c: any) => c.high);
+    const low = ohlcv.candles.map((c: any) => c.low);
     if (close.length < 20) return null;
 
     const swingHighs = [];
@@ -1557,7 +1581,10 @@ class MarketStructureBot extends TradingBot {
 
 class SupplyDemandZonesBot extends TradingBot {
   analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
-    const { close, high, low, volume } = ohlcv;
+    const close = ohlcv.candles.map((c: any) => c.close);
+    const high = ohlcv.candles.map((c: any) => c.high);
+    const low = ohlcv.candles.map((c: any) => c.low);
+    const volume = ohlcv.candles.map((c: any) => c.volume);
     if (close.length < 30) return null;
 
     const zones = this.identifyZones(close, high, low, volume);
@@ -1613,7 +1640,10 @@ class SupplyDemandZonesBot extends TradingBot {
 
 class AccumulationDistributionBot extends TradingBot {
   analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
-    const { close, high, low, volume } = ohlcv;
+    const close = ohlcv.candles.map((c: any) => c.close);
+    const high = ohlcv.candles.map((c: any) => c.high);
+    const low = ohlcv.candles.map((c: any) => c.low);
+    const volume = ohlcv.candles.map((c: any) => c.volume);
     if (close.length < 20) return null;
 
     const adLine = [];
@@ -1702,7 +1732,8 @@ class ExchangeFlowBot extends TradingBot {
     const exchangeInflow = derivatives.exchangeInflow || 0;
     const exchangeOutflow = derivatives.exchangeOutflow || 0;
     const netFlow = exchangeOutflow - exchangeInflow;
-    const { close, volume } = ohlcv;
+    const close = ohlcv.candles.map((c: any) => c.close);
+    const volume = ohlcv.candles.map((c: any) => c.volume);
 
     const avgVolume = volume.slice(-20).reduce((a: number, b: number) => a + b) / 20;
     const volumeSignificant = volume[volume.length - 1] > avgVolume * 1.3;
@@ -1736,7 +1767,7 @@ class NetworkActivityBot extends TradingBot {
   analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
     const activeAddresses = derivatives.activeAddresses || 0;
     const transactionCount = derivatives.transactionCount || 0;
-    const { close } = ohlcv;
+    const close = ohlcv.candles.map((c: any) => c.close);
 
     const networkGrowth = activeAddresses > 100000 && transactionCount > 200000;
     const networkDecline = activeAddresses < 50000 && transactionCount < 100000;
@@ -1770,7 +1801,7 @@ class NetworkActivityBot extends TradingBot {
 class HashRateAnalysisBot extends TradingBot {
   analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
     const hashRate = derivatives.hashRate || 0;
-    const { close } = ohlcv;
+    const close = ohlcv.candles.map((c: any) => c.close);
 
     if (hashRate === 0) return null;
 
@@ -1807,7 +1838,8 @@ class MinerBehaviorBot extends TradingBot {
   analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
     const minerOutflow = derivatives.minerOutflow || 0;
     const minerReserves = derivatives.minerReserves || 0;
-    const { close, volume } = ohlcv;
+    const close = ohlcv.candles.map((c: any) => c.close);
+    const volume = ohlcv.candles.map((c: any) => c.volume);
 
     const sellingPressure = minerOutflow > 1000;
     const accumulating = minerOutflow < 500 && minerReserves > 50000;
@@ -1839,7 +1871,7 @@ class MinerBehaviorBot extends TradingBot {
 
 class CorrelationAnalysisBot extends TradingBot {
   analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
-    const { close } = ohlcv;
+    const close = ohlcv.candles.map((c: any) => c.close);
     const btcCorrelation = derivatives.btcCorrelation || 0.7;
     const btcTrend = derivatives.btcTrend || 'neutral';
 
