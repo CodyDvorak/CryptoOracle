@@ -96,6 +96,7 @@ const ALL_BOTS = [
 ]
 
 const SCAN_TYPES = [
+  { id: 'oracle_scan', name: '🔮 Oracle Scan (Ultimate)', duration: '12-15 min', coins: 200, bots: 87, description: 'THE ULTIMATE SCAN: All 87 bots + TokenMetrics AI + Hybrid Aggregation Intelligence + Multi-Timeframe Analysis + Derivatives + On-Chain + Social Sentiment + Regime-Aware Weighting + Contrarian Detection + 80%+ Consensus Boost. Maximum feature integration for best possible results.', aiEnabled: true, featured: true },
   { id: 'quick_scan', name: 'Quick Scan', duration: '7-8 min', coins: 100, bots: 87, description: 'Real-time TA analysis of top 100 coins using 87 specialized bots. Market regime classification with confidence gating.', aiEnabled: false },
   { id: 'deep_analysis', name: 'Deep Analysis', duration: '4-5 min', coins: 50, bots: 87, description: 'Comprehensive OHLCV + derivatives analysis with regime-aware bot weighting across all 87 bots.', aiEnabled: true },
   { id: 'top200_scan', name: 'Top 200 Scan', duration: '14-16 min', coins: 200, bots: 87, description: 'Extensive market scan with real API data across CMC, CoinGecko, CryptoCompare analyzed by 87 bots.', aiEnabled: false },
@@ -114,7 +115,7 @@ const SCAN_TYPES = [
 ]
 
 function Dashboard() {
-  const [selectedScan, setSelectedScan] = useState('quick_scan')
+  const [selectedScan, setSelectedScan] = useState('oracle_scan')
   const [isScanning, setIsScanning] = useState(false)
   const [scanProgress, setScanProgress] = useState(null)
   const [scanStatus, setScanStatus] = useState(null)
@@ -125,6 +126,8 @@ function Dashboard() {
   const [elapsedTime, setElapsedTime] = useState(0)
   const [selectedRecommendation, setSelectedRecommendation] = useState(null)
   const [showBotDetails, setShowBotDetails] = useState(false)
+  const [minPrice, setMinPrice] = useState('')
+  const [maxPrice, setMaxPrice] = useState('')
 
   useEffect(() => {
     fetchLatestRecommendations()
@@ -270,17 +273,27 @@ function Dashboard() {
     const coinLimit = typeof scanConfig?.coins === 'number' ? scanConfig.coins : 100
 
     try {
+      const scanBody = {
+        scanType: selectedScan,
+        filterScope: 'all',
+        interval: '4h',
+        coinLimit: coinLimit,
+        useDeepAI: scanConfig?.aiEnabled || false,
+        confidenceThreshold: selectedScan === 'oracle_scan' ? 0.70 : 0.60
+      }
+
+      // Add price filters if specified
+      if (minPrice && !isNaN(parseFloat(minPrice))) {
+        scanBody.minPrice = parseFloat(minPrice)
+      }
+      if (maxPrice && !isNaN(parseFloat(maxPrice))) {
+        scanBody.maxPrice = parseFloat(maxPrice)
+      }
+
       const response = await fetch(API_ENDPOINTS.scanRun, {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify({
-          scanType: selectedScan,
-          filterScope: 'all',
-          interval: '4h',
-          coinLimit: coinLimit,
-          useDeepAI: scanConfig?.aiEnabled || false,
-          confidenceThreshold: 0.60
-        })
+        body: JSON.stringify(scanBody)
       })
 
       if (!response.ok) {
@@ -383,6 +396,35 @@ function Dashboard() {
           </select>
         </div>
 
+        <div className="price-filters">
+          <div className="price-filter-item">
+            <label htmlFor="min-price">Minimum Price ($)</label>
+            <input
+              id="min-price"
+              type="number"
+              placeholder="e.g., 0.01"
+              value={minPrice}
+              onChange={(e) => setMinPrice(e.target.value)}
+              disabled={isScanning}
+              min="0"
+              step="0.01"
+            />
+          </div>
+          <div className="price-filter-item">
+            <label htmlFor="max-price">Maximum Price ($)</label>
+            <input
+              id="max-price"
+              type="number"
+              placeholder="e.g., 100"
+              value={maxPrice}
+              onChange={(e) => setMaxPrice(e.target.value)}
+              disabled={isScanning}
+              min="0"
+              step="0.01"
+            />
+          </div>
+        </div>
+
         {selectedScanInfo && (
           <div className="scan-info-grid">
             <div className="scan-info-item">
@@ -463,7 +505,7 @@ function Dashboard() {
           </div>
           <div className="stat-content">
             <span className="stat-label">Total Bots</span>
-            <span className="stat-value">59</span>
+            <span className="stat-value">87</span>
           </div>
         </div>
         <div className="stat-card">
@@ -556,6 +598,7 @@ function Dashboard() {
         <div className="info-card">
           <h3>Scan Types</h3>
           <ul>
+            <li><strong>🔮 Oracle Scan (Ultimate):</strong> 12-15 min, 200 coins - All 87 bots + TokenMetrics AI + Hybrid Aggregation + Multi-Timeframe + All APIs + Max Features</li>
             <li><strong>Quick Scan:</strong> 7-8 min, 100 coins - Real-time TA analysis with market regime classification</li>
             <li><strong>Deep Analysis:</strong> 4-5 min, 50 coins - Comprehensive OHLCV + derivatives with AI refinement</li>
             <li><strong>Top 200/500 Scan:</strong> 14-40 min - Extended market coverage across multiple data providers</li>
