@@ -445,6 +445,11 @@ export class CryptoDataService {
     return await optionsDataService.getOptionsData(symbol);
   }
 
+  async getTokenMetricsData(symbol: string): Promise<any | null> {
+    const { tokenMetricsService } = await import('./tokenmetrics-service.ts');
+    return await tokenMetricsService.getTokenData(symbol);
+  }
+
   private calculateRSI(prices: number[], period = 14): number {
     if (prices.length < period + 1) return 50;
 

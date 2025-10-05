@@ -81,6 +81,7 @@ Deno.serve(async (req: Request) => {
 
         const derivativesData = await cryptoService.getDerivativesData(coin.symbol);
         const optionsData = await cryptoService.getOptionsData(coin.symbol);
+        const tokenMetricsData = await cryptoService.getTokenMetricsData(coin.symbol);
 
         let longVotes = 0;
         let shortVotes = 0;
@@ -135,13 +136,36 @@ Deno.serve(async (req: Request) => {
             ? directionPredictions.reduce((sum, p) => sum + p.stop_loss, 0) / directionPredictions.length
             : (consensusDirection === 'LONG' ? coin.price * 0.97 : coin.price * 1.03);
 
+          let finalConfidence = avgConfidence;
+          let aiReasoning = 'N/A';
+
+          if (tokenMetricsData?.supported && tokenMetricsData.rating) {
+            const tmScore = (tokenMetricsData.rating.overall + tokenMetricsData.rating.trader) / 200;
+
+            if (tokenMetricsData.recommendation === 'STRONG_BUY' && consensusDirection === 'LONG') {
+              finalConfidence = Math.min(finalConfidence * 1.15, 0.95);
+              aiReasoning = 'TokenMetrics STRONG_BUY confirms bot consensus';
+            } else if (tokenMetricsData.recommendation === 'STRONG_SELL' && consensusDirection === 'SHORT') {
+              finalConfidence = Math.min(finalConfidence * 1.15, 0.95);
+              aiReasoning = 'TokenMetrics STRONG_SELL confirms bot consensus';
+            } else if (
+              (tokenMetricsData.recommendation === 'STRONG_SELL' && consensusDirection === 'LONG') ||
+              (tokenMetricsData.recommendation === 'STRONG_BUY' && consensusDirection === 'SHORT')
+            ) {
+              finalConfidence *= 0.85;
+              aiReasoning = 'TokenMetrics conflicts with bot consensus';
+            }
+
+            console.log(`🤖 TokenMetrics for ${coin.symbol}: ${tokenMetricsData.recommendation} (Score: ${(tmScore * 100).toFixed(0)}%)`);
+          }
+
           recommendations.push({
             run_id: scanRun.id,
             coin: coin.name,
             ticker: coin.symbol,
             current_price: coin.price,
             consensus_direction: consensusDirection,
-            avg_confidence: avgConfidence,
+            avg_confidence: finalConfidence,
             avg_entry: avgEntry,
             avg_take_profit: avgTakeProfit,
             avg_stop_loss: avgStopLoss,
@@ -155,8 +179,11 @@ Deno.serve(async (req: Request) => {
               ? coin.price * 1.08
               : coin.price * 0.92,
             bot_count: totalBotsVoting,
+            bot_votes_long: longVotes,
+            bot_votes_short: shortVotes,
             market_regime: ohlcvData.marketRegime || 'UNKNOWN',
             regime_confidence: ohlcvData.regimeConfidence || 0.5,
+            ai_reasoning: aiReasoning,
           });
 
           botPredictions.push(...coinPredictions);
