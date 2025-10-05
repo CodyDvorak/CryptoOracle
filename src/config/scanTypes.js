@@ -8,7 +8,7 @@ export const SCAN_TYPES = [
     coinLimit: 100,
     confidenceThreshold: 0.7,
     useDeepAI: false,
-    estimatedDuration: '45-60 seconds',
+    estimatedDuration: '2-3 minutes',
     icon: '⚡',
     color: '#3b82f6'
   },
@@ -44,7 +44,7 @@ export const SCAN_TYPES = [
     coinLimit: 500,
     confidenceThreshold: 0.65,
     useDeepAI: false,
-    estimatedDuration: '4-5 minutes',
+    estimatedDuration: '5-7 minutes',
     icon: '🌐',
     color: '#f59e0b'
   },
