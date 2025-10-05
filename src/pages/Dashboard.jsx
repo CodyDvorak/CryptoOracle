@@ -502,11 +502,20 @@ function Dashboard() {
         <div className="info-card">
           <h3>Scan Types</h3>
           <ul>
-            <li><strong>Speed Run:</strong> 4-5 min, 75 coins, 25 top bots</li>
-            <li><strong>Quick Scan:</strong> 7-10 min, 100 coins, 48 bots</li>
-            <li><strong>Focused AI:</strong> 25-28 min, AI analysis on top 20</li>
-            <li><strong>All In:</strong> 30-35 min, 500 coins maximum coverage</li>
-            <li><strong>All In + AI:</strong> 45-50 min, full AI insights</li>
+            <li><strong>Quick Scan:</strong> 3-5 min, 100 coins - Real-time TA analysis with market regime classification</li>
+            <li><strong>Deep Analysis:</strong> 4-6 min, 50 coins - Comprehensive OHLCV + derivatives with AI refinement</li>
+            <li><strong>Top 200/500 Scan:</strong> 8-20 min - Extended market coverage across multiple data providers</li>
+            <li><strong>High Conviction:</strong> 8-12 min - 80%+ bot consensus signals only</li>
+            <li><strong>Trending Markets:</strong> 8-12 min - BULL regime detection with momentum confirmation</li>
+            <li><strong>Reversal Opportunities:</strong> 8-12 min - Mean-reversion setups in SIDEWAYS regimes</li>
+            <li><strong>Volatile Markets:</strong> 8-12 min - High ATR (&gt;4%) coins with expanded Bollinger Bands</li>
+            <li><strong>Whale Activity:</strong> 8-12 min - Volume spike detection and large order flow tracking</li>
+            <li><strong>Futures Signals:</strong> 8-12 min - Real derivatives data: funding rates, OI, long/short ratios</li>
+            <li><strong>Breakout Hunter:</strong> 8-12 min - Support/resistance breaks with volume confirmation</li>
+            <li><strong>AI-Powered Full Scan:</strong> 5-8 min - All 59 bots + GPT-4 deep analysis</li>
+            <li><strong>Low Cap Gems:</strong> 10-15 min - Coins ranked 201-500 with strong technical signals</li>
+            <li><strong>Elliott Wave Scan:</strong> 8-12 min - Fibonacci levels + wave pattern detection</li>
+            <li><strong>Custom Scan:</strong> Varies - Fully customizable parameters and bot selection</li>
           </ul>
         </div>
       </div>
