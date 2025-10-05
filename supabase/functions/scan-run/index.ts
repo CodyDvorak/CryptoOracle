@@ -43,7 +43,7 @@ Deno.serve(async (req: Request) => {
         max_price: maxPrice,
         scan_type: scanType,
         status: 'running',
-        total_bots: 59,
+        total_bots: 87,
         total_coins: actualCoinLimit,
       })
       .select()

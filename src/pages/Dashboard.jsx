@@ -65,24 +65,52 @@ const ALL_BOTS = [
   '4H Trend Analyzer',
   'Multi-Timeframe Confluence',
   'Volume Profile Analysis',
+  'SMA Cross',
+  'EMA Ribbon',
+  'EMA Cross',
+  'SuperTrend',
+  'Trend Strength',
+  'Linear Regression',
+  'Triple MA',
+  'Vortex Indicator',
+  'Aroon Indicator',
+  'Heikin-Ashi',
+  'Rate of Change',
+  'Money Flow Index',
+  'Ultimate Oscillator',
+  'Keltner Channel',
+  'Donchian Channel',
+  'Moving Average Envelope',
+  'Volatility Breakout',
+  'Z-Score Mean Reversion',
+  'Consolidation Breakout',
+  'Swing Trading',
+  'Conservative',
+  'Scalping',
+  'Divergence Detection',
+  'RSI Reversal',
+  'Bollinger Reversal',
+  'Stochastic Reversal',
+  'Volume Price Trend',
+  'Volume Spike Fade',
 ]
 
 const SCAN_TYPES = [
-  { id: 'quick_scan', name: 'Quick Scan', duration: '7-8 min', coins: 100, bots: 59, description: 'Real-time TA analysis of top 100 coins. Market regime classification with confidence gating.', aiEnabled: false },
-  { id: 'deep_analysis', name: 'Deep Analysis', duration: '4-5 min', coins: 50, bots: 59, description: 'Comprehensive OHLCV + derivatives analysis with regime-aware bot weighting.', aiEnabled: true },
-  { id: 'top200_scan', name: 'Top 200 Scan', duration: '14-16 min', coins: 200, bots: 59, description: 'Extensive market scan with real API data across CMC, CoinGecko, CryptoCompare.', aiEnabled: false },
-  { id: 'top500_scan', name: 'Top 500 Scan', duration: '35-40 min', coins: 500, bots: 59, description: 'Complete market coverage. Multi-provider fallback ensures data quality.', aiEnabled: false },
-  { id: 'high_conviction', name: 'High Conviction', duration: '14-16 min', coins: 200, bots: 59, description: '80%+ bot consensus detection. Strong agreement signals only.', aiEnabled: false },
-  { id: 'trending_coins', name: 'Trending Markets', duration: '14-16 min', coins: 200, bots: 59, description: 'BULL regime detection (ADX > 25, golden alignment, momentum confirmation).', aiEnabled: false },
-  { id: 'reversal_opportunities', name: 'Reversal Opportunities', duration: '14-16 min', coins: 200, bots: 59, description: 'Mean-reversion in SIDEWAYS regimes. RSI divergence + Bollinger squeeze.', aiEnabled: false },
-  { id: 'volatile_markets', name: 'Volatile Markets', duration: '14-16 min', coins: 200, bots: 59, description: 'High ATR (>4%) with real volatility indicators. Expanded Bollinger Bands.', aiEnabled: false },
-  { id: 'whale_activity', name: 'Whale Activity', duration: '14-16 min', coins: 200, bots: 59, description: 'Volume spike detection (>2.5x average). Large price impact tracking.', aiEnabled: false },
-  { id: 'futures_signals', name: 'Futures Signals', duration: '14-16 min', coins: 200, bots: 59, description: 'Real derivatives data: OKX funding rates, Binance OI, long/short ratios.', aiEnabled: false },
-  { id: 'breakout_hunter', name: 'Breakout Hunter', duration: '14-16 min', coins: 200, bots: 59, description: 'Support/resistance breaks with volume confirmation (>1.3x average).', aiEnabled: false },
-  { id: 'ai_powered_scan', name: 'AI-Powered Full Scan', duration: '8-10 min', coins: 100, bots: 59, description: 'All 59 bots + market regime classification + consensus detection.', aiEnabled: true },
-  { id: 'low_cap_gems', name: 'Low Cap Gems', duration: '22-25 min', coins: 300, bots: 59, description: 'Coins ranked 201-500 with full technical analysis and regime detection.', aiEnabled: false },
-  { id: 'elliott_wave_scan', name: 'Elliott Wave Scan', duration: '14-16 min', coins: 200, bots: 59, description: 'Fibonacci retracement levels + wave pattern detection + price structure.', aiEnabled: false },
-  { id: 'custom_scan', name: 'Custom Scan', duration: 'Varies', coins: 'Custom', bots: 59, description: 'Fully customizable with all 59 bots and regime-aware weighting.', aiEnabled: false },
+  { id: 'quick_scan', name: 'Quick Scan', duration: '7-8 min', coins: 100, bots: 87, description: 'Real-time TA analysis of top 100 coins using 87 specialized bots. Market regime classification with confidence gating.', aiEnabled: false },
+  { id: 'deep_analysis', name: 'Deep Analysis', duration: '4-5 min', coins: 50, bots: 87, description: 'Comprehensive OHLCV + derivatives analysis with regime-aware bot weighting across all 87 bots.', aiEnabled: true },
+  { id: 'top200_scan', name: 'Top 200 Scan', duration: '14-16 min', coins: 200, bots: 87, description: 'Extensive market scan with real API data across CMC, CoinGecko, CryptoCompare analyzed by 87 bots.', aiEnabled: false },
+  { id: 'top500_scan', name: 'Top 500 Scan', duration: '35-40 min', coins: 500, bots: 87, description: 'Complete market coverage with all 87 bots. Multi-provider fallback ensures data quality.', aiEnabled: false },
+  { id: 'high_conviction', name: 'High Conviction', duration: '14-16 min', coins: 200, bots: 87, description: '80%+ bot consensus detection across 87 bots. Strong agreement signals only.', aiEnabled: false },
+  { id: 'trending_coins', name: 'Trending Markets', duration: '14-16 min', coins: 200, bots: 87, description: 'BULL regime detection (ADX > 25, golden alignment, momentum confirmation) using 26 trend-following bots.', aiEnabled: false },
+  { id: 'reversal_opportunities', name: 'Reversal Opportunities', duration: '14-16 min', coins: 200, bots: 87, description: 'Mean-reversion strategies in SIDEWAYS regimes. RSI divergence + Bollinger squeeze + contrarian bots.', aiEnabled: false },
+  { id: 'volatile_markets', name: 'Volatile Markets', duration: '14-16 min', coins: 200, bots: 87, description: 'High ATR (>4%) analyzed by 12 volatility bots. Expanded Bollinger Bands + Keltner Channels.', aiEnabled: false },
+  { id: 'whale_activity', name: 'Whale Activity', duration: '14-16 min', coins: 200, bots: 87, description: 'Volume spike detection (>2.5x average) with 10 volume-based bots. Large price impact tracking.', aiEnabled: false },
+  { id: 'futures_signals', name: 'Futures Signals', duration: '14-16 min', coins: 200, bots: 87, description: 'Real derivatives data: OKX funding rates, Binance OI, long/short ratios analyzed by 5 derivatives bots.', aiEnabled: false },
+  { id: 'breakout_hunter', name: 'Breakout Hunter', duration: '14-16 min', coins: 200, bots: 87, description: 'Support/resistance breaks with volume confirmation using Donchian Channel + pattern recognition bots.', aiEnabled: false },
+  { id: 'ai_powered_scan', name: 'AI-Powered Full Scan', duration: '8-10 min', coins: 100, bots: 87, description: 'All 87 bots + TokenMetrics AI + market regime classification + multi-layer consensus.', aiEnabled: true },
+  { id: 'low_cap_gems', name: 'Low Cap Gems', duration: '22-25 min', coins: 300, bots: 87, description: 'Coins ranked 201-500 analyzed by all 87 bots with regime detection and on-chain metrics.', aiEnabled: false },
+  { id: 'elliott_wave_scan', name: 'Elliott Wave Scan', duration: '14-16 min', coins: 200, bots: 87, description: 'Fibonacci retracement + Elliott Wave + Harmonic patterns analyzed by 10 pattern recognition bots.', aiEnabled: false },
+  { id: 'custom_scan', name: 'Custom Scan', duration: 'Varies', coins: 'Custom', bots: 87, description: 'Fully customizable with all 87 bots and regime-aware weighting across all categories.', aiEnabled: false },
 ]
 
 function Dashboard() {
@@ -513,7 +541,7 @@ function Dashboard() {
             <li><strong>Data Collection:</strong> Real-time OHLCV data from CMC, CoinGecko, CryptoCompare with multi-provider fallback</li>
             <li><strong>Derivatives Integration:</strong> Live funding rates, open interest, and long/short ratios from OKX and Binance</li>
             <li><strong>On-Chain Analysis:</strong> Whale movements, exchange flows, network activity, and smart money tracking</li>
-            <li><strong>59 Specialized Bots:</strong> Each bot analyzes specific technical indicators, patterns, and market conditions</li>
+            <li><strong>87 Specialized Bots:</strong> 26 trend-following, 18 momentum, 10 volume, 12 volatility, 10 pattern recognition, 5 derivatives, and 6 specialized strategy bots</li>
             <li><strong>Bot Voting System:</strong> Every bot votes LONG/SHORT with confidence score (1-10) based on its strategy</li>
             <li><strong>Market Regime Detection:</strong> Classifies market as BULL (trending up), BEAR (trending down), or SIDEWAYS</li>
             <li><strong>Regime-Aware Weighting:</strong> Momentum bots weighted higher in trends, mean-reversion bots in ranging markets</li>
@@ -538,7 +566,7 @@ function Dashboard() {
             <li><strong>Whale Activity:</strong> 14-16 min - Volume spike detection and large order flow tracking</li>
             <li><strong>Futures Signals:</strong> 14-16 min - Real derivatives data: funding rates, OI, long/short ratios</li>
             <li><strong>Breakout Hunter:</strong> 14-16 min - Support/resistance breaks with volume confirmation</li>
-            <li><strong>AI-Powered Full Scan:</strong> 8-10 min - All 59 bots + GPT-4 deep analysis</li>
+            <li><strong>AI-Powered Full Scan:</strong> 8-10 min - All 87 bots + TokenMetrics AI + multi-layer consensus</li>
             <li><strong>Low Cap Gems:</strong> 22-25 min - Coins ranked 201-500 with strong technical signals</li>
             <li><strong>Elliott Wave Scan:</strong> 14-16 min - Fibonacci levels + wave pattern detection</li>
             <li><strong>Custom Scan:</strong> Varies - Fully customizable parameters and bot selection</li>
@@ -549,7 +577,7 @@ function Dashboard() {
       <div className="bots-status-section">
         <div className="bots-status-header">
           <h2>Trading Bots Status</h2>
-          <p>All 59 bots operational and ready</p>
+          <p>All 87 bots operational and ready</p>
         </div>
         <div className="bots-grid">
           {ALL_BOTS.map((botName, index) => (

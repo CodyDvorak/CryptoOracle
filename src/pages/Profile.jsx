@@ -29,7 +29,7 @@ export default function Profile() {
   })
 
   const SCAN_TYPES = [
-    { id: 'quick_scan', name: 'Quick Scan (100 coins, 59 bots)' },
+    { id: 'quick_scan', name: 'Quick Scan (100 coins, 87 bots)' },
     { id: 'deep_analysis', name: 'Deep Analysis (50 coins + AI)' },
     { id: 'top200_scan', name: 'Top 200 Scan' },
     { id: 'top500_scan', name: 'Top 500 Scan' },
