@@ -19,9 +19,52 @@ interface BotPrediction {
 }
 
 async function getCurrentPrice(symbol: string): Promise<number | null> {
+  const cmcApiKey = Deno.env.get('COINMARKETCAP_API_KEY') || '';
+  const coinGeckoApiKey = Deno.env.get('COINGECKO_API_KEY') || '';
+  const cryptoCompareApiKey = Deno.env.get('CRYPTOCOMPARE_API_KEY') || '';
+
+  let price = await getCurrentPriceFromCMC(symbol, cmcApiKey);
+  if (price) return price;
+
+  price = await getCurrentPriceFromCoinGecko(symbol, coinGeckoApiKey);
+  if (price) return price;
+
+  price = await getCurrentPriceFromCryptoCompare(symbol, cryptoCompareApiKey);
+  return price;
+}
+
+async function getCurrentPriceFromCMC(symbol: string, apiKey: string): Promise<number | null> {
   try {
     const response = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${symbol.toLowerCase()}&vs_currencies=usd`
+      `https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest?symbol=${symbol.toUpperCase()}`,
+      {
+        headers: {
+          'X-CMC_PRO_API_KEY': apiKey,
+          'Accept': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    return data.data?.[symbol.toUpperCase()]?.[0]?.quote?.USD?.price || null;
+  } catch (error) {
+    console.error(`CMC price fetch failed for ${symbol}:`, error);
+    return null;
+  }
+}
+
+async function getCurrentPriceFromCoinGecko(symbol: string, apiKey: string): Promise<number | null> {
+  try {
+    const headers: any = { 'Accept': 'application/json' };
+    if (apiKey) {
+      headers['x-cg-pro-api-key'] = apiKey;
+    }
+
+    const response = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${symbol.toLowerCase()}&vs_currencies=usd`,
+      { headers }
     );
 
     if (!response.ok) return null;
@@ -29,7 +72,29 @@ async function getCurrentPrice(symbol: string): Promise<number | null> {
     const data = await response.json();
     return data[symbol.toLowerCase()]?.usd || null;
   } catch (error) {
-    console.error(`Failed to fetch price for ${symbol}:`, error);
+    console.error(`CoinGecko price fetch failed for ${symbol}:`, error);
+    return null;
+  }
+}
+
+async function getCurrentPriceFromCryptoCompare(symbol: string, apiKey: string): Promise<number | null> {
+  try {
+    const response = await fetch(
+      `https://min-api.cryptocompare.com/data/price?fsym=${symbol.toUpperCase()}&tsyms=USD`,
+      {
+        headers: {
+          'authorization': `Apikey ${apiKey}`,
+          'Accept': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    return data.USD || null;
+  } catch (error) {
+    console.error(`CryptoCompare price fetch failed for ${symbol}:`, error);
     return null;
   }
 }

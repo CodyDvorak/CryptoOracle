@@ -436,21 +436,8 @@ export class CryptoDataService {
   }
 
   async getDerivativesData(symbol: string): Promise<DerivativesData | null> {
-    try {
-      return {
-        symbol,
-        openInterest: Math.random() * 100000000,
-        fundingRate: (Math.random() - 0.5) * 0.001,
-        longShortRatio: 0.8 + Math.random() * 0.4,
-        liquidations24h: {
-          longs: Math.random() * 10000000,
-          shorts: Math.random() * 10000000,
-        },
-        premiumIndex: (Math.random() - 0.5) * 0.01,
-      };
-    } catch (error) {
-      return null;
-    }
+    const { derivativesDataService } = await import('./derivatives-data-service.ts');
+    return await derivativesDataService.getDerivativesData(symbol);
   }
 
   private calculateRSI(prices: number[], period = 14): number {
