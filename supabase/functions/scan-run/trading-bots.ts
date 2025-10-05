@@ -2007,6 +2007,1054 @@ class MarketSentimentBot extends TradingBot {
   }
 }
 
+class SMACrossBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const { sma20, sma50 } = ohlcv.indicators;
+    const separation = Math.abs(sma20 - sma50) / sma50;
+
+    if (sma20 > sma50) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: Math.min(0.6 + separation * 2, 0.85),
+        entry: coin.price,
+        takeProfit: coin.price * 1.06,
+        stopLoss: coin.price * 0.965,
+        leverage: 4,
+      };
+    } else if (sma20 < sma50) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: Math.min(0.6 + separation * 2, 0.85),
+        entry: coin.price,
+        takeProfit: coin.price * 0.94,
+        stopLoss: coin.price * 1.035,
+        leverage: 4,
+      };
+    }
+    return null;
+  }
+}
+
+class EMARibbonBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const { ema9, ema21 } = ohlcv.indicators;
+    const price = coin.price;
+
+    if (price > ema9 && ema9 > ema21) {
+      const strength = ((price - ema21) / ema21) * 100;
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: Math.min(0.7 + strength / 10, 0.9),
+        entry: coin.price,
+        takeProfit: coin.price * 1.07,
+        stopLoss: coin.price * 0.96,
+        leverage: 5,
+      };
+    } else if (price < ema9 && ema9 < ema21) {
+      const strength = ((ema21 - price) / ema21) * 100;
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: Math.min(0.7 + strength / 10, 0.9),
+        entry: coin.price,
+        takeProfit: coin.price * 0.93,
+        stopLoss: coin.price * 1.04,
+        leverage: 5,
+      };
+    }
+    return null;
+  }
+}
+
+class EMACrossBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const { ema20, ema50 } = ohlcv.indicators;
+    const candles = ohlcv.candles;
+
+    if (candles.length < 2) return null;
+
+    const prevEma20 = ohlcv.indicators.ema20_prev || ema20;
+    const prevEma50 = ohlcv.indicators.ema50_prev || ema50;
+
+    const bullishCross = prevEma20 <= prevEma50 && ema20 > ema50;
+    const bearishCross = prevEma20 >= prevEma50 && ema20 < ema50;
+
+    if (bullishCross) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: 0.75,
+        entry: coin.price,
+        takeProfit: coin.price * 1.07,
+        stopLoss: coin.price * 0.96,
+        leverage: 5,
+      };
+    } else if (bearishCross) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: 0.75,
+        entry: coin.price,
+        takeProfit: coin.price * 0.93,
+        stopLoss: coin.price * 1.04,
+        leverage: 5,
+      };
+    }
+    return null;
+  }
+}
+
+class SuperTrendBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const atr = ohlcv.indicators.atr;
+    const price = coin.price;
+    const { sma20 } = ohlcv.indicators;
+
+    const multiplier = 3;
+    const upperBand = sma20 + (multiplier * atr);
+    const lowerBand = sma20 - (multiplier * atr);
+
+    if (price > upperBand) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: 0.78,
+        entry: coin.price,
+        takeProfit: coin.price * 1.08,
+        stopLoss: lowerBand,
+        leverage: 5,
+      };
+    } else if (price < lowerBand) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: 0.78,
+        entry: coin.price,
+        takeProfit: coin.price * 0.92,
+        stopLoss: upperBand,
+        leverage: 5,
+      };
+    }
+    return null;
+  }
+}
+
+class TrendStrengthBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const candles = ohlcv.candles;
+    if (candles.length < 168) return null;
+
+    const price24hAgo = candles[candles.length - 24].close;
+    const price7dAgo = candles[candles.length - 168].close;
+    const currentPrice = coin.price;
+
+    const change24h = ((currentPrice - price24hAgo) / price24hAgo) * 100;
+    const change7d = ((currentPrice - price7dAgo) / price7dAgo) * 100;
+
+    if (change24h > 1 && change7d > 3) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: Math.min(0.6 + (change24h + change7d) / 20, 0.9),
+        entry: coin.price,
+        takeProfit: coin.price * 1.06,
+        stopLoss: coin.price * 0.97,
+        leverage: 4,
+      };
+    } else if (change24h < -1 && change7d < -3) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: Math.min(0.6 + Math.abs(change24h + change7d) / 20, 0.9),
+        entry: coin.price,
+        takeProfit: coin.price * 0.94,
+        stopLoss: coin.price * 1.03,
+        leverage: 4,
+      };
+    }
+    return null;
+  }
+}
+
+class LinearRegressionBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const closes = ohlcv.candles.slice(-20).map((c: any) => c.close);
+    if (closes.length < 20) return null;
+
+    const n = closes.length;
+    const x = Array.from({length: n}, (_, i) => i);
+    const sumX = x.reduce((a, b) => a + b, 0);
+    const sumY = closes.reduce((a: number, b: number) => a + b, 0);
+    const sumXY = x.reduce((sum, xi, i) => sum + xi * closes[i], 0);
+    const sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0);
+
+    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const intercept = (sumY - slope * sumX) / n;
+    const regressionValue = slope * (n - 1) + intercept;
+    const deviation = ((coin.price - regressionValue) / regressionValue) * 100;
+
+    if (coin.price > regressionValue && slope > 0) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: Math.min(0.65 + Math.abs(deviation) / 50, 0.85),
+        entry: coin.price,
+        takeProfit: coin.price * 1.06,
+        stopLoss: coin.price * 0.97,
+        leverage: 4,
+      };
+    } else if (coin.price < regressionValue && slope < 0) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: Math.min(0.65 + Math.abs(deviation) / 50, 0.85),
+        entry: coin.price,
+        takeProfit: coin.price * 0.94,
+        stopLoss: coin.price * 1.03,
+        leverage: 4,
+      };
+    }
+    return null;
+  }
+}
+
+class TripleMABot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const { sma20, sma50, ema200 } = ohlcv.indicators;
+
+    if (sma20 > sma50 && sma50 > ema200) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: 0.82,
+        entry: coin.price,
+        takeProfit: coin.price * 1.08,
+        stopLoss: coin.price * 0.96,
+        leverage: 5,
+      };
+    } else if (sma20 < sma50 && sma50 < ema200) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: 0.82,
+        entry: coin.price,
+        takeProfit: coin.price * 0.92,
+        stopLoss: coin.price * 1.04,
+        leverage: 5,
+      };
+    }
+    return null;
+  }
+}
+
+class VortexBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const candles = ohlcv.candles.slice(-14);
+    if (candles.length < 14) return null;
+
+    let viPlus = 0, viMinus = 0, trueRange = 0;
+
+    for (let i = 1; i < candles.length; i++) {
+      const high = candles[i].high;
+      const low = candles[i].low;
+      const prevHigh = candles[i-1].high;
+      const prevLow = candles[i-1].low;
+      const prevClose = candles[i-1].close;
+
+      viPlus += Math.abs(high - prevLow);
+      viMinus += Math.abs(low - prevHigh);
+      trueRange += Math.max(high - low, Math.abs(high - prevClose), Math.abs(low - prevClose));
+    }
+
+    const viPlusNorm = viPlus / trueRange;
+    const viMinusNorm = viMinus / trueRange;
+
+    if (viPlusNorm > viMinusNorm && viPlusNorm > 1.1) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: Math.min(0.65 + (viPlusNorm - viMinusNorm) * 0.3, 0.85),
+        entry: coin.price,
+        takeProfit: coin.price * 1.06,
+        stopLoss: coin.price * 0.97,
+        leverage: 4,
+      };
+    } else if (viMinusNorm > viPlusNorm && viMinusNorm > 1.1) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: Math.min(0.65 + (viMinusNorm - viPlusNorm) * 0.3, 0.85),
+        entry: coin.price,
+        takeProfit: coin.price * 0.94,
+        stopLoss: coin.price * 1.03,
+        leverage: 4,
+      };
+    }
+    return null;
+  }
+}
+
+class AroonBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const candles = ohlcv.candles.slice(-25);
+    if (candles.length < 25) return null;
+
+    const highs = candles.map((c: any) => c.high);
+    const lows = candles.map((c: any) => c.low);
+
+    const daysSinceHigh = highs.length - 1 - highs.lastIndexOf(Math.max(...highs));
+    const daysSinceLow = lows.length - 1 - lows.lastIndexOf(Math.min(...lows));
+
+    const aroonUp = ((25 - daysSinceHigh) / 25) * 100;
+    const aroonDown = ((25 - daysSinceLow) / 25) * 100;
+
+    if (aroonUp > 70 && aroonDown < 30) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: 0.72,
+        entry: coin.price,
+        takeProfit: coin.price * 1.07,
+        stopLoss: coin.price * 0.97,
+        leverage: 4,
+      };
+    } else if (aroonDown > 70 && aroonUp < 30) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: 0.72,
+        entry: coin.price,
+        takeProfit: coin.price * 0.93,
+        stopLoss: coin.price * 1.03,
+        leverage: 4,
+      };
+    }
+    return null;
+  }
+}
+
+class HeikinAshiBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const candles = ohlcv.candles.slice(-5);
+    if (candles.length < 5) return null;
+
+    const haCandles = candles.map((c: any, i: number) => {
+      const haClose = (c.open + c.high + c.low + c.close) / 4;
+      const haOpen = i === 0 ? (c.open + c.close) / 2 :
+                     (candles[i-1].open + candles[i-1].close) / 2;
+      const haHigh = Math.max(c.high, haOpen, haClose);
+      const haLow = Math.min(c.low, haOpen, haClose);
+
+      return { open: haOpen, high: haHigh, low: haLow, close: haClose };
+    });
+
+    const allBullish = haCandles.every((c: any) => c.close > c.open && c.low === c.open);
+    const allBearish = haCandles.every((c: any) => c.close < c.open && c.high === c.open);
+
+    if (allBullish) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: 0.8,
+        entry: coin.price,
+        takeProfit: coin.price * 1.08,
+        stopLoss: coin.price * 0.96,
+        leverage: 5,
+      };
+    } else if (allBearish) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: 0.8,
+        entry: coin.price,
+        takeProfit: coin.price * 0.92,
+        stopLoss: coin.price * 1.04,
+        leverage: 5,
+      };
+    }
+    return null;
+  }
+}
+
+class ROCBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const candles = ohlcv.candles;
+    if (candles.length < 12) return null;
+
+    const currentPrice = coin.price;
+    const price12PeriodsAgo = candles[candles.length - 12].close;
+    const roc = ((currentPrice - price12PeriodsAgo) / price12PeriodsAgo) * 100;
+
+    if (roc > 5) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: Math.min(0.65 + roc / 30, 0.85),
+        entry: coin.price,
+        takeProfit: coin.price * 1.06,
+        stopLoss: coin.price * 0.97,
+        leverage: 4,
+      };
+    } else if (roc < -5) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: Math.min(0.65 + Math.abs(roc) / 30, 0.85),
+        entry: coin.price,
+        takeProfit: coin.price * 0.94,
+        stopLoss: coin.price * 1.03,
+        leverage: 4,
+      };
+    }
+    return null;
+  }
+}
+
+class MFIBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const candles = ohlcv.candles.slice(-14);
+    if (candles.length < 14) return null;
+
+    let positiveFlow = 0, negativeFlow = 0;
+
+    for (let i = 1; i < candles.length; i++) {
+      const typicalPrice = (candles[i].high + candles[i].low + candles[i].close) / 3;
+      const prevTypicalPrice = (candles[i-1].high + candles[i-1].low + candles[i-1].close) / 3;
+      const moneyFlow = typicalPrice * candles[i].volume;
+
+      if (typicalPrice > prevTypicalPrice) {
+        positiveFlow += moneyFlow;
+      } else {
+        negativeFlow += moneyFlow;
+      }
+    }
+
+    const mfi = 100 - (100 / (1 + positiveFlow / negativeFlow));
+
+    if (mfi < 20) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: (20 - mfi) / 20 * 0.8,
+        entry: coin.price,
+        takeProfit: coin.price * 1.05,
+        stopLoss: coin.price * 0.97,
+        leverage: 4,
+      };
+    } else if (mfi > 80) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: (mfi - 80) / 20 * 0.8,
+        entry: coin.price,
+        takeProfit: coin.price * 0.95,
+        stopLoss: coin.price * 1.03,
+        leverage: 4,
+      };
+    }
+    return null;
+  }
+}
+
+class UltimateOscillatorBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const candles = ohlcv.candles;
+    if (candles.length < 28) return null;
+
+    const calculateBP = (i: number) => candles[i].close - Math.min(candles[i].low, candles[i-1].close);
+    const calculateTR = (i: number) => Math.max(candles[i].high, candles[i-1].close) -
+                                       Math.min(candles[i].low, candles[i-1].close);
+
+    let bp7 = 0, tr7 = 0, bp14 = 0, tr14 = 0, bp28 = 0, tr28 = 0;
+
+    for (let i = candles.length - 28; i < candles.length; i++) {
+      if (i > 0) {
+        const bp = calculateBP(i);
+        const tr = calculateTR(i);
+
+        if (i >= candles.length - 7) { bp7 += bp; tr7 += tr; }
+        if (i >= candles.length - 14) { bp14 += bp; tr14 += tr; }
+        bp28 += bp; tr28 += tr;
+      }
+    }
+
+    const avg7 = bp7 / tr7;
+    const avg14 = bp14 / tr14;
+    const avg28 = bp28 / tr28;
+    const uo = ((avg7 * 4 + avg14 * 2 + avg28) / 7) * 100;
+
+    if (uo < 30) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: (30 - uo) / 30 * 0.75,
+        entry: coin.price,
+        takeProfit: coin.price * 1.05,
+        stopLoss: coin.price * 0.97,
+        leverage: 4,
+      };
+    } else if (uo > 70) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: (uo - 70) / 30 * 0.75,
+        entry: coin.price,
+        takeProfit: coin.price * 0.95,
+        stopLoss: coin.price * 1.03,
+        leverage: 4,
+      };
+    }
+    return null;
+  }
+}
+
+class KeltnerChannelBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const { ema20, atr } = ohlcv.indicators;
+    const multiplier = 2;
+
+    const upperChannel = ema20 + (multiplier * atr);
+    const lowerChannel = ema20 - (multiplier * atr);
+
+    if (coin.price > upperChannel) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: 0.73,
+        entry: coin.price,
+        takeProfit: coin.price * 1.07,
+        stopLoss: ema20,
+        leverage: 5,
+      };
+    } else if (coin.price < lowerChannel) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: 0.73,
+        entry: coin.price,
+        takeProfit: coin.price * 0.93,
+        stopLoss: ema20,
+        leverage: 5,
+      };
+    }
+    return null;
+  }
+}
+
+class DonchianChannelBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const candles = ohlcv.candles.slice(-20);
+    if (candles.length < 20) return null;
+
+    const highest = Math.max(...candles.map((c: any) => c.high));
+    const lowest = Math.min(...candles.map((c: any) => c.low));
+
+    if (coin.price >= highest) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: 0.76,
+        entry: coin.price,
+        takeProfit: coin.price * 1.08,
+        stopLoss: lowest,
+        leverage: 5,
+      };
+    } else if (coin.price <= lowest) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: 0.76,
+        entry: coin.price,
+        takeProfit: coin.price * 0.92,
+        stopLoss: highest,
+        leverage: 5,
+      };
+    }
+    return null;
+  }
+}
+
+class EnvelopeBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const { sma20 } = ohlcv.indicators;
+    const percentage = 0.025;
+
+    const upperEnvelope = sma20 * (1 + percentage);
+    const lowerEnvelope = sma20 * (1 - percentage);
+
+    if (coin.price <= lowerEnvelope) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: 0.68,
+        entry: coin.price,
+        takeProfit: sma20,
+        stopLoss: coin.price * 0.97,
+        leverage: 3,
+      };
+    } else if (coin.price >= upperEnvelope) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: 0.68,
+        entry: coin.price,
+        takeProfit: sma20,
+        stopLoss: coin.price * 1.03,
+        leverage: 3,
+      };
+    }
+    return null;
+  }
+}
+
+class VolatilityBreakoutBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const bb = ohlcv.indicators.bollingerBands;
+    const bandwidth = ((bb.upper - bb.lower) / bb.middle) * 100;
+    const candles = ohlcv.candles.slice(-20);
+
+    const avgBandwidth = candles.reduce((sum: number, c: any, i: number) => {
+      if (i < 10) return sum;
+      const oldBB = ohlcv.indicators[`bb_${i}`] || bb;
+      return sum + ((oldBB.upper - oldBB.lower) / oldBB.middle) * 100;
+    }, 0) / 10;
+
+    if (bandwidth < avgBandwidth * 0.7) {
+      const recentMomentum = (coin.price - candles[candles.length - 5].close) / candles[candles.length - 5].close;
+
+      if (recentMomentum > 0) {
+        return {
+          botName: this.name,
+          direction: 'LONG',
+          confidence: 0.74,
+          entry: coin.price,
+          takeProfit: coin.price * 1.08,
+          stopLoss: coin.price * 0.96,
+          leverage: 5,
+        };
+      } else {
+        return {
+          botName: this.name,
+          direction: 'SHORT',
+          confidence: 0.74,
+          entry: coin.price,
+          takeProfit: coin.price * 0.92,
+          stopLoss: coin.price * 1.04,
+          leverage: 5,
+        };
+      }
+    }
+    return null;
+  }
+}
+
+class ZScoreBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const closes = ohlcv.candles.slice(-30).map((c: any) => c.close);
+    if (closes.length < 30) return null;
+
+    const mean = closes.reduce((a: number, b: number) => a + b, 0) / closes.length;
+    const variance = closes.reduce((sum: number, val: number) => sum + Math.pow(val - mean, 2), 0) / closes.length;
+    const stdDev = Math.sqrt(variance);
+    const zScore = (coin.price - mean) / stdDev;
+
+    if (zScore < -2) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: Math.min(0.7 + Math.abs(zScore + 2) * 0.1, 0.9),
+        entry: coin.price,
+        takeProfit: mean,
+        stopLoss: coin.price * 0.97,
+        leverage: 4,
+      };
+    } else if (zScore > 2) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: Math.min(0.7 + (zScore - 2) * 0.1, 0.9),
+        entry: coin.price,
+        takeProfit: mean,
+        stopLoss: coin.price * 1.03,
+        leverage: 4,
+      };
+    }
+    return null;
+  }
+}
+
+class ConsolidationBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const candles = ohlcv.candles.slice(-20);
+    if (candles.length < 20) return null;
+
+    const highs = candles.map((c: any) => c.high);
+    const lows = candles.map((c: any) => c.low);
+    const rangeHigh = Math.max(...highs);
+    const rangeLow = Math.min(...lows);
+    const rangeSize = ((rangeHigh - rangeLow) / rangeLow) * 100;
+
+    if (rangeSize < 5) {
+      const lastCandle = candles[candles.length - 1];
+
+      if (lastCandle.close > rangeHigh * 0.99) {
+        return {
+          botName: this.name,
+          direction: 'LONG',
+          confidence: 0.77,
+          entry: coin.price,
+          takeProfit: coin.price * 1.08,
+          stopLoss: rangeLow,
+          leverage: 5,
+        };
+      } else if (lastCandle.close < rangeLow * 1.01) {
+        return {
+          botName: this.name,
+          direction: 'SHORT',
+          confidence: 0.77,
+          entry: coin.price,
+          takeProfit: coin.price * 0.92,
+          stopLoss: rangeHigh,
+          leverage: 5,
+        };
+      }
+    }
+    return null;
+  }
+}
+
+class SwingBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const candles = ohlcv.candles.slice(-10);
+    if (candles.length < 10) return null;
+
+    const highs = candles.map((c: any) => c.high);
+    const lows = candles.map((c: any) => c.low);
+
+    const swingHigh = Math.max(...highs.slice(0, -2));
+    const swingLow = Math.min(...lows.slice(0, -2));
+    const { ema20, ema50 } = ohlcv.indicators;
+
+    const uptrend = ema20 > ema50;
+    const downtrend = ema20 < ema50;
+
+    if (uptrend && coin.price > swingLow * 1.02 && coin.price < swingHigh * 0.98) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: 0.7,
+        entry: coin.price,
+        takeProfit: swingHigh * 1.05,
+        stopLoss: swingLow,
+        leverage: 3,
+      };
+    } else if (downtrend && coin.price < swingHigh * 0.98 && coin.price > swingLow * 1.02) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: 0.7,
+        entry: coin.price,
+        takeProfit: swingLow * 0.95,
+        stopLoss: swingHigh,
+        leverage: 3,
+      };
+    }
+    return null;
+  }
+}
+
+class ConservativeBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const { rsi, macd, ema20, ema50, ema200 } = ohlcv.indicators;
+
+    const rsiOversold = rsi < 35;
+    const rsiOverbought = rsi > 65;
+    const macdBullish = macd.value > macd.signal && macd.histogram > 0;
+    const macdBearish = macd.value < macd.signal && macd.histogram < 0;
+    const emaBullish = ema20 > ema50 && ema50 > ema200;
+    const emaBearish = ema20 < ema50 && ema50 < ema200;
+
+    const bullishSignals = [rsiOversold, macdBullish, emaBullish].filter(Boolean).length;
+    const bearishSignals = [rsiOverbought, macdBearish, emaBearish].filter(Boolean).length;
+
+    if (bullishSignals >= 2) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: 0.65,
+        entry: coin.price,
+        takeProfit: coin.price * 1.04,
+        stopLoss: coin.price * 0.98,
+        leverage: 2,
+      };
+    } else if (bearishSignals >= 2) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: 0.65,
+        entry: coin.price,
+        takeProfit: coin.price * 0.96,
+        stopLoss: coin.price * 1.02,
+        leverage: 2,
+      };
+    }
+    return null;
+  }
+}
+
+class ScalpingBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const lastCandle = ohlcv.candles[ohlcv.candles.length - 1];
+    const volumeRatio = lastCandle.volume / ohlcv.indicators.volume_avg;
+    const priceChange = ((lastCandle.close - lastCandle.open) / lastCandle.open) * 100;
+
+    if (volumeRatio > 1.3 && priceChange > 0.5) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: 0.68,
+        entry: coin.price,
+        takeProfit: coin.price * 1.008,
+        stopLoss: coin.price * 0.995,
+        leverage: 10,
+      };
+    } else if (volumeRatio > 1.3 && priceChange < -0.5) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: 0.68,
+        entry: coin.price,
+        takeProfit: coin.price * 0.992,
+        stopLoss: coin.price * 1.005,
+        leverage: 10,
+      };
+    }
+    return null;
+  }
+}
+
+class DivergenceBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const candles = ohlcv.candles.slice(-20);
+    if (candles.length < 20) return null;
+
+    const closes = candles.map((c: any) => c.close);
+    const rsiValues = candles.map((c: any, i: number) => {
+      if (i < 14) return 50;
+      const gains = [], losses = [];
+      for (let j = i - 13; j <= i; j++) {
+        const change = closes[j] - closes[j - 1];
+        if (change > 0) gains.push(change);
+        else losses.push(Math.abs(change));
+      }
+      const avgGain = gains.reduce((a, b) => a + b, 0) / 14;
+      const avgLoss = losses.reduce((a, b) => a + b, 0) / 14;
+      const rs = avgGain / (avgLoss || 1);
+      return 100 - (100 / (1 + rs));
+    });
+
+    const recentPriceLow = Math.min(...closes.slice(-5));
+    const previousPriceLow = Math.min(...closes.slice(-15, -5));
+    const recentRSILow = Math.min(...rsiValues.slice(-5));
+    const previousRSILow = Math.min(...rsiValues.slice(-15, -5));
+
+    const bullishDivergence = recentPriceLow < previousPriceLow && recentRSILow > previousRSILow;
+
+    const recentPriceHigh = Math.max(...closes.slice(-5));
+    const previousPriceHigh = Math.max(...closes.slice(-15, -5));
+    const recentRSIHigh = Math.max(...rsiValues.slice(-5));
+    const previousRSIHigh = Math.max(...rsiValues.slice(-15, -5));
+
+    const bearishDivergence = recentPriceHigh > previousPriceHigh && recentRSIHigh < previousRSIHigh;
+
+    if (bullishDivergence) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: 0.76,
+        entry: coin.price,
+        takeProfit: coin.price * 1.07,
+        stopLoss: coin.price * 0.97,
+        leverage: 4,
+      };
+    } else if (bearishDivergence) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: 0.76,
+        entry: coin.price,
+        takeProfit: coin.price * 0.93,
+        stopLoss: coin.price * 1.03,
+        leverage: 4,
+      };
+    }
+    return null;
+  }
+}
+
+class RSIReversalBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const { rsi } = ohlcv.indicators;
+
+    if (rsi > 70) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: (rsi - 70) / 30,
+        entry: coin.price,
+        takeProfit: coin.price * 0.96,
+        stopLoss: coin.price * 1.02,
+        leverage: 3,
+      };
+    } else if (rsi < 30) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: (30 - rsi) / 30,
+        entry: coin.price,
+        takeProfit: coin.price * 1.04,
+        stopLoss: coin.price * 0.98,
+        leverage: 3,
+      };
+    }
+    return null;
+  }
+}
+
+class BollingerReversalBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const bb = ohlcv.indicators.bollingerBands;
+
+    if (coin.price >= bb.upper) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: 0.7,
+        entry: coin.price,
+        takeProfit: bb.middle,
+        stopLoss: coin.price * 1.025,
+        leverage: 3,
+      };
+    } else if (coin.price <= bb.lower) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: 0.7,
+        entry: coin.price,
+        takeProfit: bb.middle,
+        stopLoss: coin.price * 0.975,
+        leverage: 3,
+      };
+    }
+    return null;
+  }
+}
+
+class StochasticReversalBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const candles = ohlcv.candles.slice(-14);
+    if (candles.length < 14) return null;
+
+    const currentClose = coin.price;
+    const lowest = Math.min(...candles.map((c: any) => c.low));
+    const highest = Math.max(...candles.map((c: any) => c.high));
+    const stochastic = ((currentClose - lowest) / (highest - lowest)) * 100;
+
+    if (stochastic > 80) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: (stochastic - 80) / 20 * 0.75,
+        entry: coin.price,
+        takeProfit: coin.price * 0.96,
+        stopLoss: coin.price * 1.02,
+        leverage: 3,
+      };
+    } else if (stochastic < 20) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: (20 - stochastic) / 20 * 0.75,
+        entry: coin.price,
+        takeProfit: coin.price * 1.04,
+        stopLoss: coin.price * 0.98,
+        leverage: 3,
+      };
+    }
+    return null;
+  }
+}
+
+class VolumePriceTrendBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const candles = ohlcv.candles.slice(-10);
+    if (candles.length < 2) return null;
+
+    let vpt = 0;
+    for (let i = 1; i < candles.length; i++) {
+      const priceChange = (candles[i].close - candles[i - 1].close) / candles[i - 1].close;
+      vpt += priceChange * candles[i].volume;
+    }
+
+    if (vpt > 0) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: Math.min(0.65 + Math.abs(vpt) / 1000000, 0.8),
+        entry: coin.price,
+        takeProfit: coin.price * 1.05,
+        stopLoss: coin.price * 0.97,
+        leverage: 4,
+      };
+    } else if (vpt < 0) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: Math.min(0.65 + Math.abs(vpt) / 1000000, 0.8),
+        entry: coin.price,
+        takeProfit: coin.price * 0.95,
+        stopLoss: coin.price * 1.03,
+        leverage: 4,
+      };
+    }
+    return null;
+  }
+}
+
+class VolumeSpikeFadeBot extends TradingBot {
+  analyze(ohlcv: any, derivatives: any, coin: any): BotPrediction | null {
+    const lastCandle = ohlcv.candles[ohlcv.candles.length - 1];
+    const volumeRatio = lastCandle.volume / ohlcv.indicators.volume_avg;
+    const priceChange = ((lastCandle.close - lastCandle.open) / lastCandle.open) * 100;
+
+    if (volumeRatio > 3 && priceChange > 5) {
+      return {
+        botName: this.name,
+        direction: 'SHORT',
+        confidence: Math.min(0.65 + volumeRatio / 10, 0.8),
+        entry: coin.price,
+        takeProfit: coin.price * 0.95,
+        stopLoss: coin.price * 1.03,
+        leverage: 3,
+      };
+    } else if (volumeRatio > 3 && priceChange < -5) {
+      return {
+        botName: this.name,
+        direction: 'LONG',
+        confidence: Math.min(0.65 + volumeRatio / 10, 0.8),
+        entry: coin.price,
+        takeProfit: coin.price * 1.05,
+        stopLoss: coin.price * 0.97,
+        leverage: 3,
+      };
+    }
+    return null;
+  }
+}
+
 export const tradingBots = [
   new RSIBot('RSI Oversold/Overbought'),
   new RSIBot('RSI Divergence'),
@@ -2067,6 +3115,34 @@ export const tradingBots = [
   new CorrelationAnalysisBot('Correlation Analysis'),
   new IntermarketAnalysisBot('Intermarket Analysis'),
   new SeasonalityPatternsBot('Seasonality Patterns'),
+  new SMACrossBot('SMA Cross'),
+  new EMARibbonBot('EMA Ribbon'),
+  new EMACrossBot('EMA Cross'),
+  new SuperTrendBot('SuperTrend'),
+  new TrendStrengthBot('Trend Strength'),
+  new LinearRegressionBot('Linear Regression'),
+  new TripleMABot('Triple MA'),
+  new VortexBot('Vortex Indicator'),
+  new AroonBot('Aroon Indicator'),
+  new HeikinAshiBot('Heikin-Ashi'),
+  new ROCBot('Rate of Change'),
+  new MFIBot('Money Flow Index'),
+  new UltimateOscillatorBot('Ultimate Oscillator'),
+  new KeltnerChannelBot('Keltner Channel'),
+  new DonchianChannelBot('Donchian Channel'),
+  new EnvelopeBot('Moving Average Envelope'),
+  new VolatilityBreakoutBot('Volatility Breakout'),
+  new ZScoreBot('Z-Score Mean Reversion'),
+  new ConsolidationBot('Consolidation Breakout'),
+  new SwingBot('Swing Trading'),
+  new ConservativeBot('Conservative'),
+  new ScalpingBot('Scalping'),
+  new DivergenceBot('Divergence Detection'),
+  new RSIReversalBot('RSI Reversal'),
+  new BollingerReversalBot('Bollinger Reversal'),
+  new StochasticReversalBot('Stochastic Reversal'),
+  new VolumePriceTrendBot('Volume Price Trend'),
+  new VolumeSpikeFadeBot('Volume Spike Fade'),
 ];
 
 export type { BotPrediction };
