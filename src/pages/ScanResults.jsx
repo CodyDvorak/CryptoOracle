@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { TrendingUp, TrendingDown, DollarSign, Percent, Activity, CircleAlert as AlertCircle, Info } from 'lucide-react'
-import { API_ENDPOINTS, getHeaders } from '../config/api'
+import { supabase } from '../config/api'
 import BotDetailsModal from '../components/BotDetailsModal'
 import BotPredictionsPanel from '../components/BotPredictionsPanel'
 import './ScanResults.css'
@@ -14,6 +14,39 @@ function ScanResults() {
 
   useEffect(() => {
     fetchLatestResults()
+
+    const recommendationsChannel = supabase
+      .channel('scan-results-recommendations')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'recommendations'
+      }, (payload) => {
+        console.log('New recommendation detected:', payload.new)
+        setResults(prev => {
+          if (!prev) return prev
+          const updatedRecs = [payload.new, ...(prev.recommendations || [])]
+            .sort((a, b) => b.avg_confidence - a.avg_confidence)
+          return { ...prev, recommendations: updatedRecs }
+        })
+      })
+      .subscribe()
+
+    const botPredictionsChannel = supabase
+      .channel('scan-results-bot-predictions')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'bot_predictions'
+      }, (payload) => {
+        console.log('New bot prediction detected:', payload.new)
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(recommendationsChannel)
+      supabase.removeChannel(botPredictionsChannel)
+    }
   }, [])
 
   const fetchLatestResults = async () => {
@@ -21,16 +54,33 @@ function ScanResults() {
     setError(null)
 
     try {
-      const response = await fetch(API_ENDPOINTS.scanLatest, {
-        headers: getHeaders(),
-      })
-      if (!response.ok) {
-        throw new Error('Failed to fetch results')
+      const { data: latestScan, error: scanError } = await supabase
+        .from('scan_runs')
+        .select('*')
+        .eq('status', 'completed')
+        .order('completed_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (scanError) throw scanError
+
+      if (latestScan) {
+        const { data: recs, error: recsError } = await supabase
+          .from('recommendations')
+          .select('*')
+          .eq('run_id', latestScan.id)
+          .order('avg_confidence', { ascending: false })
+
+        if (recsError) throw recsError
+
+        setResults({
+          scan: latestScan,
+          recommendations: recs || []
+        })
       }
-      const data = await response.json()
-      setResults(data)
     } catch (err) {
-      setError(err.message)
+      console.error('Error fetching results:', err)
+      setError(err.message || 'Failed to fetch results')
     } finally {
       setLoading(false)
     }
