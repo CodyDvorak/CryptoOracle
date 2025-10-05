@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { TrendingUp, TrendingDown, Activity, DollarSign, Users, AlertTriangle, Zap, Target, ShieldAlert, BarChart3, Newspaper, MessageCircle } from 'lucide-react'
+import { TrendingUp, TrendingDown, Activity, DollarSign, Users, TriangleAlert as AlertTriangle, Zap, Target, ShieldAlert, BarChart3, Newspaper, MessageCircle } from 'lucide-react'
 import { supabase } from '../config/api'
 import './Insights.css'
 
