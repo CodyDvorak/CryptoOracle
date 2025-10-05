@@ -139,11 +139,11 @@ function Dashboard() {
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'recommendations'
+          table: 'scan_recommendations'
         },
         (payload) => {
           console.log('New recommendation:', payload.new)
-          setRecommendations(prev => [payload.new, ...prev].slice(0, 50))
+          fetchLatestRecommendations()
         }
       )
       .subscribe()
@@ -168,13 +168,17 @@ function Dashboard() {
               if (!scanStartTime) {
                 setScanStartTime(Date.now())
               }
-            } else if (scan.status === 'completed' || scan.status === 'failed') {
+            } else if (scan.status === 'completed') {
+              console.log('Scan completed, fetching recommendations immediately')
               setIsScanning(false)
               setScanProgress(null)
               setScanStartTime(null)
-              setTimeout(() => {
-                fetchLatestRecommendations()
-              }, 1000)
+              fetchLatestRecommendations()
+            } else if (scan.status === 'failed') {
+              setIsScanning(false)
+              setScanProgress(null)
+              setScanStartTime(null)
+              setError('Scan failed. Please try again.')
             }
           }
         }
@@ -224,13 +228,11 @@ function Dashboard() {
         }
       } else {
         if (isScanning) {
-          console.log('Scan completed, fetching recommendations...')
+          console.log('Scan completed via status check, fetching recommendations immediately')
           setIsScanning(false)
           setScanProgress(null)
           setScanStartTime(null)
-          setTimeout(() => {
-            fetchLatestRecommendations()
-          }, 1000)
+          fetchLatestRecommendations()
         }
       }
     } catch (err) {

@@ -746,7 +746,8 @@ export class CryptoDataService {
       confidence = bearishRatio;
     }
 
-    confidence = Math.min(Math.max(confidence, 0.5), 0.95);
+    // Allow confidence to vary from 30% to 95% for more accurate representation
+    confidence = Math.min(Math.max(confidence, 0.3), 0.95);
 
     return { regime, confidence };
   }
