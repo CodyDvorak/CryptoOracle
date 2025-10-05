@@ -36,6 +36,8 @@ interface OHLCVData {
     ichimoku: { tenkan: number; kijun: number; spanA: number; spanB: number };
     sar: number;
   };
+  marketRegime?: string;
+  regimeConfidence?: number;
 }
 
 interface DerivativesData {
@@ -409,6 +411,20 @@ export class CryptoDataService {
     const ichimoku = this.calculateIchimoku(candles);
     const sar = this.calculateSAR(candles);
 
+    const currentPrice = closes[closes.length - 1];
+    const { regime, confidence } = this.classifyMarketRegime(
+      currentPrice,
+      ema20,
+      ema50,
+      ema200,
+      adx,
+      macd,
+      rsi,
+      atr,
+      bb,
+      candles
+    );
+
     return {
       symbol,
       timeframe: '4h',
@@ -432,6 +448,8 @@ export class CryptoDataService {
         ichimoku,
         sar,
       },
+      marketRegime: regime,
+      regimeConfidence: confidence,
     };
   }
 
@@ -601,6 +619,120 @@ export class CryptoDataService {
   private calculateSAR(candles: any[]): number {
     const lastCandle = candles[candles.length - 1];
     return lastCandle.close > lastCandle.open ? lastCandle.low * 0.98 : lastCandle.high * 1.02;
+  }
+
+  private classifyMarketRegime(
+    currentPrice: number,
+    ema20: number,
+    ema50: number,
+    ema200: number,
+    adx: number,
+    macd: { value: number; signal: number; histogram: number },
+    rsi: number,
+    atr: number,
+    bb: { upper: number; middle: number; lower: number },
+    candles: any[]
+  ): { regime: string; confidence: number } {
+    let bullishSignals = 0;
+    let bearishSignals = 0;
+    let sidewaysSignals = 0;
+    let totalSignals = 0;
+
+    if (currentPrice > ema20 && ema20 > ema50 && ema50 > ema200) {
+      bullishSignals += 2;
+      totalSignals += 2;
+    } else if (currentPrice < ema20 && ema20 < ema50 && ema50 < ema200) {
+      bearishSignals += 2;
+      totalSignals += 2;
+    } else {
+      sidewaysSignals += 1;
+      totalSignals += 2;
+    }
+
+    if (adx < 25) {
+      sidewaysSignals += 2;
+      totalSignals += 2;
+    } else if (adx > 40) {
+      if (currentPrice > ema20) {
+        bullishSignals += 1;
+      } else {
+        bearishSignals += 1;
+      }
+      totalSignals += 2;
+    } else {
+      totalSignals += 2;
+    }
+
+    if (macd.histogram > 0 && macd.value > macd.signal) {
+      bullishSignals += 1;
+      totalSignals += 1;
+    } else if (macd.histogram < 0 && macd.value < macd.signal) {
+      bearishSignals += 1;
+      totalSignals += 1;
+    } else {
+      sidewaysSignals += 0.5;
+      totalSignals += 1;
+    }
+
+    if (rsi > 55) {
+      bullishSignals += 0.5;
+      totalSignals += 1;
+    } else if (rsi < 45) {
+      bearishSignals += 0.5;
+      totalSignals += 1;
+    } else {
+      sidewaysSignals += 1;
+      totalSignals += 1;
+    }
+
+    const bbWidth = ((bb.upper - bb.lower) / bb.middle) * 100;
+    if (bbWidth < 3) {
+      sidewaysSignals += 1;
+      totalSignals += 1;
+    } else {
+      totalSignals += 1;
+    }
+
+    const recentCandles = candles.slice(-10);
+    const highs = recentCandles.map((c: any) => c.high);
+    const lows = recentCandles.map((c: any) => c.low);
+
+    let higherHighs = 0;
+    let lowerLows = 0;
+    for (let i = 1; i < highs.length; i++) {
+      if (highs[i] > highs[i - 1]) higherHighs++;
+      if (lows[i] < lows[i - 1]) lowerLows++;
+    }
+
+    if (higherHighs >= 6) {
+      bullishSignals += 1;
+      totalSignals += 1;
+    } else if (lowerLows >= 6) {
+      bearishSignals += 1;
+      totalSignals += 1;
+    } else {
+      sidewaysSignals += 1;
+      totalSignals += 1;
+    }
+
+    const bullishRatio = bullishSignals / totalSignals;
+    const bearishRatio = bearishSignals / totalSignals;
+    const sidewaysRatio = sidewaysSignals / totalSignals;
+
+    let regime = 'SIDEWAYS';
+    let confidence = sidewaysRatio;
+
+    if (bullishRatio > bearishRatio && bullishRatio > sidewaysRatio) {
+      regime = 'BULL';
+      confidence = bullishRatio;
+    } else if (bearishRatio > bullishRatio && bearishRatio > sidewaysRatio) {
+      regime = 'BEAR';
+      confidence = bearishRatio;
+    }
+
+    confidence = Math.min(Math.max(confidence, 0.5), 0.95);
+
+    return { regime, confidence };
   }
 }
 
