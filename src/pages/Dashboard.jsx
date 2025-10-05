@@ -219,7 +219,7 @@ function Dashboard() {
   const checkScanStatus = async () => {
     try {
       // Check if we have a specific scan ID to track
-      if (currentScanId && isScanning) {
+      if (currentScanId) {
         const { data: scanData, error } = await supabase
           .from('scan_runs')
           .select('status, completed_at')
@@ -229,7 +229,7 @@ function Dashboard() {
         if (!error && scanData) {
           console.log('Checking scan:', currentScanId, 'Status:', scanData.status)
 
-          if (scanData.status === 'completed') {
+          if (scanData.status === 'completed' && isScanning) {
             console.log('Scan completed! Updating UI...')
             setIsScanning(false)
             setScanProgress(null)
@@ -238,7 +238,7 @@ function Dashboard() {
             setCurrentScanId(null)
             setTimeout(() => fetchLatestRecommendations(), 500)
             return
-          } else if (scanData.status === 'failed') {
+          } else if (scanData.status === 'failed' && isScanning) {
             console.log('Scan failed!')
             setIsScanning(false)
             setScanProgress(null)
