@@ -12,6 +12,19 @@ function BotPerformance() {
   const [learningMetrics, setLearningMetrics] = useState([])
   const [analyzingAI, setAnalyzingAI] = useState(false)
 
+  const [filters, setFilters] = useState({
+    regime: 'all',
+    timeframe: 'all',
+    coin: 'all'
+  })
+  const [coins, setCoins] = useState([])
+  const [backtestResults, setBacktestResults] = useState([])
+  const [dateRange, setDateRange] = useState({
+    start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    end: new Date().toISOString().split('T')[0]
+  })
+  const [showBacktest, setShowBacktest] = useState(false)
+
   useEffect(() => {
     fetchBotPerformance()
   }, [])
@@ -75,6 +88,70 @@ function BotPerformance() {
     }
   }
 
+  useEffect(() => {
+    fetchAvailableCoins()
+  }, [])
+
+  const fetchAvailableCoins = async () => {
+    try {
+      const response = await fetch(API_ENDPOINTS.scanLatest, {
+        headers: getHeaders(),
+      })
+      const data = await response.json()
+      if (data.recommendations) {
+        const uniqueCoins = [...new Set(data.recommendations.map(r => r.ticker || r.coin_symbol))]
+        setCoins(uniqueCoins)
+      }
+    } catch (err) {
+      console.error('Failed to fetch coins:', err)
+    }
+  }
+
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }))
+  }
+
+  const applyFilters = (botList) => {
+    return botList.filter(bot => {
+      if (filters.regime !== 'all' && bot.best_regime !== filters.regime) {
+        return false
+      }
+      if (filters.timeframe !== 'all' && bot.best_timeframe !== filters.timeframe) {
+        return false
+      }
+      if (filters.coin !== 'all' && bot.best_coin !== filters.coin) {
+        return false
+      }
+      return true
+    })
+  }
+
+  const runBacktest = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch(`${API_ENDPOINTS.backtesting}?action=run_backtest`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({
+          action: 'run_backtest',
+          config: {
+            startDate: dateRange.start,
+            endDate: dateRange.end,
+            botNames: filters.regime !== 'all' ? bots.filter(b => b.best_regime === filters.regime).map(b => b.bot_name) : undefined,
+            coinSymbols: filters.coin !== 'all' ? [filters.coin] : undefined
+          }
+        })
+      })
+      const data = await response.json()
+      setBacktestResults(data.results || [])
+      setShowBacktest(true)
+    } catch (err) {
+      console.error('Backtest failed:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="bot-loading">
@@ -94,7 +171,9 @@ function BotPerformance() {
     )
   }
 
-  const sortedBots = [...bots].sort((a, b) => {
+  const filteredBots = applyFilters(bots)
+
+  const sortedBots = [...filteredBots].sort((a, b) => {
     switch (sortBy) {
       case 'accuracy':
         return (b.accuracy_rate || 0) - (a.accuracy_rate || 0)

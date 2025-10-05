@@ -18,6 +18,9 @@ export const API_ENDPOINTS = {
   botLearning: `${API_BASE_URL}/bot-learning`,
   notifications: `${API_BASE_URL}/notifications`,
   scheduledScan: `${API_BASE_URL}/scheduled-scan`,
+  backtesting: `${API_BASE_URL}/backtesting`,
+  customAlerts: `${API_BASE_URL}/custom-alerts`,
+  marketCorrelation: `${API_BASE_URL}/market-correlation`,
 };
 
 export const getHeaders = () => ({

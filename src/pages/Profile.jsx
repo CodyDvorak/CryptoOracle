@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { User, Bell, Clock, Mail, Save, RefreshCw, CircleAlert as AlertCircle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import CustomAlertsManager from '../components/CustomAlertsManager'
 import './Profile.css'
 
 export default function Profile() {
@@ -492,6 +493,8 @@ export default function Profile() {
             </div>
           </div>
         </div>
+
+        {user && <CustomAlertsManager userId={user.id} />}
 
         <div className="settings-actions">
           <button
