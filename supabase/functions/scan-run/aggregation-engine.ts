@@ -27,7 +27,7 @@ interface AggregatedSignal {
 }
 
 export class HybridAggregationEngine {
-  private confidenceThreshold = 0.6;
+  private confidenceThreshold = 0.6; // 6/10 minimum confidence threshold
   private botPerformanceHistory: Map<string, { correct: number; total: number }> = new Map();
 
   detectMarketRegime(ohlcv: any): MarketRegime {
@@ -54,33 +54,68 @@ export class HybridAggregationEngine {
   }
 
   getBotWeight(botName: string, regime: MarketRegime): number {
-    const trendBots = ['EMA', 'MACD', 'ADX', 'Parabolic SAR', 'Ichimoku'];
-    const rangingBots = ['RSI', 'Stochastic', 'Bollinger', 'CCI', 'Williams'];
-    const volatilityBots = ['ATR', 'Bollinger', 'Volume'];
-    const derivativesBots = ['Funding Rate', 'Open Interest'];
+    // Trend-following bots (26 total) - perform best in trending markets
+    const trendBots = [
+      'EMA', 'SMA', 'MACD', 'ADX', 'Parabolic SAR', 'Ichimoku', 'SuperTrend',
+      'Trend Strength', 'Linear Regression', 'Triple MA', 'Vortex', 'Aroon',
+      'Heikin-Ashi', 'Trend Following', '4H Trend', 'Multi-Timeframe'
+    ];
+
+    // Mean-reversion/ranging bots (18 total) - perform best in ranging markets
+    const rangingBots = [
+      'RSI', 'Stochastic', 'Bollinger', 'CCI', 'Williams', 'Mean Reversion',
+      'Support/Resistance', 'Pivot Points', 'Envelope', 'Z-Score'
+    ];
+
+    // Volatility bots (12 total) - perform best in volatile markets
+    const volatilityBots = [
+      'ATR', 'Bollinger', 'Volume', 'Keltner', 'Donchian', 'Volatility Breakout',
+      'Consolidation'
+    ];
+
+    // Derivatives/futures bots (5 total) - consistent across regimes
+    const derivativesBots = ['Funding Rate', 'Open Interest', 'Options Flow', 'Long/Short'];
+
+    // Contrarian/reversal bots (5 total) - boost in ranging markets
+    const contrarianBots = [
+      'RSI Reversal', 'Bollinger Reversal', 'Stochastic Reversal',
+      'Volume Spike Fade', 'Mean Reversion'
+    ];
 
     let baseWeight = 1.0;
 
+    // TRENDING MARKET: Boost trend bots, reduce mean-reversion bots
     if (regime.type === 'trending') {
       if (trendBots.some(b => botName.includes(b))) {
-        baseWeight = 1.3 + (regime.strength * 0.3);
+        baseWeight = 1.5 + (regime.strength * 0.2); // 1.5x-1.7x multiplier
       } else if (rangingBots.some(b => botName.includes(b))) {
-        baseWeight = 0.7 - (regime.strength * 0.2);
+        baseWeight = 0.6 - (regime.strength * 0.1); // 0.5x-0.6x multiplier
+      } else if (contrarianBots.some(b => botName.includes(b))) {
+        baseWeight = 0.5; // Contrarians weak in trends
       }
-    } else if (regime.type === 'ranging') {
+    }
+    // RANGING MARKET: Boost mean-reversion bots, reduce trend bots
+    else if (regime.type === 'ranging') {
       if (rangingBots.some(b => botName.includes(b))) {
-        baseWeight = 1.3 + (regime.strength * 0.3);
+        baseWeight = 1.5 + (regime.strength * 0.2); // 1.5x-1.7x multiplier
       } else if (trendBots.some(b => botName.includes(b))) {
-        baseWeight = 0.7 - (regime.strength * 0.2);
+        baseWeight = 0.6 - (regime.strength * 0.1); // 0.5x-0.6x multiplier
+      } else if (contrarianBots.some(b => botName.includes(b))) {
+        baseWeight = 1.3; // Contrarians strong in ranges
       }
-    } else if (regime.type === 'volatile') {
+    }
+    // VOLATILE MARKET: Boost volatility bots
+    else if (regime.type === 'volatile') {
       if (volatilityBots.some(b => botName.includes(b))) {
-        baseWeight = 1.4 + (regime.strength * 0.2);
+        baseWeight = 1.6 + (regime.strength * 0.2); // 1.6x-1.8x multiplier
+      } else if (contrarianBots.some(b => botName.includes(b))) {
+        baseWeight = 1.2; // Contrarians good in volatility
       } else {
         baseWeight = 0.8;
       }
     }
 
+    // Derivatives bots get consistent boost across all regimes
     if (derivativesBots.some(b => botName.includes(b))) {
       baseWeight *= 1.2;
     }
@@ -138,13 +173,21 @@ export class HybridAggregationEngine {
       finalConfidence = Math.min(avgConfidence * 1.08, 1.0);
     }
 
-    const contrarianBots = ['RSI', 'Stochastic', 'CCI', 'Williams', 'Bollinger'];
+    // CONTRARIAN AGREEMENT AMPLIFICATION
+    // When multiple contrarian bots align, it signals major reversals
+    const contrarianBots = [
+      'RSI Reversal', 'Mean Reversion', 'Bollinger Reversal',
+      'Stochastic Reversal', 'Volume Spike Fade'
+    ];
     const contrarianCount = dominantPreds.filter(p =>
       contrarianBots.some(b => p.botName.includes(b))
     ).length;
 
+    // If 3+ contrarians agree with 70%+ consensus, boost confidence significantly
     if (contrarianCount >= 3 && consensusPercent >= 70) {
-      finalConfidence = Math.min(finalConfidence * 1.12, 1.0);
+      finalConfidence = Math.min(finalConfidence * 1.15, 1.0); // 15% boost for contrarian alignment
+    } else if (contrarianCount >= 2 && consensusPercent >= 75) {
+      finalConfidence = Math.min(finalConfidence * 1.10, 1.0); // 10% boost for moderate contrarian agreement
     }
 
     const advancedBots = ['Elliott Wave', 'Order Flow', 'Whale', 'Social Sentiment', 'Options Flow'];

@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
 import { CryptoDataService } from './crypto-data-service.ts';
 import { tradingBots } from './trading-bots.ts';
+import { HybridAggregationEngine } from './aggregation-engine.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -55,6 +56,7 @@ Deno.serve(async (req: Request) => {
     console.log(`Starting scan ${scanRun.id} - ${scanType} for ${actualCoinLimit} coins`);
 
     const cryptoService = new CryptoDataService();
+    const aggregationEngine = new HybridAggregationEngine();
 
     console.log('Fetching top coins...');
     const coins = await cryptoService.getTopCoins(filterScope, minPrice, maxPrice);
@@ -103,22 +105,16 @@ Deno.serve(async (req: Request) => {
           console.warn(`TokenMetrics data fetch failed for ${coin.symbol}:`, error.message);
         }
 
-        let longVotes = 0;
-        let shortVotes = 0;
-        let totalConfidence = 0;
-        let totalBotsVoting = 0;
+        const rawPredictions: any[] = [];
         const coinPredictions: any[] = [];
 
+        // Collect predictions from all 87 bots
         for (const bot of tradingBots) {
           try {
             const prediction = bot.analyze(ohlcvData, derivativesData, coin, optionsData);
 
             if (prediction) {
-              totalBotsVoting++;
-              totalConfidence += prediction.confidence;
-
-              if (prediction.direction === 'LONG') longVotes++;
-              else shortVotes++;
+              rawPredictions.push(prediction);
 
               coinPredictions.push({
                 run_id: scanRun.id,
@@ -139,25 +135,19 @@ Deno.serve(async (req: Request) => {
           }
         }
 
-        if (totalBotsVoting >= 3) {
-          const consensusDirection = longVotes > shortVotes ? 'LONG' : 'SHORT';
-          const avgConfidence = totalConfidence / totalBotsVoting;
+        // Use Hybrid Aggregation Intelligence Engine
+        const aggregatedSignal = aggregationEngine.aggregate(rawPredictions, ohlcvData);
 
-          const directionPredictions = coinPredictions.filter(
-            p => p.position_direction === consensusDirection
-          );
+        if (aggregatedSignal && aggregatedSignal.botCount >= 3) {
+          const consensusDirection = aggregatedSignal.direction;
+          let finalConfidence = aggregatedSignal.confidence;
+          let aiReasoning = `Hybrid aggregation: ${aggregatedSignal.consensusPercent.toFixed(0)}% consensus`;
 
-          const avgEntry = coin.price;
-          const avgTakeProfit = directionPredictions.length > 0
-            ? directionPredictions.reduce((sum, p) => sum + p.target_price, 0) / directionPredictions.length
-            : (consensusDirection === 'LONG' ? coin.price * 1.05 : coin.price * 0.95);
+          console.log(`📊 ${coin.symbol}: ${aggregatedSignal.botCount} bots, ${aggregatedSignal.consensusPercent.toFixed(0)}% consensus, weighted confidence: ${aggregatedSignal.weightedConfidence.toFixed(2)}`);
 
-          const avgStopLoss = directionPredictions.length > 0
-            ? directionPredictions.reduce((sum, p) => sum + p.stop_loss, 0) / directionPredictions.length
-            : (consensusDirection === 'LONG' ? coin.price * 0.97 : coin.price * 1.03);
-
-          let finalConfidence = avgConfidence;
-          let aiReasoning = 'N/A';
+          const avgEntry = aggregatedSignal.avgEntry;
+          const avgTakeProfit = aggregatedSignal.avgTakeProfit;
+          const avgStopLoss = aggregatedSignal.avgStopLoss;
 
           if (tokenMetricsData?.supported && tokenMetricsData.rating) {
             const tmScore = (tokenMetricsData.rating.overall + tokenMetricsData.rating.trader) / 200;
@@ -204,9 +194,9 @@ Deno.serve(async (req: Request) => {
             predicted_change_24h: change24h,
             predicted_change_48h: change48h,
             predicted_change_7d: change7d,
-            bot_count: totalBotsVoting,
-            bot_votes_long: longVotes,
-            bot_votes_short: shortVotes,
+            bot_count: aggregatedSignal.botCount,
+            bot_votes_long: aggregatedSignal.longBots,
+            bot_votes_short: aggregatedSignal.shortBots,
             market_regime: ohlcvData.marketRegime || 'UNKNOWN',
             regime_confidence: ohlcvData.regimeConfidence || 0.5,
             ai_reasoning: aiReasoning,
