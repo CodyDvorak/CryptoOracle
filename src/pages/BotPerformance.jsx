@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { Activity, TrendingUp, TrendingDown, Target, Award, CircleAlert as AlertCircle, BarChart3, CircleCheck as CheckCircle, Brain, Lightbulb, Sparkles } from 'lucide-react'
+import { Activity, TrendingUp, TrendingDown, Target, Award, CircleAlert as AlertCircle, BarChart3, CircleCheck as CheckCircle, Brain, Lightbulb, Sparkles, Filter, Calendar, Play } from 'lucide-react'
 import { API_ENDPOINTS, getHeaders } from '../config/api'
+import SignalPerformanceCharts from '../components/SignalPerformanceCharts'
 import './BotPerformance.css'
 
 function BotPerformance() {
@@ -283,6 +284,111 @@ function BotPerformance() {
         </div>
       </div>
 
+      <div className="filters-and-tools">
+        <div className="filters-bar">
+          <div className="filters-header">
+            <Filter size={20} />
+            <h3>Filters</h3>
+          </div>
+          <div className="filter-controls">
+            <div className="filter-group">
+              <label>Regime</label>
+              <select
+                value={filters.regime}
+                onChange={(e) => handleFilterChange('regime', e.target.value)}
+              >
+                <option value="all">All Regimes</option>
+                <option value="BULL">Bull Market</option>
+                <option value="BEAR">Bear Market</option>
+                <option value="SIDEWAYS">Sideways</option>
+              </select>
+            </div>
+            <div className="filter-group">
+              <label>Timeframe</label>
+              <select
+                value={filters.timeframe}
+                onChange={(e) => handleFilterChange('timeframe', e.target.value)}
+              >
+                <option value="all">All Timeframes</option>
+                <option value="1h">1 Hour</option>
+                <option value="4h">4 Hours</option>
+                <option value="1d">1 Day</option>
+                <option value="1w">1 Week</option>
+              </select>
+            </div>
+            <div className="filter-group">
+              <label>Coin</label>
+              <select
+                value={filters.coin}
+                onChange={(e) => handleFilterChange('coin', e.target.value)}
+              >
+                <option value="all">All Coins</option>
+                {coins.map(coin => (
+                  <option key={coin} value={coin}>{coin}</option>
+                ))}
+              </select>
+            </div>
+            <div className="filter-stats">
+              <span>Showing {filteredBots.length} of {bots.length} bots</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="backtesting-section">
+          <div className="backtest-header">
+            <Calendar size={20} />
+            <h3>Backtesting</h3>
+          </div>
+          <div className="backtest-controls">
+            <div className="date-inputs">
+              <div className="date-group">
+                <label>Start Date</label>
+                <input
+                  type="date"
+                  value={dateRange.start}
+                  onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+                />
+              </div>
+              <div className="date-group">
+                <label>End Date</label>
+                <input
+                  type="date"
+                  value={dateRange.end}
+                  onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+                />
+              </div>
+            </div>
+            <button
+              className="run-backtest-btn"
+              onClick={runBacktest}
+              disabled={loading}
+            >
+              <Play size={16} />
+              Run Backtest
+            </button>
+          </div>
+
+          {showBacktest && backtestResults.length > 0 && (
+            <div className="backtest-results">
+              <h4>Backtest Results</h4>
+              <div className="results-grid">
+                {backtestResults.slice(0, 10).map((result, idx) => (
+                  <div key={idx} className="result-card">
+                    <div className="result-bot">{result.bot_name}</div>
+                    <div className="result-metrics">
+                      <span className={result.success ? 'success' : 'failure'}>
+                        {result.success ? '✓' : '✗'} {result.accuracy?.toFixed(1)}%
+                      </span>
+                      <span>{result.total_tested} tests</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="performers-section">
         <div className="top-performers">
           <div className="performers-header">
@@ -397,6 +503,8 @@ function BotPerformance() {
           <p className="hint">Run a scan to generate performance metrics</p>
         </div>
       )}
+
+      <SignalPerformanceCharts />
     </div>
   )
 }

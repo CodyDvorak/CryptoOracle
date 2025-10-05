@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { TrendingUp, TrendingDown, Activity, DollarSign, Users, TriangleAlert as AlertTriangle, Zap, Target, ShieldAlert, BarChart3, Newspaper, MessageCircle } from 'lucide-react'
 import { supabase } from '../config/api'
+import MarketCorrelation from '../components/MarketCorrelation'
 import './Insights.css'
 
 function Insights() {
@@ -228,6 +229,8 @@ function Insights() {
         {options && <OptionsSection data={options} coin={selectedCoin} />}
         <BotInsightsSection predictions={insights.botPredictions} coin={selectedCoin} />
       </div>
+
+      <MarketCorrelation />
     </div>
   )
 }
