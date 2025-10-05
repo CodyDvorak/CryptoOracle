@@ -29,7 +29,7 @@ function Insights() {
 
       if (latestScan) {
         const { data: recommendations } = await supabase
-          .from('recommendations')
+          .from('scan_recommendations')
           .select('*')
           .eq('run_id', latestScan.id)
           .eq('ticker', selectedCoin)
