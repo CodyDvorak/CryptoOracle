@@ -5,11 +5,12 @@ import Dashboard from './pages/Dashboard'
 import ScanResults from './pages/ScanResults'
 import BotPerformance from './pages/BotPerformance'
 import History from './pages/History'
+import Insights from './pages/Insights'
 import Profile from './pages/Profile'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import NotificationCenter from './components/NotificationCenter'
-import { Activity, TrendingUp, BarChart3, History as HistoryIcon, User, LogOut } from 'lucide-react'
+import { Activity, TrendingUp, BarChart3, History as HistoryIcon, Lightbulb, User, LogOut } from 'lucide-react'
 import './App.css'
 
 function Navigation() {
@@ -19,6 +20,7 @@ function Navigation() {
   const navItems = [
     { path: '/', icon: Activity, label: 'Dashboard' },
     { path: '/results', icon: TrendingUp, label: 'Results' },
+    { path: '/insights', icon: Lightbulb, label: 'Insights' },
     { path: '/bots', icon: BarChart3, label: 'Bot Performance' },
     { path: '/history', icon: HistoryIcon, label: 'History' },
     { path: '/profile', icon: User, label: 'Profile' }
@@ -95,6 +97,7 @@ function AppContent() {
           <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
           <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/results" element={<ProtectedRoute><ScanResults /></ProtectedRoute>} />
+          <Route path="/insights" element={<ProtectedRoute><Insights /></ProtectedRoute>} />
           <Route path="/bots" element={<ProtectedRoute><BotPerformance /></ProtectedRoute>} />
           <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
