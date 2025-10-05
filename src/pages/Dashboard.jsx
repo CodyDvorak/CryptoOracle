@@ -491,11 +491,18 @@ function Dashboard() {
         <div className="info-card">
           <h3>How It Works</h3>
           <ul>
-            <li>59 specialized trading bots analyze market data</li>
-            <li>Each bot votes on direction (long/short) with confidence (1-10)</li>
-            <li>Consensus recommendations are generated from bot votes</li>
-            <li>Market regime detection weighs predictions</li>
-            <li>Multi-timeframe analysis increases accuracy</li>
+            <li><strong>Data Collection:</strong> Real-time OHLCV data from CMC, CoinGecko, CryptoCompare with multi-provider fallback</li>
+            <li><strong>Derivatives Integration:</strong> Live funding rates, open interest, and long/short ratios from OKX and Binance</li>
+            <li><strong>On-Chain Analysis:</strong> Whale movements, exchange flows, network activity, and smart money tracking</li>
+            <li><strong>59 Specialized Bots:</strong> Each bot analyzes specific technical indicators, patterns, and market conditions</li>
+            <li><strong>Bot Voting System:</strong> Every bot votes LONG/SHORT with confidence score (1-10) based on its strategy</li>
+            <li><strong>Market Regime Detection:</strong> Classifies market as BULL (trending up), BEAR (trending down), or SIDEWAYS</li>
+            <li><strong>Regime-Aware Weighting:</strong> Momentum bots weighted higher in trends, mean-reversion bots in ranging markets</li>
+            <li><strong>Multi-Timeframe Analysis:</strong> 4H, 1D, and 1W timeframes analyzed for confluence and alignment</li>
+            <li><strong>Consensus Generation:</strong> Aggregates all bot votes with regime-aware weighting to generate final recommendation</li>
+            <li><strong>AI Refinement (Optional):</strong> GPT-4 analyzes patterns, sentiment, and provides enhanced insights</li>
+            <li><strong>Risk Calculation:</strong> Automatic TP/SL levels, risk/reward ratios, and position sizing suggestions</li>
+            <li><strong>Confidence Gating:</strong> Only high-confidence signals (threshold varies by scan type) are returned</li>
           </ul>
         </div>
 
