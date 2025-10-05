@@ -51,7 +51,7 @@ export function useLiveRecommendations() {
   const fetchInitialRecommendations = async () => {
     try {
       const { data, error } = await supabase
-        .from('scan_recommendations')
+        .from('recommendations')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(50);

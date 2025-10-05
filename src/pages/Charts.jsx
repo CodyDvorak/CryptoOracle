@@ -42,7 +42,7 @@ export default function Charts() {
 
       if (latestScan) {
         const { data: recs } = await supabase
-          .from('scan_recommendations')
+          .from('recommendations')
           .select('*')
           .eq('run_id', latestScan.id)
           .order('avg_confidence', { ascending: false });

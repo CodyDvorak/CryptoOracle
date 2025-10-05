@@ -66,7 +66,7 @@ function ScanResults() {
 
       if (latestScan) {
         const { data: recs, error: recsError } = await supabase
-          .from('scan_recommendations')
+          .from('recommendations')
           .select('*')
           .eq('run_id', latestScan.id)
           .order('avg_confidence', { ascending: false })

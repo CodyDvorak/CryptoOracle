@@ -140,7 +140,7 @@ function Dashboard() {
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'scan_recommendations'
+          table: 'recommendations'
         },
         (payload) => {
           console.log('New recommendation:', payload.new)
@@ -224,7 +224,7 @@ function Dashboard() {
           .from('scan_runs')
           .select('status, completed_at')
           .eq('id', currentScanId)
-          .single()
+          .maybeSingle()
 
         if (!error && scanData) {
           console.log('Checking scan:', currentScanId, 'Status:', scanData.status)
