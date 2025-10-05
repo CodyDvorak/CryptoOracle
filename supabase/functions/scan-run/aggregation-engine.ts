@@ -29,6 +29,61 @@ interface AggregatedSignal {
 export class HybridAggregationEngine {
   private confidenceThreshold = 0.6; // 6/10 minimum confidence threshold
   private botPerformanceHistory: Map<string, { correct: number; total: number }> = new Map();
+  private supabase: any;
+  private optimizedParameters: Map<string, any> = new Map();
+  private botStatusCache: Map<string, boolean> = new Map();
+
+  constructor(supabaseClient?: any) {
+    this.supabase = supabaseClient;
+  }
+
+  async loadOptimizedParameters(regime: string) {
+    if (!this.supabase) return;
+
+    try {
+      const { data } = await this.supabase
+        .from('bot_parameters')
+        .select('*')
+        .eq('market_regime', regime)
+        .eq('is_active', true);
+
+      if (data) {
+        data.forEach((param: any) => {
+          this.optimizedParameters.set(`${param.bot_name}_${regime}`, param.parameters);
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load optimized parameters:', err);
+    }
+  }
+
+  async loadBotStatuses() {
+    if (!this.supabase) return;
+
+    try {
+      const { data } = await this.supabase
+        .from('bot_status_management')
+        .select('bot_name, is_enabled')
+        .eq('is_enabled', true);
+
+      if (data) {
+        data.forEach((status: any) => {
+          this.botStatusCache.set(status.bot_name, status.is_enabled);
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load bot statuses:', err);
+    }
+  }
+
+  isBotEnabled(botName: string): boolean {
+    // If no status in cache, assume enabled (backwards compatible)
+    return this.botStatusCache.get(botName) !== false;
+  }
+
+  getOptimizedParameters(botName: string, regime: string): any {
+    return this.optimizedParameters.get(`${botName}_${regime}`) || {};
+  }
 
   detectMarketRegime(ohlcv: any): MarketRegime {
     const adx = ohlcv.indicators.adx || 20;
@@ -251,9 +306,24 @@ export class HybridAggregationEngine {
     }
   }
 
-  aggregate(predictions: BotPrediction[], ohlcv: any): AggregatedSignal | null {
+  async aggregate(predictions: BotPrediction[], ohlcv: any): Promise<AggregatedSignal | null> {
     const regime = this.detectMarketRegime(ohlcv);
-    const adaptivePredictions = this.applyAdaptiveWeighting(predictions, regime);
+
+    // Load optimized parameters and bot statuses
+    await this.loadOptimizedParameters(regime.type.toUpperCase());
+    await this.loadBotStatuses();
+
+    // Filter out disabled bots
+    const enabledPredictions = predictions.filter(pred => this.isBotEnabled(pred.botName));
+
+    if (enabledPredictions.length === 0) {
+      console.log('No enabled bots available for predictions');
+      return null;
+    }
+
+    console.log(`Using ${enabledPredictions.length} enabled bots (filtered from ${predictions.length})`);
+
+    const adaptivePredictions = this.applyAdaptiveWeighting(enabledPredictions, regime);
     return this.calculateConsensus(adaptivePredictions, regime);
   }
 }

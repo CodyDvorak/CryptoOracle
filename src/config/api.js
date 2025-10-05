@@ -21,6 +21,9 @@ export const API_ENDPOINTS = {
   backtesting: `${API_BASE_URL}/backtesting`,
   customAlerts: `${API_BASE_URL}/custom-alerts`,
   marketCorrelation: `${API_BASE_URL}/market-correlation`,
+  parameterOptimizer: `${API_BASE_URL}/parameter-optimizer`,
+  reinforcementLearning: `${API_BASE_URL}/reinforcement-learning`,
+  dynamicBotManager: `${API_BASE_URL}/dynamic-bot-manager`,
 };
 
 export const getHeaders = () => ({

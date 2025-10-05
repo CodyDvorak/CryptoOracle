@@ -56,7 +56,7 @@ Deno.serve(async (req: Request) => {
     console.log(`Starting scan ${scanRun.id} - ${scanType} for ${actualCoinLimit} coins`);
 
     const cryptoService = new CryptoDataService();
-    const aggregationEngine = new HybridAggregationEngine();
+    const aggregationEngine = new HybridAggregationEngine(supabase);
 
     console.log('Fetching top coins...');
     const coins = await cryptoService.getTopCoins(filterScope, minPrice, maxPrice);
@@ -136,7 +136,7 @@ Deno.serve(async (req: Request) => {
         }
 
         // Use Hybrid Aggregation Intelligence Engine
-        const aggregatedSignal = aggregationEngine.aggregate(rawPredictions, ohlcvData);
+        const aggregatedSignal = await aggregationEngine.aggregate(rawPredictions, ohlcvData);
 
         if (aggregatedSignal && aggregatedSignal.botCount >= 3) {
           const consensusDirection = aggregatedSignal.direction;
