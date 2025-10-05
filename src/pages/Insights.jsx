@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { TrendingUp, TrendingDown, Activity, DollarSign, Users, TriangleAlert as AlertTriangle, Zap, Target, ShieldAlert, BarChart3, Newspaper, MessageCircle } from 'lucide-react'
 import { supabase } from '../config/api'
 import MarketCorrelation from '../components/MarketCorrelation'
+import RealtimeUpdates from '../components/RealtimeUpdates'
 import './Insights.css'
 
 function Insights() {
@@ -171,6 +172,7 @@ function Insights() {
 
   return (
     <div className="insights-page">
+      <RealtimeUpdates type="insights" />
       <div className="insights-header">
         <div>
           <h1>Market Insights</h1>

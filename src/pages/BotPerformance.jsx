@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Activity, TrendingUp, TrendingDown, Target, Award, CircleAlert as AlertCircle, BarChart3, CircleCheck as CheckCircle, Brain, Lightbulb, Sparkles, Filter, Calendar, Play } from 'lucide-react'
 import { API_ENDPOINTS, getHeaders } from '../config/api'
 import SignalPerformanceCharts from '../components/SignalPerformanceCharts'
+import RealtimeUpdates from '../components/RealtimeUpdates'
 import './BotPerformance.css'
 
 function BotPerformance() {
@@ -293,6 +294,7 @@ function BotPerformance() {
 
   return (
     <div className="bot-performance">
+      <RealtimeUpdates type="bot-performance" />
       <div className="bot-header">
         <div>
           <h1>Bot Performance</h1>

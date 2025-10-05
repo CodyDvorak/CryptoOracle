@@ -9,52 +9,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
-Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 200, headers: corsHeaders });
-  }
-
-  let scanRun: any = null;
-
+async function runScanProcess(
+  supabase: any,
+  scanRun: any,
+  scanType: string,
+  actualCoinLimit: number,
+  filterScope: string,
+  minPrice: number | undefined,
+  maxPrice: number | undefined,
+  confidenceThreshold: number
+) {
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    const body = await req.json();
-    const {
-      interval = '4h',
-      filterScope = 'all',
-      minPrice,
-      maxPrice,
-      scanType = 'quick_scan',
-      coinLimit = 100,
-      confidenceThreshold = 0.65
-    } = body;
-
-    const actualCoinLimit = typeof coinLimit === 'number' ? coinLimit : 100;
-    console.log(`Confidence threshold: ${confidenceThreshold}`);
-
-    const { data: scanRunData, error: scanError } = await supabase
-      .from('scan_runs')
-      .insert({
-        interval,
-        filter_scope: filterScope,
-        min_price: minPrice,
-        max_price: maxPrice,
-        scan_type: scanType,
-        status: 'running',
-        total_bots: 87,
-        total_coins: actualCoinLimit,
-      })
-      .select()
-      .single();
-
-    if (scanError) throw scanError;
-    scanRun = scanRunData;
-
-    console.log(`Starting scan ${scanRun.id} - ${scanType} for ${actualCoinLimit} coins`);
-
     const cryptoService = new CryptoDataService();
     const aggregationEngine = new HybridAggregationEngine(supabase);
 
@@ -260,43 +225,94 @@ Deno.serve(async (req: Request) => {
       .eq('id', scanRun.id);
 
     console.log(`Scan ${scanRun.id} completed: ${totalSignals} signals from ${processedCoins} coins`);
+  } catch (error) {
+    console.error('Scan background process error:', error);
+
+    try {
+      await supabase
+        .from('scan_runs')
+        .update({
+          status: 'failed',
+          completed_at: new Date().toISOString(),
+          error_message: error.message,
+        })
+        .eq('id', scanRun.id);
+    } catch (updateError) {
+      console.error('Error updating scan status:', updateError);
+    }
+  }
+}
+
+Deno.serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 200, headers: corsHeaders });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const body = await req.json();
+    const {
+      interval = '4h',
+      filterScope = 'all',
+      minPrice,
+      maxPrice,
+      scanType = 'quick_scan',
+      coinLimit = 100,
+      confidenceThreshold = 0.65
+    } = body;
+
+    const actualCoinLimit = typeof coinLimit === 'number' ? coinLimit : 100;
+
+    const { data: scanRun, error: scanError } = await supabase
+      .from('scan_runs')
+      .insert({
+        interval,
+        filter_scope: filterScope,
+        min_price: minPrice,
+        max_price: maxPrice,
+        scan_type: scanType,
+        status: 'running',
+        total_bots: 87,
+        total_coins: actualCoinLimit,
+      })
+      .select()
+      .single();
+
+    if (scanError) throw scanError;
+
+    console.log(`Scan ${scanRun.id} initiated - returning immediately`);
+
+    runScanProcess(
+      supabase,
+      scanRun,
+      scanType,
+      actualCoinLimit,
+      filterScope,
+      minPrice,
+      maxPrice,
+      confidenceThreshold
+    ).catch(error => {
+      console.error('Background scan error:', error);
+    });
 
     return new Response(
       JSON.stringify({
         success: true,
         runId: scanRun.id,
-        message: 'Scan completed successfully',
-        totalSignals,
-        coinsAnalyzed: processedCoins,
+        message: 'Scan initiated and running in background',
+        status: 'running'
       }),
       {
-        status: 200,
+        status: 202,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
 
   } catch (error) {
-    console.error('Scan function error:', error);
-
-    if (scanRun) {
-      try {
-        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-        const supabase = createClient(supabaseUrl, supabaseKey);
-
-        await supabase
-          .from('scan_runs')
-          .update({
-            status: 'failed',
-            completed_at: new Date().toISOString(),
-            error_message: error.message,
-          })
-          .eq('id', scanRun.id);
-      } catch (updateError) {
-        console.error('Error updating scan status:', updateError);
-      }
-    }
-
+    console.error('Scan initiation error:', error);
     return new Response(
       JSON.stringify({
         success: false,
