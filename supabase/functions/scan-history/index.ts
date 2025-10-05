@@ -33,7 +33,7 @@ Deno.serve(async (req: Request) => {
     const scanIds = scans.map(scan => scan.id);
 
     const { data: recommendations, error: recsError } = await supabase
-      .from('recommendations')
+      .from('scan_recommendations')
       .select('*')
       .in('run_id', scanIds);
 

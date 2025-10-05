@@ -128,6 +128,7 @@ function Dashboard() {
   const [showBotDetails, setShowBotDetails] = useState(false)
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
+  const [currentScanId, setCurrentScanId] = useState(null)
 
   useEffect(() => {
     fetchLatestRecommendations()
@@ -169,15 +170,18 @@ function Dashboard() {
                 setScanStartTime(Date.now())
               }
             } else if (scan.status === 'completed') {
-              console.log('Scan completed, fetching recommendations immediately')
+              console.log('Scan completed via WebSocket, fetching recommendations immediately')
               setIsScanning(false)
               setScanProgress(null)
               setScanStartTime(null)
+              setElapsedTime(0)
               fetchLatestRecommendations()
             } else if (scan.status === 'failed') {
+              console.log('Scan failed via WebSocket')
               setIsScanning(false)
               setScanProgress(null)
               setScanStartTime(null)
+              setElapsedTime(0)
               setError('Scan failed. Please try again.')
             }
           }
@@ -189,7 +193,7 @@ function Dashboard() {
       if (isScanning) {
         checkScanStatus()
       }
-    }, 3000)
+    }, 2000)
 
     return () => {
       clearInterval(interval)
@@ -214,6 +218,40 @@ function Dashboard() {
 
   const checkScanStatus = async () => {
     try {
+      // Check if we have a specific scan ID to track
+      if (currentScanId && isScanning) {
+        const { data: scanData, error } = await supabase
+          .from('scan_runs')
+          .select('status, completed_at')
+          .eq('id', currentScanId)
+          .single()
+
+        if (!error && scanData) {
+          console.log('Checking scan:', currentScanId, 'Status:', scanData.status)
+
+          if (scanData.status === 'completed') {
+            console.log('Scan completed! Updating UI...')
+            setIsScanning(false)
+            setScanProgress(null)
+            setScanStartTime(null)
+            setElapsedTime(0)
+            setCurrentScanId(null)
+            setTimeout(() => fetchLatestRecommendations(), 500)
+            return
+          } else if (scanData.status === 'failed') {
+            console.log('Scan failed!')
+            setIsScanning(false)
+            setScanProgress(null)
+            setScanStartTime(null)
+            setElapsedTime(0)
+            setCurrentScanId(null)
+            setError('Scan failed. Please try again.')
+            return
+          }
+        }
+      }
+
+      // Fallback to general status check
       const response = await fetch(API_ENDPOINTS.scanStatus, {
         headers: getHeaders(),
       })
@@ -228,11 +266,13 @@ function Dashboard() {
         }
       } else {
         if (isScanning) {
-          console.log('Scan completed via status check, fetching recommendations immediately')
+          console.log('No running scans detected, scan must be complete')
           setIsScanning(false)
           setScanProgress(null)
           setScanStartTime(null)
-          fetchLatestRecommendations()
+          setElapsedTime(0)
+          setCurrentScanId(null)
+          setTimeout(() => fetchLatestRecommendations(), 500)
         }
       }
     } catch (err) {
@@ -304,6 +344,10 @@ function Dashboard() {
 
       const data = await response.json()
       console.log('Scan started:', data)
+      if (data.runId) {
+        setCurrentScanId(data.runId)
+        console.log('Tracking scan ID:', data.runId)
+      }
     } catch (err) {
       setError(err.message)
       setIsScanning(false)

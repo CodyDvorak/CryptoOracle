@@ -219,8 +219,8 @@ async function runScanProcess(
       .update({
         status: 'completed',
         completed_at: new Date().toISOString(),
-        total_available_coins: coins.length,
-        total_coins: processedCoins,
+        total_available_coins: processedCoins,
+        total_coins: scanRun.total_coins,
         total_bots: tradingBots.length,
       })
       .eq('id', scanRun.id);
