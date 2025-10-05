@@ -55,10 +55,23 @@ export class CryptoDataService {
   private cryptoCompareApiKey: string;
   private cmcIdCache: Map<string, number> = new Map();
 
+  private readonly STABLECOINS = [
+    'USDT', 'USDC', 'BUSD', 'DAI', 'TUSD', 'USDP', 'USDD', 'GUSD', 'FRAX',
+    'LUSD', 'USDN', 'USDJ', 'RSV', 'HUSD', 'FEI', 'EURS', 'EURT', 'XSGD'
+  ];
+
   constructor() {
     this.cmcApiKey = Deno.env.get('COINMARKETCAP_API_KEY') || '';
     this.coinGeckoApiKey = Deno.env.get('COINGECKO_API_KEY') || '';
     this.cryptoCompareApiKey = Deno.env.get('CRYPTOCOMPARE_API_KEY') || '';
+  }
+
+  private isStablecoin(symbol: string): boolean {
+    return this.STABLECOINS.includes(symbol.toUpperCase());
+  }
+
+  private filterStablecoins(coins: Coin[]): Coin[] {
+    return coins.filter(coin => !this.isStablecoin(coin.symbol));
   }
 
   async getTopCoins(scope: string, minPrice?: number, maxPrice?: number): Promise<Coin[]> {
@@ -66,21 +79,24 @@ export class CryptoDataService {
 
     let coins = await this.getTopCoinsFromCMC(limit, minPrice, maxPrice);
     if (coins.length > 0) {
-      console.log(`✅ CoinMarketCap: Fetched ${coins.length} coins`);
+      coins = this.filterStablecoins(coins);
+      console.log(`✅ CoinMarketCap: Fetched ${coins.length} coins (stablecoins filtered)`);
       return coins;
     }
 
     console.log('⚠️ CoinMarketCap failed, trying CoinGecko...');
     coins = await this.getTopCoinsFromCoinGecko(limit, minPrice, maxPrice);
     if (coins.length > 0) {
-      console.log(`✅ CoinGecko: Fetched ${coins.length} coins`);
+      coins = this.filterStablecoins(coins);
+      console.log(`✅ CoinGecko: Fetched ${coins.length} coins (stablecoins filtered)`);
       return coins;
     }
 
     console.log('⚠️ CoinGecko failed, trying CryptoCompare...');
     coins = await this.getTopCoinsFromCryptoCompare(limit, minPrice, maxPrice);
     if (coins.length > 0) {
-      console.log(`✅ CryptoCompare: Fetched ${coins.length} coins`);
+      coins = this.filterStablecoins(coins);
+      console.log(`✅ CryptoCompare: Fetched ${coins.length} coins (stablecoins filtered)`);
       return coins;
     }
 

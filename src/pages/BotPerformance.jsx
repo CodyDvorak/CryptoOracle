@@ -26,6 +26,12 @@ function BotPerformance() {
   })
   const [showBacktest, setShowBacktest] = useState(false)
 
+  const [botStatuses, setBotStatuses] = useState([])
+  const [optimizing, setOptimizing] = useState(false)
+  const [training, setTraining] = useState(false)
+  const [evaluating, setEvaluating] = useState(false)
+  const [showAdaptivePanel, setShowAdaptivePanel] = useState(false)
+
   useEffect(() => {
     fetchBotPerformance()
   }, [])
@@ -153,6 +159,83 @@ function BotPerformance() {
     }
   }
 
+  const runParameterOptimization = async () => {
+    setOptimizing(true)
+    try {
+      const response = await fetch(`${API_ENDPOINTS.parameterOptimizer}?action=optimize`, {
+        method: 'POST',
+        headers: getHeaders(),
+      })
+      const data = await response.json()
+      if (data.success) {
+        alert(`Optimized ${data.results?.length || 0} bot configurations`)
+        fetchBotPerformance()
+      }
+    } catch (err) {
+      console.error('Parameter optimization failed:', err)
+      alert('Parameter optimization failed')
+    } finally {
+      setOptimizing(false)
+    }
+  }
+
+  const runReinforcementLearning = async () => {
+    setTraining(true)
+    try {
+      const response = await fetch(`${API_ENDPOINTS.reinforcementLearning}?action=train`, {
+        method: 'POST',
+        headers: getHeaders(),
+      })
+      const data = await response.json()
+      if (data.success) {
+        alert(`Trained ${data.bots_trained || 0} bots on historical data`)
+      }
+    } catch (err) {
+      console.error('Reinforcement learning failed:', err)
+      alert('Training failed')
+    } finally {
+      setTraining(false)
+    }
+  }
+
+  const evaluateBotStatuses = async () => {
+    setEvaluating(true)
+    try {
+      const response = await fetch(`${API_ENDPOINTS.dynamicBotManager}?action=evaluate`, {
+        method: 'POST',
+        headers: getHeaders(),
+      })
+      const data = await response.json()
+      if (data.success) {
+        alert(`Evaluated ${data.bots_evaluated || 0} bots\nEnabled: ${data.bots_enabled || 0}\nDisabled: ${data.bots_disabled || 0}`)
+        fetchBotStatuses()
+      }
+    } catch (err) {
+      console.error('Bot evaluation failed:', err)
+      alert('Evaluation failed')
+    } finally {
+      setEvaluating(false)
+    }
+  }
+
+  const fetchBotStatuses = async () => {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.dynamicBotManager}?action=status`, {
+        headers: getHeaders(),
+      })
+      const data = await response.json()
+      if (data.success) {
+        setBotStatuses(data.statuses || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch bot statuses:', err)
+    }
+  }
+
+  useEffect(() => {
+    fetchBotStatuses()
+  }, [])
+
   if (loading) {
     return (
       <div className="bot-loading">
@@ -215,10 +298,138 @@ function BotPerformance() {
           <h1>Bot Performance</h1>
           <p>Track accuracy and performance of 54 trading bots</p>
         </div>
-        <button className="refresh-btn" onClick={fetchBotPerformance}>
-          Refresh
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button className="refresh-btn" onClick={fetchBotPerformance}>
+            Refresh
+          </button>
+          <button className="refresh-btn" onClick={() => setShowAdaptivePanel(!showAdaptivePanel)}>
+            <Brain size={18} /> Adaptive AI
+          </button>
+        </div>
       </div>
+
+      {showAdaptivePanel && (
+        <div className="adaptive-intelligence-panel" style={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          padding: '24px',
+          borderRadius: '12px',
+          marginBottom: '24px',
+          color: 'white'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+            <Sparkles size={28} />
+            <div>
+              <h2 style={{ margin: 0, fontSize: '22px' }}>Adaptive Intelligence System</h2>
+              <p style={{ margin: '4px 0 0 0', opacity: 0.9 }}>
+                Auto-optimize parameters, train reinforcement learning models, and manage bot statuses
+              </p>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
+            <div style={{ background: 'rgba(255,255,255,0.1)', padding: '16px', borderRadius: '8px' }}>
+              <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Target size={18} /> Parameter Optimization
+              </h3>
+              <p style={{ margin: '0 0 12px 0', fontSize: '13px', opacity: 0.9 }}>
+                Auto-tune RSI periods, MACD settings, and other bot parameters based on backtest performance
+              </p>
+              <button
+                onClick={runParameterOptimization}
+                disabled={optimizing}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  background: optimizing ? '#999' : '#fff',
+                  color: '#667eea',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontWeight: 'bold',
+                  cursor: optimizing ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {optimizing ? 'Optimizing...' : 'Optimize Parameters'}
+              </button>
+            </div>
+
+            <div style={{ background: 'rgba(255,255,255,0.1)', padding: '16px', borderRadius: '8px' }}>
+              <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Brain size={18} /> Reinforcement Learning
+              </h3>
+              <p style={{ margin: '0 0 12px 0', fontSize: '13px', opacity: 0.9 }}>
+                Train bots on historical outcomes using Q-learning to improve prediction accuracy
+              </p>
+              <button
+                onClick={runReinforcementLearning}
+                disabled={training}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  background: training ? '#999' : '#fff',
+                  color: '#667eea',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontWeight: 'bold',
+                  cursor: training ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {training ? 'Training...' : 'Train Models'}
+              </button>
+            </div>
+
+            <div style={{ background: 'rgba(255,255,255,0.1)', padding: '16px', borderRadius: '8px' }}>
+              <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Activity size={18} /> Dynamic Bot Manager
+              </h3>
+              <p style={{ margin: '0 0 12px 0', fontSize: '13px', opacity: 0.9 }}>
+                Auto-enable bots at 60%+ accuracy, disable at 35%, with 7-day cooldown period
+              </p>
+              <button
+                onClick={evaluateBotStatuses}
+                disabled={evaluating}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  background: evaluating ? '#999' : '#fff',
+                  color: '#667eea',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontWeight: 'bold',
+                  cursor: evaluating ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {evaluating ? 'Evaluating...' : 'Evaluate Bots'}
+              </button>
+            </div>
+          </div>
+
+          {botStatuses.length > 0 && (
+            <div style={{ marginTop: '16px', background: 'rgba(255,255,255,0.1)', padding: '16px', borderRadius: '8px' }}>
+              <h3 style={{ margin: '0 0 12px 0', fontSize: '16px' }}>Bot Status Summary</h3>
+              <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+                <div>
+                  <div style={{ fontSize: '28px', fontWeight: 'bold' }}>
+                    {botStatuses.filter(b => b.is_enabled).length}
+                  </div>
+                  <div style={{ fontSize: '13px', opacity: 0.9 }}>Enabled Bots</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '28px', fontWeight: 'bold' }}>
+                    {botStatuses.filter(b => !b.is_enabled).length}
+                  </div>
+                  <div style={{ fontSize: '13px', opacity: 0.9 }}>Disabled Bots</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '28px', fontWeight: 'bold' }}>
+                    {botStatuses.filter(b => b.cooldown_until && new Date(b.cooldown_until) > new Date()).length}
+                  </div>
+                  <div style={{ fontSize: '13px', opacity: 0.9 }}>In Cooldown</div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="performance-overview">
         <div className="overview-header">

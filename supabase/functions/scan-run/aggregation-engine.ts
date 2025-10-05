@@ -223,9 +223,9 @@ export class HybridAggregationEngine {
     let finalConfidence = avgConfidence;
 
     if (consensusPercent >= 80) {
-      finalConfidence = Math.min(avgConfidence * 1.15, 1.0);
+      finalConfidence = Math.min(avgConfidence * 1.12, 0.95);
     } else if (consensusPercent >= 70) {
-      finalConfidence = Math.min(avgConfidence * 1.08, 1.0);
+      finalConfidence = Math.min(avgConfidence * 1.06, 0.92);
     }
 
     // CONTRARIAN AGREEMENT AMPLIFICATION
@@ -240,9 +240,9 @@ export class HybridAggregationEngine {
 
     // If 3+ contrarians agree with 70%+ consensus, boost confidence significantly
     if (contrarianCount >= 3 && consensusPercent >= 70) {
-      finalConfidence = Math.min(finalConfidence * 1.15, 1.0); // 15% boost for contrarian alignment
+      finalConfidence = Math.min(finalConfidence * 1.08, 0.95); // 8% boost for contrarian alignment
     } else if (contrarianCount >= 2 && consensusPercent >= 75) {
-      finalConfidence = Math.min(finalConfidence * 1.10, 1.0); // 10% boost for moderate contrarian agreement
+      finalConfidence = Math.min(finalConfidence * 1.05, 0.93); // 5% boost for moderate contrarian agreement
     }
 
     const advancedBots = ['Elliott Wave', 'Order Flow', 'Whale', 'Social Sentiment', 'Options Flow'];
@@ -251,7 +251,7 @@ export class HybridAggregationEngine {
     ).length;
 
     if (advancedCount >= 2 && consensusPercent >= 75) {
-      finalConfidence = Math.min(finalConfidence * 1.10, 1.0);
+      finalConfidence = Math.min(finalConfidence * 1.05, 0.94);
     }
 
     const avgEntry = dominantPreds.reduce((sum, p) => sum + p.entry, 0) / dominantPreds.length;
