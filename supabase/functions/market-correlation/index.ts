@@ -67,145 +67,56 @@ async function getCorrelations(supabase: any) {
 }
 
 async function calculateCorrelations(supabase: any) {
-  console.log('Calculating market correlations...');
+  console.log('Triggering correlation calculation via calculate-correlations function...');
 
-  const baseAssets = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP'];
-  const correlatedAssets = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'ADA', 'DOGE', 'MATIC', 'DOT', 'AVAX'];
-  const timeframes = ['1h', '4h', '1d', '1w'];
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
-  const correlations = [];
+    // Call the calculate-correlations function
+    const correlationUrl = `${supabaseUrl}/functions/v1/calculate-correlations`;
 
-  for (const base of baseAssets) {
-    for (const corr of correlatedAssets) {
-      if (base === corr) continue;
-
-      for (const timeframe of timeframes) {
-        const coefficient = await fetchCorrelation(base, corr, timeframe);
-
-        if (coefficient !== null) {
-          const absCoeff = Math.abs(coefficient);
-          let strength = 'WEAK';
-          if (absCoeff >= 0.7) strength = 'STRONG';
-          else if (absCoeff >= 0.4) strength = 'MODERATE';
-
-          const direction = coefficient >= 0 ? 'POSITIVE' : 'NEGATIVE';
-
-          correlations.push({
-            base_asset: base,
-            correlated_asset: corr,
-            correlation_coefficient: coefficient,
-            timeframe,
-            period_days: timeframe === '1h' ? 7 : timeframe === '4h' ? 14 : timeframe === '1d' ? 30 : 90,
-            strength,
-            direction,
-          });
-        }
+    const response = await fetch(`${correlationUrl}?days=30&timeframe=1d`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${supabaseAnonKey}`,
+        'Content-Type': 'application/json',
       }
-    }
-  }
+    });
 
-  for (const correlation of correlations) {
-    await supabase
-      .from('market_correlations')
-      .upsert(correlation, {
-        onConflict: 'base_asset,correlated_asset,timeframe',
-      });
-  }
+    const data = await response.json();
 
-  const btcData = await fetchPriceData('BTC', '1d');
-  const totalMarketCap = await fetchTotalMarketCap();
-  const btcMarketCap = btcData?.marketCap || 0;
-  const btcDominance = totalMarketCap > 0 ? (btcMarketCap / totalMarketCap) * 100 : 0;
-
-  const strongPositive = correlations.filter(
-    (c) => c.strength === 'STRONG' && c.direction === 'POSITIVE'
-  );
-  const marketSentiment = strongPositive.length > correlations.length * 0.6 ? 'BULLISH' : 'NEUTRAL';
-
-  await supabase.from('correlation_snapshots').insert({
-    btc_dominance: btcDominance,
-    market_sentiment: marketSentiment,
-    top_correlations: correlations.slice(0, 10),
-  });
-
-  console.log(`Calculated ${correlations.length} correlations`);
-
-  return new Response(
-    JSON.stringify({
-      success: true,
-      calculated: correlations.length,
-    }),
-    {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    }
-  );
-}
-
-async function fetchCorrelation(base: string, corr: string, timeframe: string): Promise<number | null> {
-  try {
-    const baseData = await fetchPriceData(base, timeframe);
-    const corrData = await fetchPriceData(corr, timeframe);
-
-    if (!baseData?.prices || !corrData?.prices || baseData.prices.length < 10 || corrData.prices.length < 10) {
-      return null;
+    if (!response.ok) {
+      throw new Error(`Correlation calculation failed: ${JSON.stringify(data)}`);
     }
 
-    const basePrices = baseData.prices.slice(0, Math.min(baseData.prices.length, corrData.prices.length));
-    const corrPrices = corrData.prices.slice(0, Math.min(baseData.prices.length, corrData.prices.length));
+    console.log(`✅ Calculated ${data.results?.totalCorrelations || 0} correlations`);
 
-    return calculatePearsonCorrelation(basePrices, corrPrices);
-  } catch (error) {
-    console.error(`Error fetching correlation ${base}-${corr}:`, error);
-    return null;
-  }
-}
-
-async function fetchPriceData(symbol: string, timeframe: string): Promise<any> {
-  try {
-    const coinId = symbol.toLowerCase();
-    const days = timeframe === '1h' ? '1' : timeframe === '4h' ? '7' : timeframe === '1d' ? '30' : '90';
-
-    const response = await fetch(
-      `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=${days}&interval=${timeframe === '1h' ? 'hourly' : 'daily'}`
+    return new Response(
+      JSON.stringify({
+        success: true,
+        calculated: data.results?.totalCorrelations || 0,
+        results: data
+      }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
     );
-
-    if (!response.ok) return null;
-
-    const data = await response.json();
-    const prices = data.prices?.map((p: any) => p[1]) || [];
-
-    return { prices, marketCap: data.market_caps?.[0]?.[1] || 0 };
   } catch (error) {
-    return null;
+    console.error('Correlation calculation error:', error);
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: error.message,
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
 }
 
-async function fetchTotalMarketCap(): Promise<number> {
-  try {
-    const response = await fetch('https://api.coingecko.com/api/v3/global');
-    if (!response.ok) return 0;
-    const data = await response.json();
-    return data.data?.total_market_cap?.usd || 0;
-  } catch (error) {
-    return 0;
-  }
-}
-
-function calculatePearsonCorrelation(x: number[], y: number[]): number {
-  const n = x.length;
-  if (n === 0 || n !== y.length) return 0;
-
-  const sumX = x.reduce((a, b) => a + b, 0);
-  const sumY = y.reduce((a, b) => a + b, 0);
-  const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
-  const sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0);
-  const sumY2 = y.reduce((sum, yi) => sum + yi * yi, 0);
-
-  const numerator = n * sumXY - sumX * sumY;
-  const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
-
-  if (denominator === 0) return 0;
-
-  return numerator / denominator;
-}
+// Note: Correlation calculation logic moved to calculate-correlations function
+// This function now delegates to the new service with multi-API support
