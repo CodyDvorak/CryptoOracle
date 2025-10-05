@@ -250,7 +250,8 @@ function Dashboard() {
           filterScope: 'all',
           interval: '4h',
           coinLimit: coinLimit,
-          useDeepAI: scanConfig?.aiEnabled || false
+          useDeepAI: scanConfig?.aiEnabled || false,
+          confidenceThreshold: 0.60
         })
       })
 

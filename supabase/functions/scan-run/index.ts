@@ -27,10 +27,12 @@ Deno.serve(async (req: Request) => {
       minPrice,
       maxPrice,
       scanType = 'quick_scan',
-      coinLimit = 100
+      coinLimit = 100,
+      confidenceThreshold = 0.65
     } = body;
 
     const actualCoinLimit = typeof coinLimit === 'number' ? coinLimit : 100;
+    console.log(`Confidence threshold: ${confidenceThreshold}`);
 
     const { data: scanRunData, error: scanError } = await supabase
       .from('scan_runs')
@@ -79,9 +81,27 @@ Deno.serve(async (req: Request) => {
           continue;
         }
 
-        const derivativesData = await cryptoService.getDerivativesData(coin.symbol);
-        const optionsData = await cryptoService.getOptionsData(coin.symbol);
-        const tokenMetricsData = await cryptoService.getTokenMetricsData(coin.symbol);
+        let derivativesData = null;
+        let optionsData = null;
+        let tokenMetricsData = null;
+
+        try {
+          derivativesData = await cryptoService.getDerivativesData(coin.symbol);
+        } catch (error) {
+          console.warn(`Derivatives data fetch failed for ${coin.symbol}:`, error.message);
+        }
+
+        try {
+          optionsData = await cryptoService.getOptionsData(coin.symbol);
+        } catch (error) {
+          console.warn(`Options data fetch failed for ${coin.symbol}:`, error.message);
+        }
+
+        try {
+          tokenMetricsData = await cryptoService.getTokenMetricsData(coin.symbol);
+        } catch (error) {
+          console.warn(`TokenMetrics data fetch failed for ${coin.symbol}:`, error.message);
+        }
 
         let longVotes = 0;
         let shortVotes = 0;
@@ -159,7 +179,16 @@ Deno.serve(async (req: Request) => {
             console.log(`🤖 TokenMetrics for ${coin.symbol}: ${tokenMetricsData.recommendation} (Score: ${(tmScore * 100).toFixed(0)}%)`);
           }
 
-          recommendations.push({
+          const predicted24h = consensusDirection === 'LONG' ? coin.price * 1.02 : coin.price * 0.98;
+          const predicted48h = consensusDirection === 'LONG' ? coin.price * 1.04 : coin.price * 0.96;
+          const predicted7d = consensusDirection === 'LONG' ? coin.price * 1.08 : coin.price * 0.92;
+
+          const change24h = ((predicted24h - coin.price) / coin.price) * 100;
+          const change48h = ((predicted48h - coin.price) / coin.price) * 100;
+          const change7d = ((predicted7d - coin.price) / coin.price) * 100;
+
+          if (finalConfidence >= confidenceThreshold) {
+            recommendations.push({
             run_id: scanRun.id,
             coin: coin.name,
             ticker: coin.symbol,
@@ -169,22 +198,23 @@ Deno.serve(async (req: Request) => {
             avg_entry: avgEntry,
             avg_take_profit: avgTakeProfit,
             avg_stop_loss: avgStopLoss,
-            avg_predicted_24h: consensusDirection === 'LONG'
-              ? coin.price * 1.02
-              : coin.price * 0.98,
-            avg_predicted_48h: consensusDirection === 'LONG'
-              ? coin.price * 1.04
-              : coin.price * 0.96,
-            avg_predicted_7d: consensusDirection === 'LONG'
-              ? coin.price * 1.08
-              : coin.price * 0.92,
+            avg_predicted_24h: predicted24h,
+            avg_predicted_48h: predicted48h,
+            avg_predicted_7d: predicted7d,
+            predicted_change_24h: change24h,
+            predicted_change_48h: change48h,
+            predicted_change_7d: change7d,
             bot_count: totalBotsVoting,
             bot_votes_long: longVotes,
             bot_votes_short: shortVotes,
             market_regime: ohlcvData.marketRegime || 'UNKNOWN',
             regime_confidence: ohlcvData.regimeConfidence || 0.5,
             ai_reasoning: aiReasoning,
-          });
+            });
+            console.log(`✅ ${coin.symbol}: Confidence ${finalConfidence.toFixed(2)} >= ${confidenceThreshold} - ADDED`);
+          } else {
+            console.log(`❌ ${coin.symbol}: Confidence ${finalConfidence.toFixed(2)} < ${confidenceThreshold} - FILTERED OUT`);
+          }
 
           botPredictions.push(...coinPredictions);
         }
