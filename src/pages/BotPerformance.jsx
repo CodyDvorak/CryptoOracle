@@ -3,6 +3,7 @@ import { Activity, TrendingUp, TrendingDown, Target, Award, CircleAlert as Alert
 import { API_ENDPOINTS, getHeaders } from '../config/api'
 import SignalPerformanceCharts from '../components/SignalPerformanceCharts'
 import RealtimeUpdates from '../components/RealtimeUpdates'
+import BotAccuracyHistory from '../components/BotAccuracyHistory'
 import './BotPerformance.css'
 
 function BotPerformance() {

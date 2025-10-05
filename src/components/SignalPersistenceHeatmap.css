@@ -1,0 +1,360 @@
+.signal-persistence-heatmap {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.heatmap-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.heatmap-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  color: #fff;
+  font-size: 1.1rem;
+}
+
+.heatmap-header select {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff;
+  cursor: pointer;
+}
+
+.heatmap-header select:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.heatmap-description {
+  margin: 0 0 1.5rem 0;
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.heatmap-grid {
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+}
+
+.grid-header {
+  display: grid;
+  grid-template-columns: 120px repeat(var(--date-count, 7), 50px) 120px;
+  gap: 4px;
+  margin-bottom: 4px;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.coin-column-header,
+.date-header,
+.stats-header {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #9ca3af;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.coin-column-header {
+  text-align: left;
+}
+
+.stats-header {
+  text-align: right;
+}
+
+.heatmap-row {
+  display: grid;
+  grid-template-columns: 120px repeat(var(--date-count, 7), 50px) 120px;
+  gap: 4px;
+  margin-bottom: 4px;
+  align-items: center;
+}
+
+.coin-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.coin-name {
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.coin-count {
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+.signal-cell {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.signal-cell.empty {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.signal-cell.long {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.5));
+  border-color: rgba(16, 185, 129, 0.6);
+}
+
+.signal-cell.short {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(239, 68, 68, 0.5));
+  border-color: rgba(239, 68, 68, 0.6);
+}
+
+.signal-cell:hover {
+  transform: scale(1.1);
+  z-index: 10;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.signal-indicator {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.signal-cell.long .signal-indicator {
+  color: #10b981;
+}
+
+.signal-cell.short .signal-indicator {
+  color: #ef4444;
+}
+
+.persistence-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.persistence-bar-container {
+  flex: 1;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.persistence-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+
+.persistence-value {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #3b82f6;
+  min-width: 40px;
+}
+
+.heatmap-legend {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #d1d5db;
+  font-size: 0.85rem;
+}
+
+.legend-indicator {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.legend-indicator.long {
+  background: rgba(16, 185, 129, 0.3);
+  border: 1px solid rgba(16, 185, 129, 0.6);
+  color: #10b981;
+}
+
+.legend-indicator.short {
+  background: rgba(239, 68, 68, 0.3);
+  border: 1px solid rgba(239, 68, 68, 0.6);
+  color: #ef4444;
+}
+
+.legend-indicator.empty {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.persistence-insights {
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.persistence-insights h4 {
+  margin: 0 0 1rem 0;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.insight-card {
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.insight-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.insight-coin {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.insight-direction {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.insight-direction.long {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.insight-direction.short {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.insight-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.insight-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.insight-stat .stat-label {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.insight-stat .stat-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.insights-note {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.85rem;
+  font-style: italic;
+  text-align: center;
+}
+
+.heatmap-loading,
+.heatmap-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+  gap: 1rem;
+}
+
+.heatmap-loading svg {
+  color: #3b82f6;
+}
+
+.heatmap-empty svg {
+  color: #6b7280;
+}
+
+.heatmap-empty p {
+  margin: 0;
+  color: #9ca3af;
+}
+
+@media (max-width: 1200px) {
+  .heatmap-grid {
+    font-size: 0.85rem;
+  }
+
+  .signal-cell {
+    width: 40px;
+    height: 40px;
+  }
+
+  .grid-header,
+  .heatmap-row {
+    grid-template-columns: 100px repeat(var(--date-count, 7), 40px) 100px;
+  }
+}
+
+@media (max-width: 768px) {
+  .heatmap-legend {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .insights-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -3,6 +3,7 @@ import { TrendingUp, TrendingDown, Activity, DollarSign, Users, TriangleAlert as
 import { supabase } from '../config/api'
 import MarketCorrelation from '../components/MarketCorrelation'
 import RealtimeUpdates from '../components/RealtimeUpdates'
+import MarketRegimeTimeline from '../components/MarketRegimeTimeline'
 import './Insights.css'
 
 function Insights() {
@@ -233,6 +234,7 @@ function Insights() {
       </div>
 
       <MarketCorrelation />
+      <MarketRegimeTimeline coin={selectedCoin} />
     </div>
   )
 }

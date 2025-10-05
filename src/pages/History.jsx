@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { Clock, CircleCheck as CheckCircle, Circle as XCircle, Activity, CircleAlert as AlertCircle, ChevronDown, ChevronUp, TrendingUp, TrendingDown } from 'lucide-react'
 import { API_ENDPOINTS, getHeaders } from '../config/api'
+import ScanComparison from '../components/ScanComparison'
+import SignalPersistenceHeatmap from '../components/SignalPersistenceHeatmap'
 import './History.css'
 
 function History() {
@@ -70,11 +72,15 @@ function History() {
           <p className="hint">Run a scan from the Dashboard to see history</p>
         </div>
       ) : (
-        <div className="history-list">
-          {scans.map((scan) => (
-            <ScanHistoryCard key={scan.id} scan={scan} />
-          ))}
-        </div>
+        <>
+          <ScanComparison />
+          <SignalPersistenceHeatmap />
+          <div className="history-list">
+            {scans.map((scan) => (
+              <ScanHistoryCard key={scan.id} scan={scan} />
+            ))}
+          </div>
+        </>
       )}
     </div>
   )

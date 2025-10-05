@@ -19,6 +19,9 @@ async function runScanProcess(
   maxPrice: number | undefined,
   confidenceThreshold: number
 ) {
+  const scanStartTime = Date.now();
+  const MAX_SCAN_TIME = 8 * 60 * 1000; // 8 minutes max (before 10-minute edge function timeout)
+
   try {
     const cryptoService = new CryptoDataService();
     const aggregationEngine = new HybridAggregationEngine(supabase);
@@ -38,6 +41,12 @@ async function runScanProcess(
     let processedCoins = 0;
 
     for (const coin of coinsToAnalyze) {
+      // Check if we're approaching timeout
+      if (Date.now() - scanStartTime > MAX_SCAN_TIME) {
+        console.warn(`⏱️ Approaching timeout limit. Processed ${processedCoins}/${coinsToAnalyze.length} coins. Finishing scan early.`);
+        break;
+      }
+
       try {
         console.log(`Processing ${coin.symbol} (${processedCoins + 1}/${coinsToAnalyze.length})`);
 
@@ -213,6 +222,8 @@ async function runScanProcess(
       .eq('run_id', scanRun.id);
 
     const totalSignals = allRecs?.length || 0;
+    const scanDuration = (Date.now() - scanStartTime) / 1000;
+    const wasTimeout = processedCoins < coinsToAnalyze.length;
 
     await supabase
       .from('scan_runs')
@@ -222,10 +233,11 @@ async function runScanProcess(
         total_available_coins: processedCoins,
         total_coins: scanRun.total_coins,
         total_bots: tradingBots.length,
+        error_message: wasTimeout ? `Timeout: Analyzed ${processedCoins}/${coinsToAnalyze.length} coins in ${scanDuration.toFixed(0)}s` : null,
       })
       .eq('id', scanRun.id);
 
-    console.log(`Scan ${scanRun.id} completed: ${totalSignals} signals from ${processedCoins} coins`);
+    console.log(`✅ Scan ${scanRun.id} completed: ${totalSignals} signals from ${processedCoins}/${coinsToAnalyze.length} coins (${scanDuration.toFixed(0)}s)`);
   } catch (error) {
     console.error('Scan background process error:', error);
 
@@ -295,8 +307,20 @@ Deno.serve(async (req: Request) => {
       minPrice,
       maxPrice,
       confidenceThreshold
-    ).catch(error => {
+    ).catch(async (error) => {
       console.error('Background scan error:', error);
+      try {
+        await supabase
+          .from('scan_runs')
+          .update({
+            status: 'failed',
+            completed_at: new Date().toISOString(),
+            error_message: `Scan failed: ${error.message}`,
+          })
+          .eq('id', scanRun.id);
+      } catch (updateError) {
+        console.error('Error updating failed scan:', updateError);
+      }
     });
 
     return new Response(
