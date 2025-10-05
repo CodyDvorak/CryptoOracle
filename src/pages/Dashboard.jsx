@@ -189,7 +189,7 @@ function Dashboard() {
       if (isScanning) {
         checkScanStatus()
       }
-    }, 5000)
+    }, 3000)
 
     return () => {
       clearInterval(interval)
@@ -663,11 +663,19 @@ function RecommendationCard({ recommendation, rank, onBotDetailsClick }) {
     const takeProfitDistance = Math.abs((recommendation.avg_take_profit - recommendation.current_price) / recommendation.current_price) * 100
     const riskRewardRatio = takeProfitDistance / stopLossDistance
 
+    // Kelly Criterion: position size = edge / odds
+    // Simplified: use 2% risk per 1% stop loss distance, max 25%
+    const kellyPosition = Math.min((2 / stopLossDistance) * 100, 25)
+
+    // Adjust based on confidence (higher confidence = larger position)
+    const confidenceMultiplier = recommendation.avg_confidence
+    const adjustedPosition = kellyPosition * confidenceMultiplier
+
     return {
       stopLossPercent: stopLossDistance.toFixed(2),
       takeProfitPercent: takeProfitDistance.toFixed(2),
       riskReward: riskRewardRatio.toFixed(2),
-      positionSize: Math.min((2 / stopLossDistance) * 100, 10).toFixed(2)
+      positionSize: Math.max(Math.min(adjustedPosition, 25), 1).toFixed(2)
     }
   }
 
@@ -811,6 +819,12 @@ function RecommendationCard({ recommendation, rank, onBotDetailsClick }) {
             <span className="risk-label">Risk/Reward Ratio</span>
             <span className="risk-value" style={{ color: risk.riskReward >= 2 ? 'var(--accent-green)' : 'var(--accent-yellow)' }}>
               1:{risk.riskReward}
+            </span>
+          </div>
+          <div className="risk-item">
+            <span className="risk-label">Avg Leverage</span>
+            <span className="risk-value" style={{ color: 'var(--accent-blue)' }}>
+              {recommendation.avg_leverage ? `${recommendation.avg_leverage.toFixed(1)}x` : '3.0x'}
             </span>
           </div>
           <div className="risk-item">

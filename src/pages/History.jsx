@@ -89,8 +89,10 @@ function ScanHistoryCard({ scan }) {
   const isFailed = scan.status === 'failed'
   const isRunning = scan.status === 'running'
 
-  const successRate = scan.total_available_coins > 0
-    ? ((scan.total_available_coins / scan.total_coins) * 100).toFixed(1)
+  const coinsAnalyzed = scan.total_available_coins || 0
+  const coinsRequested = scan.total_coins || 0
+  const successRate = coinsRequested > 0
+    ? ((coinsAnalyzed / coinsRequested) * 100).toFixed(1)
     : 0
 
   const fetchRecommendations = async () => {
@@ -165,7 +167,7 @@ function ScanHistoryCard({ scan }) {
         <div className="history-stat">
           <span className="stat-label">Coins Analyzed</span>
           <span className="stat-value">
-            {scan.total_available_coins || 0} / {scan.total_coins || 0}
+            {coinsAnalyzed} / {coinsRequested}
           </span>
         </div>
 
@@ -184,7 +186,7 @@ function ScanHistoryCard({ scan }) {
         )}
       </div>
 
-      {scan.total_available_coins > 0 && (
+      {coinsAnalyzed > 0 && (
         <div className="success-rate">
           <span>Success Rate:</span>
           <div className="rate-bar">

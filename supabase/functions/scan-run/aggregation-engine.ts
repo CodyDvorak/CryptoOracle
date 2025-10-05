@@ -257,6 +257,7 @@ export class HybridAggregationEngine {
     const avgEntry = dominantPreds.reduce((sum, p) => sum + p.entry, 0) / dominantPreds.length;
     const avgTakeProfit = dominantPreds.reduce((sum, p) => sum + p.takeProfit, 0) / dominantPreds.length;
     const avgStopLoss = dominantPreds.reduce((sum, p) => sum + p.stopLoss, 0) / dominantPreds.length;
+    const avgLeverage = dominantPreds.reduce((sum, p) => sum + (p.leverage || 3), 0) / dominantPreds.length;
 
     return {
       direction,
@@ -268,6 +269,7 @@ export class HybridAggregationEngine {
       avgEntry,
       avgTakeProfit,
       avgStopLoss,
+      avgLeverage,
       weightedConfidence
     };
   }

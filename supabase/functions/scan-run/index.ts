@@ -153,6 +153,7 @@ async function runScanProcess(
             avg_entry: avgEntry,
             avg_take_profit: avgTakeProfit,
             avg_stop_loss: avgStopLoss,
+            avg_leverage: aggregatedSignal.avgLeverage,
             avg_predicted_24h: predicted24h,
             avg_predicted_48h: predicted48h,
             avg_predicted_7d: predicted7d,
