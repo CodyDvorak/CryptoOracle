@@ -73,9 +73,30 @@ function ScanResults() {
 
         if (recsError) throw recsError
 
+        const enrichedRecs = await Promise.all((recs || []).map(async (rec) => {
+          if (rec.bot_votes_long !== null && rec.bot_votes_short !== null) {
+            return rec
+          }
+
+          const { data: predictions } = await supabase
+            .from('bot_predictions')
+            .select('position_direction')
+            .eq('run_id', rec.run_id)
+            .eq('coin_symbol', rec.ticker)
+
+          const longVotes = predictions?.filter(p => p.position_direction === 'LONG').length || 0
+          const shortVotes = predictions?.filter(p => p.position_direction === 'SHORT').length || 0
+
+          return {
+            ...rec,
+            bot_votes_long: longVotes,
+            bot_votes_short: shortVotes
+          }
+        }))
+
         setResults({
           scan: latestScan,
-          recommendations: recs || []
+          recommendations: enrichedRecs
         })
       }
     } catch (err) {
