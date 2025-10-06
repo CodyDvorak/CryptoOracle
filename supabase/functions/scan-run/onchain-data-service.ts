@@ -44,7 +44,7 @@ class OnChainDataService {
   private blockchairKey = 'A___rjyAq3_WSXrBH1M7YfdNWJQr5QGZ';
   private blockchairRequestCount = 0;
   private blockchairDailyLimit = 30000;
-  private intoTheBlockApiKey = Deno.env.get('INTOTHEBLOCK_API_KEY') || '';
+  private whaleAlertApiKey = Deno.env.get('WHALEALERT_API_KEY') || '';
   private WHALE_THRESHOLD_USD = 1000000;
 
   async getOnChainData(symbol: string): Promise<OnChainData | null> {
@@ -105,13 +105,13 @@ class OnChainDataService {
   }
 
   private async getWhaleActivityWithFallback(symbol: string, blockchain: string): Promise<WhaleData> {
-    if (this.intoTheBlockApiKey) {
-      const data = await this.getWhaleActivityIntoTheBlock(symbol);
+    if (this.whaleAlertApiKey) {
+      const data = await this.getWhaleActivityWhaleAlert(symbol, blockchain);
       if (data && (data.largeTransactions > 0 || data.totalVolume > 0)) {
-        console.log(`✅ IntoTheBlock: Whale data for ${symbol}`);
+        console.log(`✅ WhaleAlert: Whale data for ${symbol}`);
         return data;
       }
-      console.log(`⚠️ IntoTheBlock failed for ${symbol}, trying Blockchair...`);
+      console.log(`⚠️ WhaleAlert failed for ${symbol}, trying Blockchair...`);
     }
 
     let data = await this.getWhaleActivityBlockchair(symbol, blockchain);
@@ -477,49 +477,37 @@ class OnChainDataService {
     return 'STABLE';
   }
 
-  private async getWhaleActivityIntoTheBlock(symbol: string): Promise<WhaleData | null> {
+  private async getWhaleActivityWhaleAlert(symbol: string, blockchain: string): Promise<WhaleData | null> {
     try {
-      const assetMap: Record<string, string> = {
-        'BTC': 'bitcoin',
-        'ETH': 'ethereum',
-        'LTC': 'litecoin',
-        'BCH': 'bitcoin-cash',
-        'XRP': 'ripple',
-        'ADA': 'cardano',
-        'DOT': 'polkadot',
-        'LINK': 'chainlink',
-        'UNI': 'uniswap',
-        'MATIC': 'polygon',
-      };
-
-      const asset = assetMap[symbol.toUpperCase()];
-      if (!asset) {
-        return null;
-      }
+      const now = Math.floor(Date.now() / 1000);
+      const start = now - 86400;
 
       const response = await fetch(
-        `https://api.intotheblock.com/market/large_transactions?coin=${asset}`,
+        `https://api.whale-alert.io/v1/transactions?api_key=${this.whaleAlertApiKey}&start=${start}&end=${now}&blockchain=${blockchain}&min_value=1000000`,
         {
           headers: {
             'Accept': 'application/json',
-            'x-api-key': this.intoTheBlockApiKey,
           },
         }
       );
 
       if (!response.ok) {
-        console.error(`IntoTheBlock API error: ${response.status}`);
+        console.error(`WhaleAlert API error: ${response.status}`);
         return null;
       }
 
       const data = await response.json();
 
-      if (!data || !data.data) {
+      if (!data || !data.transactions || data.transactions.length === 0) {
         return null;
       }
 
-      const largeTransactions = data.data.count || 0;
-      const totalVolume = data.data.volume || 0;
+      const transactions = data.transactions.filter((tx: any) =>
+        tx.symbol && tx.symbol.toUpperCase() === symbol.toUpperCase()
+      );
+
+      const largeTransactions = transactions.length;
+      const totalVolume = transactions.reduce((sum: number, tx: any) => sum + (tx.amount_usd || 0), 0);
 
       return {
         largeTransactions,
@@ -527,7 +515,7 @@ class OnChainDataService {
         averageSize: largeTransactions > 0 ? totalVolume / largeTransactions : 0,
       };
     } catch (error) {
-      console.error('IntoTheBlock whale activity error:', error);
+      console.error('WhaleAlert whale activity error:', error);
       return null;
     }
   }
