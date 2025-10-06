@@ -75,6 +75,8 @@
   border-radius: 8px;
   color: var(--text-primary);
   font-size: 16px;
+  min-width: 500px;
+  max-width: 100%;
 }
 
 .scan-selector select:disabled {
@@ -286,13 +288,14 @@
 
 .stat-label {
   font-size: 14px;
-  color: var(--text-secondary);
+  color: #fff;
   margin-bottom: 4px;
 }
 
 .stat-value {
   font-size: 28px;
   font-weight: 700;
+  color: #fff;
 }
 
 .info-cards {

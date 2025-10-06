@@ -402,6 +402,22 @@ export default function Profile() {
                   />
                   <span>Daily Performance Summary</span>
                 </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={profile.notification_preferences.signal_types.includes('crypto_news')}
+                    onChange={() => handleSignalTypeToggle('crypto_news')}
+                  />
+                  <span>Crypto News Updates</span>
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={profile.notification_preferences.signal_types.includes('social_sentiment')}
+                    onChange={() => handleSignalTypeToggle('social_sentiment')}
+                  />
+                  <span>Social Sentiment Analysis</span>
+                </label>
               </div>
             </div>
           </div>

@@ -6,6 +6,7 @@ import './Analytics.css'
 function Analytics() {
   const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState('30d')
+  const [error, setError] = useState(null)
   const [analytics, setAnalytics] = useState({
     timeSeriesData: [],
     botCorrelations: [],
@@ -14,11 +15,16 @@ function Analytics() {
   })
 
   useEffect(() => {
-    fetchAnalytics()
+    fetchAnalytics().catch(err => {
+      console.error('Analytics fetch error:', err)
+      setError(err.message)
+      setLoading(false)
+    })
   }, [timeRange])
 
   const fetchAnalytics = async () => {
     setLoading(true)
+    setError(null)
     try {
       const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90
 
@@ -51,6 +57,8 @@ function Analytics() {
       })
     } catch (err) {
       console.error('Error fetching analytics:', err)
+      setError(err.message)
+      throw err
     } finally {
       setLoading(false)
     }
@@ -189,6 +197,20 @@ function Analytics() {
     return (
       <div className="analytics-page">
         <div className="loading">Loading analytics...</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="analytics-page">
+        <div className="analytics-header">
+          <h1><BarChart3 size={28} /> Advanced Analytics</h1>
+        </div>
+        <div className="error-message">
+          <p>Error loading analytics: {error}</p>
+          <button onClick={() => fetchAnalytics()}>Retry</button>
+        </div>
       </div>
     )
   }
