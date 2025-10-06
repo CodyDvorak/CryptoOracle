@@ -20,7 +20,7 @@ async function runScanProcess(
   confidenceThreshold: number
 ) {
   const scanStartTime = Date.now();
-  const MAX_SCAN_TIME = 8 * 60 * 1000; // 8 minutes max (before 10-minute edge function timeout)
+  const MAX_SCAN_TIME = 7 * 60 * 1000; // 7 minutes max (leave 3 minutes buffer for cleanup)
 
   try {
     const cryptoService = new CryptoDataService();
@@ -61,22 +61,27 @@ async function runScanProcess(
         let optionsData = null;
         let tokenMetricsData = null;
 
-        try {
-          derivativesData = await cryptoService.getDerivativesData(coin.symbol);
-        } catch (error) {
-          console.warn(`Derivatives data fetch failed for ${coin.symbol}:`, error.message);
-        }
+        // Skip expensive API calls for speed - use only OHLCV data for quick scans
+        if (scanType === 'oracle_scan' || scanType === 'deep_analysis' || scanType === 'ai_powered_scan') {
+          try {
+            derivativesData = await cryptoService.getDerivativesData(coin.symbol);
+          } catch (error) {
+            console.warn(`Derivatives data fetch failed for ${coin.symbol}:`, error.message);
+          }
 
-        try {
-          optionsData = await cryptoService.getOptionsData(coin.symbol);
-        } catch (error) {
-          console.warn(`Options data fetch failed for ${coin.symbol}:`, error.message);
+          try {
+            tokenMetricsData = await cryptoService.getTokenMetricsData(coin.symbol);
+          } catch (error) {
+            console.warn(`TokenMetrics data fetch failed for ${coin.symbol}:`, error.message);
+          }
         }
-
-        try {
-          tokenMetricsData = await cryptoService.getTokenMetricsData(coin.symbol);
-        } catch (error) {
-          console.warn(`TokenMetrics data fetch failed for ${coin.symbol}:`, error.message);
+        // Options data only for major coins
+        if (['BTC', 'ETH', 'SOL'].includes(coin.symbol)) {
+          try {
+            optionsData = await cryptoService.getOptionsData(coin.symbol);
+          } catch (error) {
+            console.warn(`Options data fetch failed for ${coin.symbol}:`, error.message);
+          }
         }
 
         const rawPredictions: any[] = [];
