@@ -223,10 +223,21 @@ export class HybridAggregationEngine {
 
     let finalConfidence = avgConfidence;
 
+    // CONSENSUS-BASED ADJUSTMENTS
+    // Strong consensus (80%+): High agreement = high confidence boost
     if (consensusPercent >= 80) {
-      finalConfidence = Math.min(avgConfidence * 1.12, 0.95);
+      finalConfidence = Math.min(avgConfidence * 1.15, 0.95);
     } else if (consensusPercent >= 70) {
-      finalConfidence = Math.min(avgConfidence * 1.06, 0.92);
+      finalConfidence = Math.min(avgConfidence * 1.08, 0.92);
+    } else if (consensusPercent >= 60) {
+      // Moderate consensus: slight penalty
+      finalConfidence = avgConfidence * 0.95;
+    } else if (consensusPercent >= 50) {
+      // Weak consensus: significant penalty
+      finalConfidence = avgConfidence * 0.85;
+    } else {
+      // No consensus (<50%): heavy penalty - conflicting signals
+      finalConfidence = avgConfidence * 0.70;
     }
 
     // CONTRARIAN AGREEMENT AMPLIFICATION
