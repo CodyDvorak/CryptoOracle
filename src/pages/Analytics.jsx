@@ -14,10 +14,14 @@ function Analytics() {
     comparativeAnalysis: []
   })
 
+  console.log('Analytics render - loading:', loading, 'error:', error);
+
   useEffect(() => {
+    setLoading(true);
+    setError(null);
     fetchAnalytics().catch(err => {
       console.error('Analytics fetch error:', err)
-      setError(err.message)
+      setError(err.message || 'Failed to load analytics')
       setLoading(false)
     })
   }, [timeRange])
@@ -194,9 +198,9 @@ function Analytics() {
   }
 
   return (
-    <div className="analytics-page">
-      <div className="analytics-header">
-        <h1><BarChart3 size={28} /> Advanced Analytics</h1>
+    <div className="analytics-page" style={{ minHeight: '100vh', background: '#0a0e1a', color: '#fff', padding: '2rem' }}>
+      <div className="analytics-header" style={{ marginBottom: '2rem' }}>
+        <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#fff' }}><BarChart3 size={28} /> Advanced Analytics</h1>
         {!loading && !error && (
           <div className="header-controls">
             <select value={timeRange} onChange={(e) => setTimeRange(e.target.value)} className="time-range-select">
@@ -212,7 +216,9 @@ function Analytics() {
       </div>
 
       {loading && (
-        <div className="loading">Loading analytics...</div>
+        <div className="loading" style={{ padding: '4rem', textAlign: 'center', color: '#fff', fontSize: '1.1rem' }}>
+          Loading analytics...
+        </div>
       )}
 
       {error && !loading && (

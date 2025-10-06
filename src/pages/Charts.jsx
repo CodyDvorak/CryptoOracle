@@ -20,14 +20,20 @@ export default function Charts() {
   const [botPredictions, setBotPredictions] = useState([]);
   const [pageError, setPageError] = useState(null);
 
+  console.log('Charts render - loading:', loading, 'error:', pageError, 'recs:', recommendations.length);
+
   useEffect(() => {
-    fetchLatestRecommendations();
+    fetchLatestRecommendations().catch(err => {
+      console.error('Failed to fetch recommendations:', err);
+      setPageError(err.message || 'Failed to load data');
+      setLoading(false);
+    });
   }, []);
 
   useEffect(() => {
     if (selectedCoin) {
-      fetchTimeframeData();
-      fetchBotPredictions();
+      fetchTimeframeData().catch(err => console.error('Timeframe data error:', err));
+      fetchBotPredictions().catch(err => console.error('Bot predictions error:', err));
     }
   }, [selectedCoin]);
 
@@ -120,21 +126,21 @@ export default function Charts() {
   );
 
   return (
-    <div className="charts-page">
-      <div className="charts-header">
-        <div className="header-left">
-          <Activity size={32} />
+    <div className="charts-page" style={{ minHeight: '100vh', background: '#0a0e1a', color: '#fff' }}>
+      <div className="charts-header" style={{ padding: '2rem', marginBottom: '2rem' }}>
+        <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <Activity size={32} style={{ color: '#3b82f6' }} />
           <div>
-            <h1>Advanced Charts</h1>
-            <p>Professional candlestick charts with bot signals & technical analysis</p>
+            <h1 style={{ margin: 0, marginBottom: '0.5rem', color: '#fff' }}>Advanced Charts</h1>
+            <p style={{ margin: 0, color: '#9ca3af' }}>Professional candlestick charts with bot signals & technical analysis</p>
           </div>
         </div>
       </div>
 
       {loading && (
-        <div className="loading-chart">
-          <Activity size={48} className="spin" />
-          <p>Loading recommendations...</p>
+        <div className="loading-chart" style={{ padding: '4rem', textAlign: 'center', color: '#fff' }}>
+          <Activity size={48} className="spin" style={{ margin: '0 auto', marginBottom: '1rem' }} />
+          <p style={{ fontSize: '1.1rem' }}>Loading recommendations...</p>
         </div>
       )}
 
