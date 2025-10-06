@@ -4,6 +4,7 @@ import { supabase } from '../config/api'
 import MarketCorrelation from '../components/MarketCorrelation'
 import RealtimeUpdates from '../components/RealtimeUpdates'
 import MarketRegimeTimeline from '../components/MarketRegimeTimeline'
+import NewsSection from '../components/NewsSection'
 import './Insights.css'
 
 function Insights() {
@@ -275,6 +276,8 @@ function Insights() {
         {options && <OptionsSection data={options} coin={selectedCoin} />}
         <BotInsightsSection predictions={insights.botPredictions} coin={selectedCoin} />
       </div>
+
+      <NewsSection coinSymbol={selectedCoin} />
 
       <MarketCorrelation />
       <MarketRegimeTimeline coin={selectedCoin} />
