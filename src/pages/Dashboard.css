@@ -288,7 +288,7 @@
 
 .stat-label {
   font-size: 14px;
-  color: #fff;
+  color: var(--text-secondary);
   margin-bottom: 4px;
 }
 
