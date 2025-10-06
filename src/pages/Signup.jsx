@@ -1,13 +1,8 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { createClient } from '@supabase/supabase-js'
-import { Mail, Lock, User, Eye, EyeOff, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react'
+import { supabase } from '../config/api'
+import { Mail, Lock, User, Eye, EyeOff, TrendingUp, CircleAlert as AlertCircle, CircleCheck as CheckCircle } from 'lucide-react'
 import './Auth.css'
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-)
 
 export default function Signup() {
   const navigate = useNavigate()

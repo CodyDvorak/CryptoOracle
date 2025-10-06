@@ -17,8 +17,9 @@ export default function NotificationCenter() {
 
   const fetchNotifications = async () => {
     try {
+      const headers = await getHeaders(true);
       const response = await fetch(`${API_ENDPOINTS.notifications}?limit=20`, {
-        headers: getHeaders(),
+        headers,
       })
       if (response.ok) {
         const data = await response.json()
@@ -32,9 +33,10 @@ export default function NotificationCenter() {
 
   const markAsRead = async (notificationId) => {
     try {
+      const headers = await getHeaders(true);
       const response = await fetch(API_ENDPOINTS.notifications, {
         method: 'POST',
-        headers: getHeaders(),
+        headers,
         body: JSON.stringify({
           action: 'mark_read',
           notificationId
@@ -51,9 +53,10 @@ export default function NotificationCenter() {
   const markAllAsRead = async () => {
     try {
       setLoading(true)
+      const headers = await getHeaders(true);
       const response = await fetch(API_ENDPOINTS.notifications, {
         method: 'POST',
-        headers: getHeaders(),
+        headers,
         body: JSON.stringify({ action: 'mark_all_read' })
       })
       if (response.ok) {
@@ -68,9 +71,10 @@ export default function NotificationCenter() {
 
   const deleteNotification = async (notificationId) => {
     try {
+      const headers = await getHeaders(true);
       const response = await fetch(API_ENDPOINTS.notifications, {
         method: 'POST',
-        headers: getHeaders(),
+        headers,
         body: JSON.stringify({
           action: 'delete',
           notificationId

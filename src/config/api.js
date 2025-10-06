@@ -26,8 +26,19 @@ export const API_ENDPOINTS = {
   dynamicBotManager: `${API_BASE_URL}/dynamic-bot-manager`,
 };
 
-export const getHeaders = () => ({
-  'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-  'Content-Type': 'application/json',
-  'apikey': SUPABASE_ANON_KEY,
-});
+export const getHeaders = async (requireAuth = false) => {
+  let token = SUPABASE_ANON_KEY;
+
+  if (requireAuth) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      token = session.access_token;
+    }
+  }
+
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+    'apikey': SUPABASE_ANON_KEY,
+  };
+};
