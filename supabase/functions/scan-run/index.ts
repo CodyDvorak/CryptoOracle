@@ -1,11 +1,12 @@
+import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
-import { CryptoDataService } from './crypto-data-service.ts';
 import { tradingBots } from './trading-bots.ts';
+import { CryptoDataService } from './crypto-data-service.ts';
 import { HybridAggregationEngine } from './aggregation-engine.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
@@ -159,40 +160,58 @@ async function runScanProcess(
           if (finalConfidence >= confidenceThreshold) {
             recommendations.push({
             run_id: scanRun.id,
-            coin: coin.name,
             ticker: coin.symbol,
+            coin: coin.name,
             current_price: coin.price,
             consensus_direction: consensusDirection,
             avg_confidence: finalConfidence,
-            avg_entry: avgEntry,
             avg_take_profit: avgTakeProfit,
             avg_stop_loss: avgStopLoss,
-            avg_leverage: aggregatedSignal.avgLeverage,
+            avg_entry: avgEntry,
             avg_predicted_24h: predicted24h,
             avg_predicted_48h: predicted48h,
             avg_predicted_7d: predicted7d,
+            avg_leverage: aggregatedSignal.avgLeverage,
+            min_leverage: aggregatedSignal.minLeverage,
+            max_leverage: aggregatedSignal.maxLeverage,
+            bot_count: aggregatedSignal.botCount,
+            trader_grade: tokenMetricsData?.rating?.trader || null,
+            investor_grade: tokenMetricsData?.rating?.overall || null,
+            ai_trend: tokenMetricsData?.recommendation || null,
+            predicted_percent_change: change24h,
+            predicted_dollar_change: predicted24h - coin.price,
+            market_regime: ohlcvData.marketRegime,
+            regime_confidence: ohlcvData.regimeConfidence,
+            ai_reasoning: aiReasoning,
             predicted_change_24h: change24h,
             predicted_change_48h: change48h,
             predicted_change_7d: change7d,
-            bot_count: aggregatedSignal.botCount,
-            bot_votes_long: aggregatedSignal.longBots,
-            bot_votes_short: aggregatedSignal.shortBots,
-            market_regime: ohlcvData.marketRegime || 'UNKNOWN',
-            regime_confidence: ohlcvData.regimeConfidence || 0.5,
-            ai_reasoning: aiReasoning,
-            });
-            console.log(`✅ ${coin.symbol}: Confidence ${finalConfidence.toFixed(2)} >= ${confidenceThreshold} - ADDED`);
-          } else {
-            console.log(`❌ ${coin.symbol}: Confidence ${finalConfidence.toFixed(2)} < ${confidenceThreshold} - FILTERED OUT`);
+            bot_votes_long: aggregatedSignal.longCount,
+            bot_votes_short: aggregatedSignal.shortCount,
+          });
           }
-
-          botPredictions.push(...coinPredictions);
         }
 
+        botPredictions.push(...coinPredictions);
         processedCoins++;
 
+        // Batch insert predictions every 20 coins to avoid memory issues
+        if (botPredictions.length >= 1000) {
+          await supabase.from('bot_predictions').insert(botPredictions.splice(0));
+        }
+
+        // Batch insert recommendations every 10 coins
+        if (recommendations.length >= 50) {
+          await supabase.from('recommendations').insert(recommendations.splice(0));
+        }
+
+        // Update progress
         if (processedCoins % 10 === 0) {
-          console.log(`Progress: ${processedCoins}/${coinsToAnalyze.length} coins processed`);
+          const progress = Math.round((processedCoins / coinsToAnalyze.length) * 100);
+          await supabase
+            .from('scan_runs')
+            .update({ progress })
+            .eq('id', scanRun.id);
 
           if (recommendations.length > 0) {
             await supabase.from('recommendations').insert(recommendations.splice(0));
@@ -243,6 +262,21 @@ async function runScanProcess(
       .eq('id', scanRun.id);
 
     console.log(`✅ Scan ${scanRun.id} completed: ${totalSignals} signals from ${processedCoins}/${coinsToAnalyze.length} coins (${scanDuration.toFixed(0)}s)`);
+
+    // Refresh bot performance cache in background (don't await to avoid blocking)
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      fetch(`${supabaseUrl}/functions/v1/bot-performance`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+          'Content-Type': 'application/json',
+        },
+      }).catch(err => console.warn('Bot performance refresh failed:', err.message));
+      console.log('🔄 Bot performance cache refresh triggered');
+    } catch (refreshError) {
+      console.warn('Failed to trigger bot performance refresh:', refreshError.message);
+    }
   } catch (error) {
     console.error('Scan background process error:', error);
 
@@ -267,34 +301,47 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    );
 
     const body = await req.json();
-    const {
-      interval = '4h',
-      filterScope = 'all',
-      minPrice,
-      maxPrice,
-      scanType = 'quick_scan',
-      coinLimit = 100,
-      confidenceThreshold = 0.65
-    } = body;
+    const scanType = body.scanType || 'market_scan';
+    const actualCoinLimit = body.coinLimit || 100;
+    const filterScope = body.scope || 'top200';
+    const minPrice = body.minPrice;
+    const maxPrice = body.maxPrice;
+    const confidenceThreshold = body.confidenceThreshold || 0.6;
 
-    const actualCoinLimit = typeof coinLimit === 'number' ? coinLimit : 100;
+    const { data: existingScans } = await supabase
+      .from('scan_runs')
+      .select('id')
+      .eq('status', 'running')
+      .limit(1);
+
+    if (existingScans && existingScans.length > 0) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Another scan is already running. Please wait for it to complete.',
+          runId: existingScans[0].id,
+        }),
+        {
+          status: 409,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
 
     const { data: scanRun, error: scanError } = await supabase
       .from('scan_runs')
       .insert({
-        interval,
-        filter_scope: filterScope,
-        min_price: minPrice,
-        max_price: maxPrice,
         scan_type: scanType,
         status: 'running',
-        total_bots: 87,
+        started_at: new Date().toISOString(),
         total_coins: actualCoinLimit,
+        progress: 0,
       })
       .select()
       .single();
