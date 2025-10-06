@@ -122,11 +122,19 @@ function CryptoChart({ symbol, predictions = [], supportResistance = [] }) {
       'UNI': 'uniswap',
       'ATOM': 'cosmos',
       'LTC': 'litecoin',
-      'BCH': 'bitcoin-cash'
+      'BCH': 'bitcoin-cash',
+      'XMR': 'monero',
+      'TRX': 'tron',
+      'APT': 'aptos',
+      'NEAR': 'near',
+      'FTM': 'fantom',
+      'ARB': 'arbitrum',
+      'OP': 'optimism',
+      'SUI': 'sui'
     }
 
-    const cleanSymbol = sym.toUpperCase().replace('USDT', '').replace('USD', '')
-    return symbolMap[cleanSymbol] || sym.toLowerCase()
+    const cleanSymbol = sym.toUpperCase().replace('USDT', '').replace('USD', '').replace('PERP', '')
+    return symbolMap[cleanSymbol] || 'bitcoin'
   }
 
   const fetchChartData = async () => {
@@ -179,18 +187,24 @@ function CryptoChart({ symbol, predictions = [], supportResistance = [] }) {
   const addPredictionMarkers = () => {
     if (!candleSeriesRef.current || predictions.length === 0) return
 
-    const markers = predictions.map(pred => {
-      const isLong = pred.direction === 'LONG'
-      return {
-        time: Math.floor(new Date(pred.created_at).getTime() / 1000),
-        position: isLong ? 'belowBar' : 'aboveBar',
-        color: isLong ? '#10b981' : '#ef4444',
-        shape: isLong ? 'arrowUp' : 'arrowDown',
-        text: `${pred.bot_name}: ${isLong ? 'LONG' : 'SHORT'} @ $${pred.entry_price.toFixed(2)}`,
-      }
-    })
+    try {
+      const markers = predictions.map(pred => {
+        const isLong = pred.position_direction === 'LONG'
+        return {
+          time: Math.floor(new Date(pred.prediction_time).getTime() / 1000),
+          position: isLong ? 'belowBar' : 'aboveBar',
+          color: isLong ? '#10b981' : '#ef4444',
+          shape: isLong ? 'arrowUp' : 'arrowDown',
+          text: `${pred.bot_name}: ${isLong ? 'LONG' : 'SHORT'}`,
+        }
+      })
 
-    candleSeriesRef.current.setMarkers(markers)
+      if (typeof candleSeriesRef.current.setMarkers === 'function') {
+        candleSeriesRef.current.setMarkers(markers)
+      }
+    } catch (err) {
+      console.error('Failed to add prediction markers:', err)
+    }
   }
 
   const addSupportResistanceLines = () => {
@@ -247,11 +261,11 @@ function CryptoChart({ symbol, predictions = [], supportResistance = [] }) {
         <div className="chart-legend">
           <div className="legend-item">
             <span className="legend-icon long">↑</span>
-            <span>Long Signals: {predictions.filter(p => p.direction === 'LONG').length}</span>
+            <span>Long Signals: {predictions.filter(p => p.position_direction === 'LONG').length}</span>
           </div>
           <div className="legend-item">
             <span className="legend-icon short">↓</span>
-            <span>Short Signals: {predictions.filter(p => p.direction === 'SHORT').length}</span>
+            <span>Short Signals: {predictions.filter(p => p.position_direction === 'SHORT').length}</span>
           </div>
         </div>
       )}
