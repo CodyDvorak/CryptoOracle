@@ -4,6 +4,8 @@ import { supabase } from '../config/api'
 import MarketCorrelation from '../components/MarketCorrelation'
 import RealtimeUpdates from '../components/RealtimeUpdates'
 import MarketRegimeTimeline from '../components/MarketRegimeTimeline'
+import AIChatAssistant from '../components/AIChatAssistant'
+import NewsSection from '../components/NewsSection'
 import './Insights.css'
 
 function Insights() {
@@ -12,6 +14,18 @@ function Insights() {
   const [insights, setInsights] = useState(null)
   const [availableCoins, setAvailableCoins] = useState(['BTC', 'ETH', 'SOL'])
   const [timeRange, setTimeRange] = useState('24h')
+  const [viewMode, setViewMode] = useState('all')
+
+  const VIEW_MODES = [
+    { id: 'all', name: 'All Signals', icon: '🎯' },
+    { id: 'whale_activity', name: 'Whale Activity', icon: '🐋' },
+    { id: 'trending_markets', name: 'Trending Markets', icon: '📈' },
+    { id: 'futures_signals', name: 'Futures & Options', icon: '📊' },
+    { id: 'breakout_hunter', name: 'Breakout Opportunities', icon: '🚀' },
+    { id: 'reversal_opportunities', name: 'Reversal Setups', icon: '🔄' },
+    { id: 'volatile_markets', name: 'Volatile Markets', icon: '🌊' },
+    { id: 'elliott_wave', name: 'Elliott Wave', icon: '〰️' }
+  ]
 
   useEffect(() => {
     fetchInsights()
@@ -180,6 +194,17 @@ function Insights() {
           <p>On-chain data, sentiment analysis, and options flow for informed trading decisions</p>
         </div>
         <div className="insights-controls">
+          <select
+            value={viewMode}
+            onChange={(e) => setViewMode(e.target.value)}
+            className="view-mode-selector"
+          >
+            {VIEW_MODES.map(mode => (
+              <option key={mode.id} value={mode.id}>
+                {mode.icon} {mode.name}
+              </option>
+            ))}
+          </select>
           <select value={selectedCoin} onChange={(e) => setSelectedCoin(e.target.value)}>
             {availableCoins.map(coin => (
               <option key={coin} value={coin}>{coin}</option>
@@ -192,6 +217,26 @@ function Insights() {
           </select>
         </div>
       </div>
+
+      {viewMode !== 'all' && (
+        <div className="view-mode-banner">
+          <div className="banner-icon">{VIEW_MODES.find(m => m.id === viewMode)?.icon}</div>
+          <div className="banner-content">
+            <h3>Viewing: {VIEW_MODES.find(m => m.id === viewMode)?.name}</h3>
+            <p>
+              Showing signals from specialized bots focused on{' '}
+              {viewMode === 'whale_activity' && 'large volume movements and institutional activity'}
+              {viewMode === 'trending_markets' && 'strong momentum and trending market conditions'}
+              {viewMode === 'futures_signals' && 'derivatives market data and funding rates'}
+              {viewMode === 'breakout_hunter' && 'breakout patterns with volume confirmation'}
+              {viewMode === 'reversal_opportunities' && 'oversold/overbought reversals and mean reversion'}
+              {viewMode === 'volatile_markets' && 'high volatility opportunities for experienced traders'}
+              {viewMode === 'elliott_wave' && 'Elliott Wave theory and Fibonacci analysis'}
+              . All 83 bots still run on every scan.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="insights-summary">
         <SummaryCard
@@ -233,8 +278,12 @@ function Insights() {
         <BotInsightsSection predictions={insights.botPredictions} coin={selectedCoin} />
       </div>
 
+      <NewsSection coinSymbol={selectedCoin} />
+
       <MarketCorrelation />
       <MarketRegimeTimeline coin={selectedCoin} />
+
+      <AIChatAssistant coinSymbol={selectedCoin} />
     </div>
   )
 }
