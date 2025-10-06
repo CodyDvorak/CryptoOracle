@@ -193,43 +193,37 @@ function Analytics() {
     a.click()
   }
 
-  if (loading) {
-    return (
-      <div className="analytics-page">
-        <div className="loading">Loading analytics...</div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="analytics-page">
-        <div className="analytics-header">
-          <h1><BarChart3 size={28} /> Advanced Analytics</h1>
-        </div>
-        <div className="error-message">
-          <p>Error loading analytics: {error}</p>
-          <button onClick={() => fetchAnalytics()}>Retry</button>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="analytics-page">
       <div className="analytics-header">
         <h1><BarChart3 size={28} /> Advanced Analytics</h1>
-        <div className="header-controls">
-          <select value={timeRange} onChange={(e) => setTimeRange(e.target.value)} className="time-range-select">
-            <option value="7d">Last 7 Days</option>
-            <option value="30d">Last 30 Days</option>
-            <option value="90d">Last 90 Days</option>
-          </select>
-          <button onClick={exportToCSV} className="export-btn">
-            <Download size={16} /> Export CSV
-          </button>
-        </div>
+        {!loading && !error && (
+          <div className="header-controls">
+            <select value={timeRange} onChange={(e) => setTimeRange(e.target.value)} className="time-range-select">
+              <option value="7d">Last 7 Days</option>
+              <option value="30d">Last 30 Days</option>
+              <option value="90d">Last 90 Days</option>
+            </select>
+            <button onClick={exportToCSV} className="export-btn">
+              <Download size={16} /> Export CSV
+            </button>
+          </div>
+        )}
       </div>
+
+      {loading && (
+        <div className="loading">Loading analytics...</div>
+      )}
+
+      {error && !loading && (
+        <div className="error-message">
+          <p>Error loading analytics: {error}</p>
+          <button onClick={() => fetchAnalytics()}>Retry</button>
+        </div>
+      )}
+
+      {!loading && !error && (
+        <>
 
       <div className="analytics-grid">
         <div className="analytics-card">
@@ -348,6 +342,8 @@ function Analytics() {
           </div>
         </div>
       </div>
+        </>
+      )}
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Activity, TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import TradingViewChart from '../components/TradingViewChart';
+import CryptoChart from '../components/CryptoChart';
 import { supabase } from '../config/api';
 import './Charts.css';
 
@@ -18,6 +18,7 @@ export default function Charts() {
   const [loading, setLoading] = useState(true);
   const [timeframeData, setTimeframeData] = useState(null);
   const [botPredictions, setBotPredictions] = useState([]);
+  const [pageError, setPageError] = useState(null);
 
   useEffect(() => {
     fetchLatestRecommendations();
@@ -32,7 +33,7 @@ export default function Charts() {
 
   const fetchLatestRecommendations = async () => {
     try {
-      const { data: latestScan } = await supabase
+      const { data: latestScan, error: scanError } = await supabase
         .from('scan_runs')
         .select('id')
         .eq('status', 'completed')
@@ -40,12 +41,16 @@ export default function Charts() {
         .limit(1)
         .maybeSingle();
 
+      if (scanError) throw scanError;
+
       if (latestScan) {
-        const { data: recs } = await supabase
+        const { data: recs, error: recsError } = await supabase
           .from('recommendations')
           .select('*')
           .eq('run_id', latestScan.id)
           .order('avg_confidence', { ascending: false });
+
+        if (recsError) throw recsError;
 
         setRecommendations(recs || []);
         if (recs?.length > 0) {
@@ -54,6 +59,7 @@ export default function Charts() {
       }
     } catch (error) {
       console.error('Error fetching recommendations:', error);
+      setPageError(error.message || 'Failed to load recommendations');
     } finally {
       setLoading(false);
     }
@@ -113,47 +119,6 @@ export default function Charts() {
     (r) => r.ticker === selectedCoin
   );
 
-  if (loading) {
-    return (
-      <div className="charts-page">
-        <div className="charts-header">
-          <div className="header-left">
-            <Activity size={32} />
-            <div>
-              <h1>Advanced Charts</h1>
-              <p>Interactive TradingView charts with bot signals</p>
-            </div>
-          </div>
-        </div>
-        <div className="loading-chart">
-          <Activity size={48} className="spin" />
-          <p>Loading recommendations...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (recommendations.length === 0) {
-    return (
-      <div className="charts-page">
-        <div className="charts-header">
-          <div className="header-left">
-            <Activity size={32} />
-            <div>
-              <h1>Advanced Charts</h1>
-              <p>Interactive TradingView charts with bot signals</p>
-            </div>
-          </div>
-        </div>
-        <div className="no-data-message">
-          <Activity size={48} style={{ color: '#3b82f6', marginBottom: '1rem' }} />
-          <p>No recommendations available yet.</p>
-          <p style={{ marginTop: '0.5rem', fontSize: '0.95rem' }}>Please run a scan from the Dashboard to see charts and analysis.</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="charts-page">
       <div className="charts-header">
@@ -161,12 +126,45 @@ export default function Charts() {
           <Activity size={32} />
           <div>
             <h1>Advanced Charts</h1>
-            <p>Interactive TradingView charts with bot signals</p>
+            <p>Professional candlestick charts with bot signals & technical analysis</p>
           </div>
         </div>
       </div>
 
-      {recommendations.length > 0 && (
+      {loading && (
+        <div className="loading-chart">
+          <Activity size={48} className="spin" />
+          <p>Loading recommendations...</p>
+        </div>
+      )}
+
+      {pageError && !loading && (
+        <div className="no-data-message">
+          <Activity size={48} style={{ color: '#ef4444', marginBottom: '1rem' }} />
+          <p style={{ color: '#ef4444' }}>Error: {pageError}</p>
+          <button
+            onClick={() => {
+              setPageError(null);
+              setLoading(true);
+              fetchLatestRecommendations();
+            }}
+            style={{ marginTop: '1rem', padding: '0.5rem 1rem', borderRadius: '6px', background: '#3b82f6', color: 'white', border: 'none', cursor: 'pointer' }}
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {!loading && !pageError && recommendations.length === 0 && (
+        <div className="no-data-message">
+          <Activity size={48} style={{ color: '#3b82f6', marginBottom: '1rem' }} />
+          <p>No recommendations available yet.</p>
+          <p style={{ marginTop: '0.5rem', fontSize: '0.95rem' }}>Please run a scan from the Dashboard to see charts and analysis.</p>
+        </div>
+      )}
+
+      {!loading && !pageError && recommendations.length > 0 && (
+        <>
         <div className="charts-controls">
           <div className="coin-selector">
             <label>Select Coin:</label>
@@ -197,13 +195,12 @@ export default function Charts() {
           </div>
         </div>
         </div>
-      )}
 
-      {recommendations.length > 0 && selectedCoin && timeframeData && (
+      {selectedCoin && timeframeData && (
         <MultiTimeframePanel data={timeframeData} />
       )}
 
-      {currentRecommendation && recommendations.length > 0 && (
+      {currentRecommendation && (
         <div className="signal-info">
           <div className="signal-card">
             <h3>{currentRecommendation.ticker} Signal Analysis</h3>
@@ -249,44 +246,46 @@ export default function Charts() {
         </div>
       )}
 
-      {recommendations.length > 0 && selectedCoin && (
+      {selectedCoin && (
         <>
           <div className="chart-container">
-            {loading ? (
-              <div className="loading-chart">
-                <Activity size={48} className="spin" />
-                <p>Loading chart...</p>
-              </div>
-            ) : (
-              <TradingViewChart
-                symbol={selectedCoin}
-                interval={selectedInterval}
-                botSignals={botPredictions}
-              />
-            )}
+            <CryptoChart
+              symbol={selectedCoin}
+              predictions={botPredictions}
+              supportResistance={currentRecommendation ? [
+                { price: currentRecommendation.current_price * 1.05, type: 'resistance' },
+                { price: currentRecommendation.current_price * 0.95, type: 'support' }
+              ] : []}
+            />
           </div>
 
           <div className="chart-legend">
-        <h3>Indicators Displayed</h3>
-        <div className="legend-items">
-          <div className="legend-item">
-            <span className="indicator-color rsi"></span>
-            <span>RSI (Relative Strength Index)</span>
-          </div>
-          <div className="legend-item">
-            <span className="indicator-color macd"></span>
-            <span>MACD (Moving Average Convergence Divergence)</span>
-          </div>
-          <div className="legend-item">
-            <span className="indicator-color bb"></span>
-            <span>Bollinger Bands</span>
-          </div>
-        </div>
+            <h3>Chart Features</h3>
+            <div className="legend-items">
+              <div className="legend-item">
+                <span className="indicator-dot green"></span>
+                <span>Candlestick patterns with volume</span>
+              </div>
+              <div className="legend-item">
+                <span className="indicator-dot blue"></span>
+                <span>Bot prediction markers</span>
+              </div>
+              <div className="legend-item">
+                <span className="indicator-dot red"></span>
+                <span>Support & resistance levels</span>
+              </div>
+              <div className="legend-item">
+                <span className="indicator-dot purple"></span>
+                <span>Multiple timeframes (1m to 1W)</span>
+              </div>
+            </div>
           </div>
 
           {botPredictions.length > 0 && (
             <BotSignalsPanel predictions={botPredictions} />
           )}
+        </>
+      )}
         </>
       )}
     </div>
