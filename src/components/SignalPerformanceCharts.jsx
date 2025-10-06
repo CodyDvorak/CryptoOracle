@@ -21,12 +21,9 @@ export default function SignalPerformanceCharts() {
 
       let query = supabase
         .from('bot_predictions')
-        .select(`
-          *,
-          prediction_evaluations(*)
-        `)
-        .gte('created_at', startDate.toISOString())
-        .order('created_at', { ascending: false })
+        .select('*')
+        .gte('timestamp', startDate.toISOString())
+        .order('timestamp', { ascending: false })
         .limit(100)
 
       if (selectedCoin !== 'all') {
@@ -44,14 +41,14 @@ export default function SignalPerformanceCharts() {
     }
   }
 
-  const evaluatedSignals = signals.filter(s => s.prediction_evaluations && s.prediction_evaluations.length > 0)
+  const evaluatedSignals = signals.filter(s => s.outcome_status !== null)
 
   const successfulSignals = evaluatedSignals.filter(s =>
-    s.prediction_evaluations[0]?.was_correct === true
+    s.outcome_status === 'success'
   )
 
   const failedSignals = evaluatedSignals.filter(s =>
-    s.prediction_evaluations[0]?.was_correct === false
+    s.outcome_status === 'failed'
   )
 
   const accuracy = evaluatedSignals.length > 0
@@ -59,19 +56,22 @@ export default function SignalPerformanceCharts() {
     : 0
 
   const avgTimeToTarget = evaluatedSignals
-    .filter(s => s.prediction_evaluations[0]?.hours_to_outcome)
-    .reduce((sum, s) => sum + s.prediction_evaluations[0].hours_to_outcome, 0) / evaluatedSignals.length || 0
+    .filter(s => s.outcome_checked_at && s.timestamp)
+    .reduce((sum, s) => {
+      const hours = (new Date(s.outcome_checked_at) - new Date(s.timestamp)) / (1000 * 60 * 60)
+      return sum + hours
+    }, 0) / evaluatedSignals.length || 0
 
   const avgPriceChange = evaluatedSignals
-    .filter(s => s.prediction_evaluations[0]?.actual_price_change)
-    .reduce((sum, s) => sum + Math.abs(s.prediction_evaluations[0].actual_price_change), 0) / evaluatedSignals.length || 0
+    .filter(s => s.profit_loss_percent !== null)
+    .reduce((sum, s) => sum + Math.abs(s.profit_loss_percent), 0) / evaluatedSignals.length || 0
 
   const stopLossHitRate = evaluatedSignals
-    .filter(s => s.prediction_evaluations[0]?.stop_loss_hit)
+    .filter(s => s.outcome_status === 'failed')
     .length / evaluatedSignals.length * 100 || 0
 
   const takeProfitHitRate = evaluatedSignals
-    .filter(s => s.prediction_evaluations[0]?.take_profit_hit)
+    .filter(s => s.outcome_status === 'success')
     .length / evaluatedSignals.length * 100 || 0
 
   const coins = [...new Set(signals.map(s => s.coin_symbol))].sort()
@@ -229,10 +229,12 @@ export default function SignalPerformanceCharts() {
             </thead>
             <tbody>
               {evaluatedSignals.slice(0, 20).map((signal, idx) => {
-                const evaluation = signal.prediction_evaluations[0]
+                const hoursToOutcome = signal.outcome_checked_at && signal.timestamp
+                  ? (new Date(signal.outcome_checked_at) - new Date(signal.timestamp)) / (1000 * 60 * 60)
+                  : 0
                 return (
-                  <tr key={idx} className={evaluation?.was_correct ? 'success-row' : 'failure-row'}>
-                    <td>{new Date(signal.created_at).toLocaleDateString()}</td>
+                  <tr key={idx} className={signal.outcome_status === 'success' ? 'success-row' : 'failure-row'}>
+                    <td>{new Date(signal.timestamp).toLocaleDateString()}</td>
                     <td className="coin-cell">{signal.coin_symbol}</td>
                     <td className="bot-cell">{signal.bot_name}</td>
                     <td>
@@ -241,14 +243,14 @@ export default function SignalPerformanceCharts() {
                       </span>
                     </td>
                     <td>${signal.entry_price?.toFixed(4)}</td>
-                    <td>${signal.take_profit_price?.toFixed(4)}</td>
-                    <td className={evaluation?.actual_price_change > 0 ? 'positive' : 'negative'}>
-                      {evaluation?.actual_price_change?.toFixed(2)}%
+                    <td>${signal.target_price?.toFixed(4)}</td>
+                    <td className={signal.profit_loss_percent > 0 ? 'positive' : 'negative'}>
+                      {signal.profit_loss_percent?.toFixed(2)}%
                     </td>
-                    <td>{evaluation?.hours_to_outcome?.toFixed(1)}h</td>
+                    <td>{hoursToOutcome.toFixed(1)}h</td>
                     <td>
-                      <span className={`result-badge ${evaluation?.was_correct ? 'success' : 'failure'}`}>
-                        {evaluation?.was_correct ? '✓ Success' : '✗ Failed'}
+                      <span className={`result-badge ${signal.outcome_status === 'success' ? 'success' : 'failure'}`}>
+                        {signal.outcome_status === 'success' ? '✓ Success' : '✗ Failed'}
                       </span>
                     </td>
                   </tr>
@@ -265,7 +267,9 @@ export default function SignalPerformanceCharts() {
           {(() => {
             const buckets = { '0-6h': 0, '6-12h': 0, '12-24h': 0, '24-48h': 0, '48h+': 0 }
             evaluatedSignals.forEach(s => {
-              const hours = s.prediction_evaluations[0]?.hours_to_outcome || 0
+              const hours = s.outcome_checked_at && s.timestamp
+                ? (new Date(s.outcome_checked_at) - new Date(s.timestamp)) / (1000 * 60 * 60)
+                : 0
               if (hours <= 6) buckets['0-6h']++
               else if (hours <= 12) buckets['6-12h']++
               else if (hours <= 24) buckets['12-24h']++
