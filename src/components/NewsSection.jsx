@@ -16,41 +16,53 @@ function NewsSection({ coinSymbol }) {
     setError(null)
     try {
       const coinNames = {
-        'BTC': 'bitcoin',
-        'ETH': 'ethereum',
-        'SOL': 'solana',
-        'ADA': 'cardano',
-        'DOT': 'polkadot',
-        'LINK': 'chainlink',
-        'MATIC': 'polygon',
-        'AVAX': 'avalanche',
-        'UNI': 'uniswap',
-        'ATOM': 'cosmos'
+        'BTC': 'Bitcoin',
+        'ETH': 'Ethereum',
+        'SOL': 'Solana',
+        'ADA': 'Cardano',
+        'DOT': 'Polkadot',
+        'LINK': 'Chainlink',
+        'MATIC': 'Polygon',
+        'AVAX': 'Avalanche',
+        'UNI': 'Uniswap',
+        'ATOM': 'Cosmos'
       }
 
-      const coinId = coinNames[coinSymbol] || 'bitcoin'
+      const searchTerm = coinNames[coinSymbol] || coinSymbol
+      const apiKey = '2841426678d04402b8a9dd54677dbca3'
 
-      // Use CryptoPanic API (free, no registration needed)
-      const url = `https://cryptopanic.com/api/v1/posts/?auth_token=free&currencies=${coinSymbol}&public=true`
+      // Try NewsAPI first
+      let url = `https://newsapi.org/v2/everything?q=${searchTerm} cryptocurrency&sortBy=publishedAt&pageSize=10&language=en&apiKey=${apiKey}`
 
-      const response = await fetch(url)
+      let response = await fetch(url)
+      let data = await response.json()
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
+      // If NewsAPI fails (likely browser restriction), fall back to CryptoPanic
+      if (data.status === 'error' || !response.ok) {
+        console.log('NewsAPI failed, falling back to CryptoPanic')
+        url = `https://cryptopanic.com/api/v1/posts/?auth_token=free&currencies=${coinSymbol}&public=true`
+        response = await fetch(url)
+        data = await response.json()
 
-      const data = await response.json()
-
-      if (data && data.results) {
-        const articlesWithSentiment = data.results.slice(0, 10).map(item => ({
-          title: item.title,
-          description: item.title,
-          url: item.url,
-          urlToImage: item.currencies?.[0]?.url || null,
-          publishedAt: item.published_at || item.created_at,
-          source: { name: item.source?.title || 'CryptoPanic' },
-          author: null,
-          sentiment: analyzeSentiment(item.title)
+        if (data && data.results) {
+          const articlesWithSentiment = data.results.slice(0, 10).map(item => ({
+            title: item.title,
+            description: item.title,
+            url: item.url,
+            urlToImage: item.currencies?.[0]?.url || null,
+            publishedAt: item.published_at || item.created_at,
+            source: { name: item.source?.title || 'CryptoPanic' },
+            author: null,
+            sentiment: analyzeSentiment(item.title)
+          }))
+          setNews(articlesWithSentiment)
+        } else {
+          setNews([])
+        }
+      } else if (data.status === 'ok' && data.articles) {
+        const articlesWithSentiment = data.articles.map(article => ({
+          ...article,
+          sentiment: analyzeSentiment(article.title + ' ' + (article.description || ''))
         }))
         setNews(articlesWithSentiment)
       } else {
