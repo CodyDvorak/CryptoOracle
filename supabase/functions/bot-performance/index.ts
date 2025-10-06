@@ -19,6 +19,29 @@ Deno.serve(async (req: Request) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    if (req.method === 'GET') {
+      const { data: cachedPerformance, error: cacheError } = await supabase
+        .from('bot_performance')
+        .select('*')
+        .order('accuracy_rate', { ascending: false });
+
+      if (cacheError) throw cacheError;
+
+      return new Response(
+        JSON.stringify({
+          bots: cachedPerformance || [],
+          totalBots: cachedPerformance?.length || 0,
+        }),
+        {
+          status: 200,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+    }
+
     const { data: predictions, error: predsError } = await supabase
       .from('bot_predictions')
       .select('*');

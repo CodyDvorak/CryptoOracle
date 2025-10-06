@@ -102,6 +102,10 @@ Deno.serve(async (req: Request) => {
       performanceEvaluated = await evaluateBotPerformance(supabase);
     }
 
+    if ((dueScans?.length || 0) > 0) {
+      await refreshBotPerformanceCache(supabase);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -192,6 +196,16 @@ async function evaluateBotPerformance(supabase: any): Promise<number> {
     if (response.ok) {
       const result = await response.json();
       console.log(`Bot performance evaluation: ${result.evaluated} predictions evaluated`);
+
+      const botPerformanceUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/bot-performance`;
+      await fetch(botPerformanceUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+        },
+      });
+      console.log('Bot performance cache refreshed');
+
       return result.evaluated || 0;
     }
   } catch (error) {
@@ -199,4 +213,19 @@ async function evaluateBotPerformance(supabase: any): Promise<number> {
   }
 
   return 0;
+}
+
+async function refreshBotPerformanceCache(supabase: any): Promise<void> {
+  try {
+    const botPerformanceUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/bot-performance`;
+    await fetch(botPerformanceUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+      },
+    });
+    console.log('Bot performance cache refreshed after scan completion');
+  } catch (error) {
+    console.error('Cache refresh failed:', error);
+  }
 }
