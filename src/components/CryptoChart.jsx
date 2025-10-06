@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { createChart } from 'lightweight-charts'
-import './CryptoChart.css'
 
 function CryptoChart({ symbol, predictions = [], supportResistance = [] }) {
   const chartContainerRef = useRef(null)

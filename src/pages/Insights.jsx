@@ -4,8 +4,8 @@ import { supabase } from '../config/api'
 import MarketCorrelation from '../components/MarketCorrelation'
 import RealtimeUpdates from '../components/RealtimeUpdates'
 import MarketRegimeTimeline from '../components/MarketRegimeTimeline'
-import AIChatAssistant from '../components/AIChatAssistant'
-import NewsSection from '../components/NewsSection'
+// import AIChatAssistant from '../components/AIChatAssistant'
+// import NewsSection from '../components/NewsSection'
 import './Insights.css'
 
 function Insights() {
@@ -283,7 +283,7 @@ function Insights() {
       <MarketCorrelation />
       <MarketRegimeTimeline coin={selectedCoin} />
 
-      <AIChatAssistant coinSymbol={selectedCoin} />
+      {/* <AIChatAssistant coinSymbol={selectedCoin} /> */}
     </div>
   )
 }
