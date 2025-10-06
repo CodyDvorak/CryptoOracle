@@ -28,7 +28,7 @@ async function runScanProcess(
     const aggregationEngine = new HybridAggregationEngine(supabase);
 
     console.log('Fetching top coins...');
-    const allCoins = await cryptoService.fetchTopCoins();
+    const allCoins = await cryptoService.getTopCoins('all', minPrice, maxPrice);
 
     let filteredCoins = allCoins;
     if (filterScope && filterScope !== 'all') {
@@ -63,7 +63,7 @@ async function runScanProcess(
       try {
         console.log(`Processing ${coin.symbol} (${processedCoins + 1}/${coinsToScan.length})`);
 
-        const ohlcvData = await cryptoService.fetchOHLCV(coin.symbol);
+        const ohlcvData = await cryptoService.getOHLCVData(coin.symbol);
         if (!ohlcvData || !ohlcvData.candles) {
           console.log(`Skipping ${coin.symbol}: No OHLCV data`);
           continue;
