@@ -253,20 +253,20 @@ function ChartsInner() {
             <div className="signal-details">
               <div className="detail-item">
                 <span className="label">Direction:</span>
-                <span className={`value ${currentRecommendation.consensus.toLowerCase()}`}>
-                  {currentRecommendation.consensus}
+                <span className={`value ${currentRecommendation.consensus?.toLowerCase() || ''}`}>
+                  {currentRecommendation.consensus || 'N/A'}
                 </span>
               </div>
               <div className="detail-item">
                 <span className="label">Confidence:</span>
                 <span className="value">
-                  {(currentRecommendation.bot_confidence * 100).toFixed(1)}%
+                  {((currentRecommendation.bot_confidence || 0) * 100).toFixed(1)}%
                 </span>
               </div>
               <div className="detail-item">
                 <span className="label">Regime:</span>
-                <span className={`value ${currentRecommendation.regime.toLowerCase()}`}>
-                  {currentRecommendation.regime}
+                <span className={`value ${currentRecommendation.regime?.toLowerCase() || ''}`}>
+                  {currentRecommendation.regime || 'N/A'}
                 </span>
               </div>
               <div className="detail-item">
