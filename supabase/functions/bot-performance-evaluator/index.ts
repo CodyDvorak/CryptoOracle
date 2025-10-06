@@ -99,7 +99,52 @@ async function getCurrentPriceFromCryptoCompare(symbol: string, apiKey: string):
   }
 }
 
-function evaluatePrediction(prediction: BotPrediction, currentPrice: number): { success: boolean; reason: string } {
+async function evaluatePredictionWithHistory(
+  prediction: BotPrediction,
+  currentPrice: number,
+  supabase: any
+): Promise<{ success: boolean; reason: string; exitPrice?: number }> {
+  const { position_direction, entry_price, target_price, stop_loss, coin_symbol, created_at } = prediction;
+
+  const { data: priceHistory, error } = await supabase
+    .from('price_history')
+    .select('price, timestamp')
+    .eq('symbol', coin_symbol)
+    .gte('timestamp', created_at)
+    .order('timestamp', { ascending: true });
+
+  if (error || !priceHistory || priceHistory.length === 0) {
+    return evaluatePredictionSnapshot(prediction, currentPrice);
+  }
+
+  if (position_direction === 'LONG') {
+    const targetHit = priceHistory.find((p: any) => p.price >= target_price);
+    if (targetHit) {
+      return { success: true, reason: 'Target reached', exitPrice: targetHit.price };
+    }
+
+    const stopLossHit = priceHistory.find((p: any) => p.price <= stop_loss);
+    if (stopLossHit) {
+      return { success: false, reason: 'Stop loss hit', exitPrice: stopLossHit.price };
+    }
+
+    return { success: currentPrice > entry_price, reason: 'In progress - evaluating current position' };
+  } else {
+    const targetHit = priceHistory.find((p: any) => p.price <= target_price);
+    if (targetHit) {
+      return { success: true, reason: 'Target reached', exitPrice: targetHit.price };
+    }
+
+    const stopLossHit = priceHistory.find((p: any) => p.price >= stop_loss);
+    if (stopLossHit) {
+      return { success: false, reason: 'Stop loss hit', exitPrice: stopLossHit.price };
+    }
+
+    return { success: currentPrice < entry_price, reason: 'In progress - evaluating current position' };
+  }
+}
+
+function evaluatePredictionSnapshot(prediction: BotPrediction, currentPrice: number): { success: boolean; reason: string } {
   const { position_direction, entry_price, target_price, stop_loss } = prediction;
 
   if (position_direction === 'LONG') {
@@ -181,7 +226,7 @@ Deno.serve(async (req: Request) => {
 
       if (!currentPrice) continue;
 
-      const result = evaluatePrediction(prediction, currentPrice);
+      const result = await evaluatePredictionWithHistory(prediction, currentPrice, supabase);
 
       if (!botResults[prediction.bot_name]) {
         botResults[prediction.bot_name] = { successful: 0, failed: 0, neutral: 0 };
@@ -189,19 +234,20 @@ Deno.serve(async (req: Request) => {
 
       let outcomeStatus = null;
       let profitLossPercent = 0;
+      const exitPrice = result.exitPrice || currentPrice;
 
       if (result.success && result.reason === 'Target reached') {
         botResults[prediction.bot_name].successful++;
         outcomeStatus = 'success';
         profitLossPercent = prediction.position_direction === 'LONG'
-          ? ((currentPrice - prediction.entry_price) / prediction.entry_price) * 100
-          : ((prediction.entry_price - currentPrice) / prediction.entry_price) * 100;
+          ? ((exitPrice - prediction.entry_price) / prediction.entry_price) * 100
+          : ((prediction.entry_price - exitPrice) / prediction.entry_price) * 100;
       } else if (!result.success && result.reason === 'Stop loss hit') {
         botResults[prediction.bot_name].failed++;
         outcomeStatus = 'failed';
         profitLossPercent = prediction.position_direction === 'LONG'
-          ? ((currentPrice - prediction.entry_price) / prediction.entry_price) * 100
-          : ((prediction.entry_price - currentPrice) / prediction.entry_price) * 100;
+          ? ((exitPrice - prediction.entry_price) / prediction.entry_price) * 100
+          : ((prediction.entry_price - exitPrice) / prediction.entry_price) * 100;
       } else {
         botResults[prediction.bot_name].neutral++;
       }
@@ -210,7 +256,7 @@ Deno.serve(async (req: Request) => {
         updatedPredictions.push({
           id: prediction.id,
           outcome_status: outcomeStatus,
-          outcome_price: currentPrice,
+          outcome_price: exitPrice,
           outcome_checked_at: new Date().toISOString(),
           profit_loss_percent: profitLossPercent
         });

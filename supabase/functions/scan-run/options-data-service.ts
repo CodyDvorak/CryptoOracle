@@ -59,7 +59,9 @@ interface DeribitTrade {
 class OptionsDataService {
   private readonly SUPPORTED_SYMBOLS = ['BTC', 'ETH', 'SOL'];
   private readonly DERIBIT_BASE_URL = 'https://www.deribit.com/api/v2/public';
+  private readonly OKX_BASE_URL = 'https://www.okx.com/api/v5/public';
   private readonly LARGE_TRADE_THRESHOLD = 10;
+  private okxApiKey = Deno.env.get('OKX_API_KEY') || '';
 
   async getOptionsData(symbol: string): Promise<OptionsData | null> {
     try {
@@ -82,15 +84,25 @@ class OptionsDataService {
 
       console.log(`📊 Fetching options data for ${upperSymbol} from Deribit...`);
 
-      const [instruments, recentTrades, currentPrice] = await Promise.all([
+      let [instruments, recentTrades, currentPrice] = await Promise.all([
         this.getInstruments(upperSymbol),
         this.getRecentTrades(upperSymbol),
         this.getCurrentPrice(upperSymbol),
       ]);
 
       if (!instruments || instruments.length === 0) {
-        console.error(`❌ No options instruments found for ${upperSymbol}`);
-        return null;
+        console.log(`⚠️ Deribit failed for ${upperSymbol}, trying OKX...`);
+        [instruments, recentTrades, currentPrice] = await Promise.all([
+          this.getInstrumentsOKX(upperSymbol),
+          this.getRecentTradesOKX(upperSymbol),
+          this.getCurrentPriceOKX(upperSymbol),
+        ]);
+
+        if (!instruments || instruments.length === 0) {
+          console.error(`❌ No options instruments found for ${upperSymbol} (Deribit & OKX failed)`);
+          return null;
+        }
+        console.log(`✅ OKX: Options data available for ${upperSymbol}`);
       }
 
       const orderBooks = await this.getOrderBooks(instruments.slice(0, 20));
@@ -472,6 +484,71 @@ class OptionsDataService {
     }
 
     return Math.min(confidence, 1.0);
+  }
+
+  private async getInstrumentsOKX(symbol: string): Promise<DeribitInstrument[]> {
+    try {
+      const instType = 'OPTION';
+      const uly = `${symbol}-USD`;
+      const response = await fetch(
+        `${this.OKX_BASE_URL}/instruments?instType=${instType}&uly=${uly}`,
+        {
+          headers: this.okxApiKey ? { 'OK-ACCESS-KEY': this.okxApiKey } : {},
+        }
+      );
+
+      if (!response.ok) {
+        return [];
+      }
+
+      const data = await response.json();
+      if (!data || !data.data || data.data.length === 0) {
+        return [];
+      }
+
+      return data.data.map((inst: any) => ({
+        instrument_name: inst.instId,
+        kind: 'option',
+        option_type: inst.optType,
+        strike: parseFloat(inst.stk),
+        expiration_timestamp: parseInt(inst.expTime),
+      }));
+    } catch (error) {
+      console.error('OKX instruments fetch error:', error);
+      return [];
+    }
+  }
+
+  private async getRecentTradesOKX(symbol: string): Promise<DeribitTrade[]> {
+    try {
+      return [];
+    } catch (error) {
+      console.error('OKX trades fetch error:', error);
+      return [];
+    }
+  }
+
+  private async getCurrentPriceOKX(symbol: string): Promise<number> {
+    try {
+      const instId = `${symbol}-USD-SWAP`;
+      const response = await fetch(
+        `${this.OKX_BASE_URL}/mark-price?instType=SWAP&instId=${instId}`
+      );
+
+      if (!response.ok) {
+        return 0;
+      }
+
+      const data = await response.json();
+      if (!data || !data.data || data.data.length === 0) {
+        return 0;
+      }
+
+      return parseFloat(data.data[0].markPx) || 0;
+    } catch (error) {
+      console.error('OKX price fetch error:', error);
+      return 0;
+    }
   }
 }
 
