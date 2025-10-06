@@ -232,7 +232,11 @@ function RecommendationCard({ recommendation, rank, runId, onShowDetails }) {
         </div>
         <div className="stat">
           <span className="stat-label">Consensus</span>
-          <span className="stat-value">{recommendation.consensus_percent?.toFixed(1)}%</span>
+          <span className="stat-value">
+            {recommendation.bot_count > 0
+              ? ((Math.max(recommendation.bot_votes_long || 0, recommendation.bot_votes_short || 0) / recommendation.bot_count) * 100).toFixed(0)
+              : '0'}%
+          </span>
         </div>
       </div>
 
@@ -240,12 +244,12 @@ function RecommendationCard({ recommendation, rank, runId, onShowDetails }) {
         <div className="vote-bar">
           <div
             className="vote-fill long"
-            style={{ width: `${(recommendation.long_bots / recommendation.bot_count) * 100}%` }}
+            style={{ width: `${((recommendation.bot_votes_long || 0) / recommendation.bot_count) * 100}%` }}
           />
         </div>
         <div className="vote-labels">
-          <span className="long">{recommendation.long_bots} Long</span>
-          <span className="short">{recommendation.short_bots} Short</span>
+          <span className="long">{recommendation.bot_votes_long || 0} Long</span>
+          <span className="short">{recommendation.bot_votes_short || 0} Short</span>
         </div>
       </div>
 

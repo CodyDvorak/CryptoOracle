@@ -11,13 +11,13 @@ function CryptoChart({ symbol, predictions = [], supportResistance = [] }) {
   const [error, setError] = useState(null)
 
   const timeframeMapping = {
-    '1m': { days: 1, interval: 'minutely' },
-    '5m': { days: 1, interval: 'minutely' },
-    '15m': { days: 3, interval: 'minutely' },
-    '1H': { days: 7, interval: 'hourly' },
-    '4H': { days: 30, interval: 'hourly' },
-    '1D': { days: 90, interval: 'daily' },
-    '1W': { days: 365, interval: 'daily' },
+    '1m': { days: 1 },
+    '5m': { days: 1 },
+    '15m': { days: 1 },
+    '1H': { days: 7 },
+    '4H': { days: 30 },
+    '1D': { days: 90 },
+    '1W': { days: 365 },
   }
 
   useEffect(() => {
@@ -138,6 +138,11 @@ function CryptoChart({ symbol, predictions = [], supportResistance = [] }) {
   }
 
   const fetchChartData = async () => {
+    if (!chartRef.current || !candleSeriesRef.current || !volumeSeriesRef.current) {
+      console.warn('Chart not initialized yet')
+      return
+    }
+
     setLoading(true)
     setError(null)
 
@@ -149,9 +154,18 @@ function CryptoChart({ symbol, predictions = [], supportResistance = [] }) {
         `https://api.coingecko.com/api/v3/coins/${coinId}/ohlc?vs_currency=usd&days=${config.days}`
       )
 
-      if (!response.ok) throw new Error('Failed to fetch chart data')
+      if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error('Rate limit exceeded. Please wait a moment.')
+        }
+        throw new Error('Failed to fetch chart data')
+      }
 
       const data = await response.json()
+
+      if (!Array.isArray(data) || data.length === 0) {
+        throw new Error('No chart data available')
+      }
 
       const candleData = data.map(([timestamp, open, high, low, close]) => ({
         time: timestamp / 1000,
@@ -167,7 +181,7 @@ function CryptoChart({ symbol, predictions = [], supportResistance = [] }) {
         color: index > 0 && data[index][4] > data[index - 1][4] ? '#10b981' : '#ef4444',
       }))
 
-      if (candleSeriesRef.current && volumeSeriesRef.current) {
+      if (candleSeriesRef.current && volumeSeriesRef.current && chartRef.current) {
         candleSeriesRef.current.setData(candleData)
         volumeSeriesRef.current.setData(volumeData)
 
