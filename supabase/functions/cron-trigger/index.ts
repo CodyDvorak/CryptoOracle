@@ -26,7 +26,7 @@ Deno.serve(async (req: Request) => {
       .from('scheduled_scans')
       .select('*')
       .eq('is_active', true)
-      .lte('next_run', now.toISOString());
+      .lte('next_run_at', now.toISOString());
 
     if (fetchError) throw fetchError;
 
@@ -36,11 +36,18 @@ Deno.serve(async (req: Request) => {
 
     for (const scan of dueScans || []) {
       try {
+        // Parse config from JSONB
+        const config = scan.config || {};
+
         const scanPayload = {
           interval: '4h',
-          scanType: 'scheduled',
+          scanType: config.scanType || 'comprehensive_scan',
+          coinLimit: config.coinLimit || 100,
+          filterScope: config.filterScope || 'top200',
+          confidenceThreshold: config.confidenceThreshold || 0.60,
           userId: scan.user_id,
           scheduledScanId: scan.id,
+          automated: config.automated || false,
         };
 
         const scanResponse = await fetch(`${supabaseUrl}/functions/v1/scan-run`, {
@@ -63,9 +70,8 @@ Deno.serve(async (req: Request) => {
         await supabase
           .from('scheduled_scans')
           .update({
-            last_run: now.toISOString(),
-            next_run: nextRun.toISOString(),
-            run_count: (scan.run_count || 0) + 1,
+            last_run_at: now.toISOString(),
+            next_run_at: nextRun.toISOString(),
           })
           .eq('id', scan.id);
 
@@ -82,8 +88,8 @@ Deno.serve(async (req: Request) => {
         await supabase
           .from('scheduled_scans')
           .update({
-            last_error: scanError.message,
-            error_count: (scan.error_count || 0) + 1,
+            last_run_at: now.toISOString(),
+            next_run_at: calculateNextRun(scan).toISOString(),
           })
           .eq('id', scan.id);
 
@@ -144,19 +150,24 @@ Deno.serve(async (req: Request) => {
 function calculateNextRun(scan: any): Date {
   const next = new Date();
 
-  if (scan.interval === 'hourly') {
-    next.setHours(next.getHours() + 1);
-  } else if (scan.interval === '4h') {
-    next.setHours(next.getHours() + 4);
-  } else if (scan.interval === 'daily') {
-    next.setDate(next.getDate() + 1);
-  } else if (scan.interval === 'weekly') {
-    next.setDate(next.getDate() + 7);
-  }
+  // Parse cron schedule to determine next run
+  // Format: '0 */4 * * *' means every 4 hours
+  const cron = scan.schedule_cron || '0 */4 * * *';
 
-  if (scan.time_of_day) {
-    const [hours, minutes] = scan.time_of_day.split(':');
-    next.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+  // Simple parser for common patterns
+  if (cron.includes('*/4')) {
+    // Every 4 hours
+    next.setHours(next.getHours() + 4);
+  } else if (cron.includes('*/1') || cron === '0 * * * *') {
+    // Every hour
+    next.setHours(next.getHours() + 1);
+  } else if (cron.includes('0 0 * * *')) {
+    // Daily
+    next.setDate(next.getDate() + 1);
+    next.setHours(0, 0, 0, 0);
+  } else {
+    // Default to 4 hours if unclear
+    next.setHours(next.getHours() + 4);
   }
 
   return next;

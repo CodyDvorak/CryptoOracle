@@ -29,13 +29,11 @@ function NewsSection({ coinSymbol }) {
       }
 
       const coinId = coinNames[coinSymbol] || 'bitcoin'
-      const url = `https://api.coingecko.com/api/v3/coins/${coinId}/news`
 
-      const response = await fetch(url, {
-        headers: {
-          'accept': 'application/json'
-        }
-      })
+      // Use CryptoPanic API (free, no registration needed)
+      const url = `https://cryptopanic.com/api/v1/posts/?auth_token=free&currencies=${coinSymbol}&public=true`
+
+      const response = await fetch(url)
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -43,16 +41,16 @@ function NewsSection({ coinSymbol }) {
 
       const data = await response.json()
 
-      if (data && data.data) {
-        const articlesWithSentiment = data.data.slice(0, 10).map(item => ({
+      if (data && data.results) {
+        const articlesWithSentiment = data.results.slice(0, 10).map(item => ({
           title: item.title,
-          description: item.description || item.body?.substring(0, 150) + '...',
+          description: item.title,
           url: item.url,
-          urlToImage: item.thumb_2x || item.thumb,
-          publishedAt: item.updated_at || item.published_at,
-          source: { name: item.news_site || 'CoinGecko' },
-          author: item.author,
-          sentiment: analyzeSentiment(item.title + ' ' + (item.description || ''))
+          urlToImage: item.currencies?.[0]?.url || null,
+          publishedAt: item.published_at || item.created_at,
+          source: { name: item.source?.title || 'CryptoPanic' },
+          author: null,
+          sentiment: analyzeSentiment(item.title)
         }))
         setNews(articlesWithSentiment)
       } else {
