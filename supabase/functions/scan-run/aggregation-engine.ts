@@ -23,6 +23,7 @@ interface AggregatedSignal {
   avgEntry: number;
   avgTakeProfit: number;
   avgStopLoss: number;
+  avgLeverage?: number;
   weightedConfidence: number;
 }
 
@@ -222,18 +223,10 @@ export class HybridAggregationEngine {
 
     let finalConfidence = avgConfidence;
 
-    // Apply consensus multipliers - reward high consensus, penalize low consensus
     if (consensusPercent >= 80) {
       finalConfidence = Math.min(avgConfidence * 1.12, 0.95);
     } else if (consensusPercent >= 70) {
       finalConfidence = Math.min(avgConfidence * 1.06, 0.92);
-    } else if (consensusPercent >= 60) {
-      finalConfidence = avgConfidence * 0.95; // Small penalty
-    } else if (consensusPercent >= 50) {
-      finalConfidence = avgConfidence * 0.85; // Moderate penalty for weak majority
-    } else {
-      // Consensus below 50% means more bots disagreed - heavy penalty
-      finalConfidence = avgConfidence * 0.70;
     }
 
     // CONTRARIAN AGREEMENT AMPLIFICATION
