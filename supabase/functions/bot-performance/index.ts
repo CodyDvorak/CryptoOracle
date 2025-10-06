@@ -27,6 +27,10 @@ Deno.serve(async (req: Request) => {
 
     if (predsError) throw predsError;
 
+    console.log(`[bot-performance] Fetched ${predictions?.length || 0} total predictions from database`);
+    const uniqueBots = new Set(predictions?.map(p => p.bot_name) || []);
+    console.log(`[bot-performance] Found ${uniqueBots.size} unique bots`);
+
     const botStats = new Map();
 
     predictions.forEach(pred => {
@@ -118,6 +122,8 @@ Deno.serve(async (req: Request) => {
     });
 
     performanceData.sort((a, b) => b.accuracy_rate - a.accuracy_rate);
+
+    console.log(`[bot-performance] Returning ${performanceData.length} bots to client`);
 
     for (const botData of performanceData) {
       await supabase
