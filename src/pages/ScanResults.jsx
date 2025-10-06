@@ -182,8 +182,7 @@ function ScanResults() {
 
       {selectedCoin && (
         <BotDetailsModal
-          coin={selectedCoin}
-          runId={scan?.id}
+          recommendation={selectedCoin}
           onClose={() => setSelectedCoin(null)}
         />
       )}

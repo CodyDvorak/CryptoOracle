@@ -234,19 +234,19 @@
 .stat-value {
   font-size: 18px;
   font-weight: 600;
-  color: #ffffff;
+  color: #ffffff !important;
 }
 
-.confidence-high {
-  color: var(--accent-green);
+.stat-value.confidence-high {
+  color: var(--accent-green) !important;
 }
 
-.confidence-medium {
-  color: var(--accent-orange);
+.stat-value.confidence-medium {
+  color: var(--accent-orange) !important;
 }
 
-.confidence-low {
-  color: var(--accent-red);
+.stat-value.confidence-low {
+  color: var(--accent-red) !important;
 }
 
 .bot-votes {
