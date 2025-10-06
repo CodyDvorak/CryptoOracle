@@ -143,8 +143,9 @@ Deno.serve(async (req: Request) => {
     const { data: predictions, error } = await supabase
       .from('bot_predictions')
       .select('*')
-      .gte('created_at', cutoffDate.toISOString())
-      .order('created_at', { ascending: false });
+      .gte('timestamp', cutoffDate.toISOString())
+      .is('outcome_status', null)
+      .order('timestamp', { ascending: false });
 
     if (error) throw error;
 
@@ -173,6 +174,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const botResults: Record<string, { successful: number; failed: number; neutral: number }> = {};
+    const updatedPredictions = [];
 
     for (const prediction of predictions) {
       const currentPrice = priceCache[prediction.coin_symbol];
@@ -185,13 +187,46 @@ Deno.serve(async (req: Request) => {
         botResults[prediction.bot_name] = { successful: 0, failed: 0, neutral: 0 };
       }
 
+      let outcomeStatus = null;
+      let profitLossPercent = 0;
+
       if (result.success && result.reason === 'Target reached') {
         botResults[prediction.bot_name].successful++;
+        outcomeStatus = 'success';
+        profitLossPercent = prediction.position_direction === 'LONG'
+          ? ((currentPrice - prediction.entry_price) / prediction.entry_price) * 100
+          : ((prediction.entry_price - currentPrice) / prediction.entry_price) * 100;
       } else if (!result.success && result.reason === 'Stop loss hit') {
         botResults[prediction.bot_name].failed++;
+        outcomeStatus = 'failed';
+        profitLossPercent = prediction.position_direction === 'LONG'
+          ? ((currentPrice - prediction.entry_price) / prediction.entry_price) * 100
+          : ((prediction.entry_price - currentPrice) / prediction.entry_price) * 100;
       } else {
         botResults[prediction.bot_name].neutral++;
       }
+
+      if (outcomeStatus) {
+        updatedPredictions.push({
+          id: prediction.id,
+          outcome_status: outcomeStatus,
+          outcome_price: currentPrice,
+          outcome_checked_at: new Date().toISOString(),
+          profit_loss_percent: profitLossPercent
+        });
+      }
+    }
+
+    for (const update of updatedPredictions) {
+      await supabase
+        .from('bot_predictions')
+        .update({
+          outcome_status: update.outcome_status,
+          outcome_price: update.outcome_price,
+          outcome_checked_at: update.outcome_checked_at,
+          profit_loss_percent: update.profit_loss_percent
+        })
+        .eq('id', update.id);
     }
 
     const metricsToUpdate = [];
@@ -242,6 +277,7 @@ Deno.serve(async (req: Request) => {
     return new Response(JSON.stringify({
       success: true,
       evaluated: predictions.length,
+      updated: updatedPredictions.length,
       unique_bots: Object.keys(botResults).length,
       bot_results: botResults,
       message: 'Bot performance evaluation completed'
