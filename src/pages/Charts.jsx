@@ -4,6 +4,36 @@ import CryptoChart from '../components/CryptoChart';
 import { supabase } from '../config/api';
 import './Charts.css';
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Charts error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ minHeight: '100vh', background: '#0a0e1a', color: '#fff', padding: '2rem', textAlign: 'center' }}>
+          <h1 style={{ color: '#ef4444', marginBottom: '1rem' }}>Something went wrong</h1>
+          <p>{this.state.error?.message || 'An error occurred'}</p>
+          <button onClick={() => window.location.reload()} style={{ marginTop: '1rem', padding: '0.5rem 1rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '0.5rem', cursor: 'pointer' }}>
+            Reload Page
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const INTERVALS = [
   { value: '1h', label: '1H' },
   { value: '4h', label: '4H' },
@@ -11,7 +41,7 @@ const INTERVALS = [
   { value: '1W', label: '1W' },
 ];
 
-export default function Charts() {
+function ChartsInner() {
   const [recommendations, setRecommendations] = useState([]);
   const [selectedCoin, setSelectedCoin] = useState('BTC');
   const [selectedInterval, setSelectedInterval] = useState('4h');
@@ -21,6 +51,16 @@ export default function Charts() {
   const [pageError, setPageError] = useState(null);
 
   console.log('Charts render - loading:', loading, 'error:', pageError, 'recs:', recommendations.length);
+
+  // Check if supabase is configured
+  if (!supabase) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#0a0e1a', color: '#fff', padding: '2rem', textAlign: 'center' }}>
+        <h1 style={{ color: '#ef4444', marginBottom: '1rem' }}>Configuration Error</h1>
+        <p>Supabase client is not properly configured. Please check your environment variables.</p>
+      </div>
+    );
+  }
 
   useEffect(() => {
     fetchLatestRecommendations().catch(err => {
@@ -387,5 +427,14 @@ function BotSignalsPanel({ predictions }) {
         ))}
       </div>
     </div>
+  );
+}
+
+
+export default function Charts() {
+  return (
+    <ErrorBoundary>
+      <ChartsInner />
+    </ErrorBoundary>
   );
 }

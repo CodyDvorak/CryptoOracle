@@ -3,7 +3,37 @@ import { BarChart3, TrendingUp, TrendingDown, Activity, Calendar, Download, Filt
 import { supabase } from '../config/api'
 import './Analytics.css'
 
-function Analytics() {
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Analytics error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ minHeight: '100vh', background: '#0a0e1a', color: '#fff', padding: '2rem', textAlign: 'center' }}>
+          <h1 style={{ color: '#ef4444', marginBottom: '1rem' }}>Something went wrong</h1>
+          <p>{this.state.error?.message || 'An error occurred'}</p>
+          <button onClick={() => window.location.reload()} style={{ marginTop: '1rem', padding: '0.5rem 1rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '0.5rem', cursor: 'pointer' }}>
+            Reload Page
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function AnalyticsInner() {
   const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState('30d')
   const [error, setError] = useState(null)
@@ -354,4 +384,10 @@ function Analytics() {
   )
 }
 
-export default Analytics
+export default function Analytics() {
+  return (
+    <ErrorBoundary>
+      <AnalyticsInner />
+    </ErrorBoundary>
+  );
+}
