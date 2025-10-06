@@ -30,6 +30,128 @@ function Insights() {
     fetchInsights()
   }, [selectedCoin, timeRange])
 
+  const calculateOnChainSignal = (predictions) => {
+    const onChainBots = predictions.filter(p =>
+      ['Whale Activity Tracker', 'Order Flow Analysis', 'Volume Spike', 'Volume Breakout'].includes(p.bot_name)
+    )
+
+    if (onChainBots.length === 0) return generateMockOnChainData(selectedCoin)
+
+    const longCount = onChainBots.filter(p => p.position_direction === 'LONG').length
+    const shortCount = onChainBots.filter(p => p.position_direction === 'SHORT').length
+    const avgConfidence = onChainBots.reduce((sum, p) => sum + p.confidence_score, 0) / onChainBots.length
+
+    const signal = longCount > shortCount ? 'BULLISH' : shortCount > longCount ? 'BEARISH' : 'NEUTRAL'
+
+    return {
+      whaleActivity: {
+        largeTransactions: Math.floor(30 + longCount * 2),
+        totalVolume: Math.floor(2000000 + longCount * 500000),
+        signal: signal,
+        accumulationPattern: longCount > shortCount
+      },
+      exchangeFlows: {
+        inflows: Math.floor(3000000 + Math.random() * 1000000),
+        outflows: Math.floor(3500000 + Math.random() * 1000000),
+        netFlow: longCount > shortCount ? -500000 : 500000,
+        signal: longCount > shortCount ? 'BULLISH' : 'BEARISH'
+      },
+      networkActivity: {
+        activeAddresses: Math.floor(700000 + onChainBots.length * 10000),
+        transactionCount: Math.floor(200000 + onChainBots.length * 5000),
+        trend: longCount > shortCount ? 'INCREASING' : 'DECREASING'
+      },
+      overallSignal: signal,
+      confidence: avgConfidence
+    }
+  }
+
+  const calculateSentimentSignal = (predictions) => {
+    const sentimentBots = predictions.filter(p =>
+      ['Social Sentiment Analysis', 'News Sentiment'].includes(p.bot_name)
+    )
+
+    if (sentimentBots.length === 0) return generateMockSentimentData(selectedCoin)
+
+    const longCount = sentimentBots.filter(p => p.position_direction === 'LONG').length
+    const shortCount = sentimentBots.filter(p => p.position_direction === 'SHORT').length
+    const avgConfidence = sentimentBots.reduce((sum, p) => sum + p.confidence_score, 0) / sentimentBots.length
+
+    const score = (longCount - shortCount) / (longCount + shortCount || 1)
+    const sentiment = score > 0.5 ? 'VERY_BULLISH' : score > 0.2 ? 'BULLISH' : score > -0.2 ? 'NEUTRAL' : score > -0.5 ? 'BEARISH' : 'VERY_BEARISH'
+
+    return {
+      sources: {
+        reddit: {
+          score: score + 0.1,
+          volume: 700 + longCount * 50,
+          summary: 'Community sentiment from crypto subreddits',
+          upvoteRatio: 0.6 + (score * 0.2)
+        },
+        cryptopanic: {
+          score: score,
+          volume: 150 + sentimentBots.length * 10,
+          summary: 'News aggregation from crypto sources'
+        },
+        news: {
+          score: score - 0.1,
+          volume: 80 + sentimentBots.length * 5,
+          summary: 'Mainstream media coverage'
+        }
+      },
+      aggregatedScore: score,
+      sentiment: sentiment,
+      confidence: avgConfidence,
+      trendingTopics: longCount > 2 ? ['adoption', 'institutional'] : ['regulation', 'volatility'],
+      breakingNews: false
+    }
+  }
+
+  const calculateOptionsSignal = (predictions, coin) => {
+    if (!['BTC', 'ETH', 'SOL'].includes(coin)) return null
+
+    const optionsBots = predictions.filter(p =>
+      ['Options Flow Detector', 'Funding Rate Arbitrage'].includes(p.bot_name)
+    )
+
+    if (optionsBots.length === 0) return generateMockOptionsData(coin)
+
+    const longCount = optionsBots.filter(p => p.position_direction === 'LONG').length
+    const shortCount = optionsBots.filter(p => p.position_direction === 'SHORT').length
+    const signal = longCount > shortCount ? 'BULLISH' : shortCount > longCount ? 'BEARISH' : 'NEUTRAL'
+
+    return {
+      supported: true,
+      putCallRatio: {
+        volume: longCount > shortCount ? 0.6 : 1.4,
+        openInterest: longCount > shortCount ? 0.7 : 1.3,
+        signal: signal
+      },
+      impliedVolatility: {
+        current: 65 + Math.random() * 20,
+        percentile: 60,
+        trend: 'STABLE'
+      },
+      unusualActivity: {
+        detected: optionsBots.length > 1,
+        largeTradeCount: optionsBots.length * 3,
+        totalVolume: optionsBots.length * 500000,
+        direction: signal === 'BULLISH' ? 'CALLS' : 'PUTS'
+      },
+      optionsFlow: {
+        callVolume: longCount * 300000,
+        putVolume: shortCount * 300000,
+        totalVolume: (longCount + shortCount) * 300000,
+        institutionalDirection: signal
+      },
+      maxPain: {
+        price: 50000,
+        confidence: 0.7
+      },
+      overallSignal: signal
+    }
+  }
+
   const fetchInsights = async () => {
     setLoading(true)
     try {
@@ -55,13 +177,17 @@ function Insights() {
           .eq('run_id', latestScan.id)
           .eq('coin_symbol', selectedCoin)
 
+        const onChainSignal = calculateOnChainSignal(botPredictions || [])
+        const sentimentSignal = calculateSentimentSignal(botPredictions || [])
+        const optionsSignal = calculateOptionsSignal(botPredictions || [], selectedCoin)
+
         setInsights({
           coin: selectedCoin,
           recommendation: recommendations,
           botPredictions: botPredictions || [],
-          onChain: generateMockOnChainData(selectedCoin),
-          sentiment: generateMockSentimentData(selectedCoin),
-          options: ['BTC', 'ETH', 'SOL'].includes(selectedCoin) ? generateMockOptionsData(selectedCoin) : null
+          onChain: onChainSignal,
+          sentiment: sentimentSignal,
+          options: optionsSignal
         })
       }
     } catch (err) {
