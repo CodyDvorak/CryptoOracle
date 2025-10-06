@@ -45,14 +45,17 @@ function BotPerformance() {
     try {
       const response = await fetch(API_ENDPOINTS.botPerformance, {
         headers: getHeaders(),
+        cache: 'no-store',
       })
       if (!response.ok) {
         throw new Error('Failed to fetch bot performance')
       }
       const data = await response.json()
+      console.log('Bot performance data:', data)
       setBots(data.bots || [])
       await fetchAIInsights()
     } catch (err) {
+      console.error('Error fetching bot performance:', err)
       setError(err.message)
     } finally {
       setLoading(false)
