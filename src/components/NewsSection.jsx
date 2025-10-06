@@ -15,34 +15,48 @@ function NewsSection({ coinSymbol }) {
     setLoading(true)
     setError(null)
     try {
-      const apiKey = '2841426678d04402b8a9dd54677dbca3'
       const coinNames = {
-        'BTC': 'Bitcoin',
-        'ETH': 'Ethereum',
-        'SOL': 'Solana',
-        'ADA': 'Cardano',
-        'DOT': 'Polkadot',
-        'LINK': 'Chainlink',
-        'MATIC': 'Polygon',
-        'AVAX': 'Avalanche',
-        'UNI': 'Uniswap',
-        'ATOM': 'Cosmos'
+        'BTC': 'bitcoin',
+        'ETH': 'ethereum',
+        'SOL': 'solana',
+        'ADA': 'cardano',
+        'DOT': 'polkadot',
+        'LINK': 'chainlink',
+        'MATIC': 'polygon',
+        'AVAX': 'avalanche',
+        'UNI': 'uniswap',
+        'ATOM': 'cosmos'
       }
 
-      const searchTerm = coinNames[coinSymbol] || coinSymbol
-      const url = `https://newsapi.org/v2/everything?q=${searchTerm} cryptocurrency&sortBy=publishedAt&pageSize=10&language=en&apiKey=${apiKey}`
+      const coinId = coinNames[coinSymbol] || 'bitcoin'
+      const url = `https://api.coingecko.com/api/v3/coins/${coinId}/news`
 
-      const response = await fetch(url)
+      const response = await fetch(url, {
+        headers: {
+          'accept': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
       const data = await response.json()
 
-      if (data.status === 'ok') {
-        const articlesWithSentiment = data.articles.map(article => ({
-          ...article,
-          sentiment: analyzeSentiment(article.title + ' ' + (article.description || ''))
+      if (data && data.data) {
+        const articlesWithSentiment = data.data.slice(0, 10).map(item => ({
+          title: item.title,
+          description: item.description || item.body?.substring(0, 150) + '...',
+          url: item.url,
+          urlToImage: item.thumb_2x || item.thumb,
+          publishedAt: item.updated_at || item.published_at,
+          source: { name: item.news_site || 'CoinGecko' },
+          author: item.author,
+          sentiment: analyzeSentiment(item.title + ' ' + (item.description || ''))
         }))
         setNews(articlesWithSentiment)
       } else {
-        throw new Error(data.message || 'Failed to fetch news')
+        setNews([])
       }
     } catch (err) {
       console.error('Error fetching news:', err)

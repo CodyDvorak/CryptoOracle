@@ -17,13 +17,13 @@ function Insights() {
 
   const VIEW_MODES = [
     { id: 'all', name: 'All Signals', icon: '🎯', botFilter: null },
-    { id: 'whale_activity', name: 'Whale Activity', icon: '🐋', botFilter: ['Whale Activity Tracker', 'Order Flow Analysis', 'Volume Spike', 'Volume Breakout'] },
-    { id: 'trending_markets', name: 'Trending Markets', icon: '📈', botFilter: ['Momentum Trader', 'Trend Following', 'EMA Golden Cross', 'ADX Trend Strength'] },
-    { id: 'futures_signals', name: 'Futures & Options', icon: '📊', botFilter: ['Funding Rate Arbitrage', 'Open Interest Momentum', 'Options Flow Detector'] },
-    { id: 'breakout_hunter', name: 'Breakout Opportunities', icon: '🚀', botFilter: ['Breakout Hunter', 'Bollinger Breakout', 'Volume Breakout', 'Chart Patterns'] },
-    { id: 'reversal_opportunities', name: 'Reversal Setups', icon: '🔄', botFilter: ['Mean Reversion', 'RSI Oversold/Overbought', 'RSI Divergence', 'Stochastic Oscillator'] },
-    { id: 'volatile_markets', name: 'Volatile Markets', icon: '🌊', botFilter: ['ATR Volatility', 'Bollinger Squeeze', 'Volatility Breakout'] },
-    { id: 'elliott_wave', name: 'Elliott Wave', icon: '〰️', botFilter: ['Elliott Wave Pattern', 'Fibonacci Retracement', 'Harmonic Patterns'] }
+    { id: 'whale_activity', name: 'Whale Activity', icon: '🐋', botFilter: ['Volume Spike', 'Volume Breakout', 'OBV On-Balance Volume', 'Volume Price Trend', 'CMF Money Flow'] },
+    { id: 'trending_markets', name: 'Trending Markets', icon: '📈', botFilter: ['Momentum Trader', 'ADX Trend Strength', 'SuperTrend', 'Aroon Indicator', 'Vortex Indicator'] },
+    { id: 'futures_signals', name: 'Futures & Options', icon: '📊', botFilter: ['Funding Rate Arbitrage', 'Open Interest Momentum'] },
+    { id: 'breakout_hunter', name: 'Breakout Opportunities', icon: '🚀', botFilter: ['Breakout Hunter', 'Bollinger Breakout', 'Volume Breakout', 'Chart Patterns', 'Consolidation Breakout', 'Donchian Channel'] },
+    { id: 'reversal_opportunities', name: 'Reversal Setups', icon: '🔄', botFilter: ['Mean Reversion', 'RSI Oversold/Overbought', 'RSI Divergence', 'Stochastic Oscillator', 'RSI Reversal', 'Stochastic Reversal', 'Bollinger Reversal'] },
+    { id: 'volatile_markets', name: 'Volatile Markets', icon: '🌊', botFilter: ['ATR Volatility', 'Bollinger Squeeze', 'Keltner Channel'] },
+    { id: 'elliott_wave', name: 'Elliott Wave', icon: '〰️', botFilter: ['Elliott Wave Pattern', 'Fibonacci Retracement', 'Wyckoff Method'] }
   ]
 
   useEffect(() => {
@@ -32,7 +32,7 @@ function Insights() {
 
   const calculateOnChainSignal = (predictions) => {
     const onChainBots = predictions.filter(p =>
-      ['Whale Activity Tracker', 'Order Flow Analysis', 'Volume Spike', 'Volume Breakout'].includes(p.bot_name)
+      ['Volume Spike', 'Volume Breakout', 'OBV On-Balance Volume', 'Network Activity', 'CMF Money Flow', 'Volume Price Trend', 'Volume Profile Analysis'].includes(p.bot_name)
     )
 
     if (onChainBots.length === 0) return generateMockOnChainData(selectedCoin)
@@ -68,7 +68,7 @@ function Insights() {
 
   const calculateSentimentSignal = (predictions) => {
     const sentimentBots = predictions.filter(p =>
-      ['Social Sentiment Analysis', 'News Sentiment'].includes(p.bot_name)
+      ['Social Sentiment Analysis', 'Market Sentiment', 'Fear & Greed Index'].includes(p.bot_name)
     )
 
     if (sentimentBots.length === 0) return generateMockSentimentData(selectedCoin)
@@ -111,7 +111,7 @@ function Insights() {
     if (!['BTC', 'ETH', 'SOL'].includes(coin)) return null
 
     const optionsBots = predictions.filter(p =>
-      ['Options Flow Detector', 'Funding Rate Arbitrage'].includes(p.bot_name)
+      ['Funding Rate Arbitrage', 'Open Interest Momentum'].includes(p.bot_name)
     )
 
     if (optionsBots.length === 0) return generateMockOptionsData(coin)
