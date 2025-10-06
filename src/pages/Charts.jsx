@@ -338,7 +338,7 @@ function ChartsInner() {
   );
 }
 
-function MultiTimeframePanel({ data }) {
+function MultiTimeframePanel({ data = {} }) {
   const getRegimeIcon = (regime) => {
     if (regime === 'BULL') return <TrendingUp size={16} />;
     if (regime === 'BEAR') return <TrendingDown size={16} />;
@@ -354,7 +354,7 @@ function MultiTimeframePanel({ data }) {
   if (!data?.analysis) return null;
 
   const { primary, secondary, daily, weekly, alignment } = data.analysis;
-  const timeframes = [weekly, daily, primary, secondary];
+  const timeframes = [weekly, daily, primary, secondary].filter(Boolean);
 
   return (
     <div className="multi-timeframe-panel">
@@ -362,18 +362,18 @@ function MultiTimeframePanel({ data }) {
       <div className="timeframe-bars">
         {timeframes.map((tf, idx) => (
           <div key={idx} className="timeframe-row">
-            <div className="tf-label">{tf.timeframe}</div>
+            <div className="tf-label">{tf?.timeframe || 'N/A'}</div>
             <div className="tf-bar-container">
               <div
-                className={`tf-bar ${getRegimeColor(tf.regime)}`}
-                style={{ width: `${tf.confidence * 100}%` }}
+                className={`tf-bar ${getRegimeColor(tf?.regime)}`}
+                style={{ width: `${(tf?.confidence || 0) * 100}%` }}
               >
                 <span className="tf-regime">
-                  {getRegimeIcon(tf.regime)}
-                  {tf.regime}
+                  {getRegimeIcon(tf?.regime)}
+                  {tf?.regime || 'N/A'}
                 </span>
               </div>
-              <span className="tf-confidence">{(tf.confidence * 100).toFixed(0)}%</span>
+              <span className="tf-confidence">{((tf?.confidence || 0) * 100).toFixed(0)}%</span>
             </div>
           </div>
         ))}
@@ -397,7 +397,7 @@ function MultiTimeframePanel({ data }) {
   );
 }
 
-function BotSignalsPanel({ predictions }) {
+function BotSignalsPanel({ predictions = [] }) {
   const longCount = predictions.filter(p => p.position_direction === 'LONG').length;
   const shortCount = predictions.filter(p => p.position_direction === 'SHORT').length;
   const topPredictions = predictions.slice(0, 5);
@@ -416,13 +416,13 @@ function BotSignalsPanel({ predictions }) {
       <div className="top-predictions">
         <h4>Top 5 Confident Bots</h4>
         {topPredictions.map((pred, idx) => (
-          <div key={pred.id} className="prediction-item">
+          <div key={pred?.id || idx} className="prediction-item">
             <span className="rank">#{idx + 1}</span>
-            <span className="bot-name">{pred.bot_name}</span>
-            <span className={`direction ${pred.position_direction.toLowerCase()}`}>
-              {pred.position_direction}
+            <span className="bot-name">{pred?.bot_name || 'Unknown'}</span>
+            <span className={`direction ${pred?.position_direction?.toLowerCase() || ''}`}>
+              {pred?.position_direction || 'N/A'}
             </span>
-            <span className="confidence">{(pred.confidence_score * 10).toFixed(1)}/10</span>
+            <span className="confidence">{((pred?.confidence_score || 0) * 10).toFixed(1)}/10</span>
           </div>
         ))}
       </div>

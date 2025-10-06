@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { BarChart3, TrendingUp, TrendingDown, Activity, Calendar, Download, Filter } from 'lucide-react'
+import { BarChart3, TrendingUp, TrendingDown, Activity, Calendar, Download, Filter, Award } from 'lucide-react'
 import { supabase } from '../config/api'
 import './Analytics.css'
 
