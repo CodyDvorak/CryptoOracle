@@ -286,16 +286,16 @@
   flex-direction: column;
 }
 
-.stat-label {
+.stat-content .stat-label {
   font-size: 14px;
   color: var(--text-secondary);
   margin-bottom: 4px;
 }
 
-.stat-value {
+.stat-content .stat-value {
   font-size: 28px;
   font-weight: 700;
-  color: #fff;
+  color: #ffffff !important;
 }
 
 .info-cards {
