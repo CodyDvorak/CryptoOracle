@@ -11,7 +11,23 @@ CREATE EXTENSION IF NOT EXISTS pg_cron;
 CREATE EXTENSION IF NOT EXISTS http WITH SCHEMA extensions;
 
 -- ====================================================================================
--- 1. Daily Market Correlation Update (2 AM UTC)
+-- 1. Main Cron Trigger (Every 10 minutes)
+-- ====================================================================================
+-- This triggers scheduled scans, email processing, and bot performance evaluation
+SELECT cron.schedule(
+  'main-cron-trigger',
+  '*/10 * * * *',
+  $$
+  SELECT extensions.http_post(
+    url:='https://YOUR_PROJECT.supabase.co/functions/v1/cron-trigger',
+    headers:='{"Content-Type": "application/json", "Authorization": "Bearer YOUR_ANON_KEY"}'::jsonb,
+    body:='{}'::jsonb
+  ) as request_id;
+  $$
+);
+
+-- ====================================================================================
+-- 2. Daily Market Correlation Update (2 AM UTC)
 -- ====================================================================================
 SELECT cron.schedule(
   'daily-correlation-update',
@@ -26,7 +42,7 @@ SELECT cron.schedule(
 );
 
 -- ====================================================================================
--- 2. Daily Email Report (6 AM UTC)
+-- 3. Daily Email Report (6 AM UTC)
 -- ====================================================================================
 SELECT cron.schedule(
   'daily-email-report',
@@ -41,7 +57,7 @@ SELECT cron.schedule(
 );
 
 -- ====================================================================================
--- 3. Hourly Alert Check
+-- 4. Hourly Alert Check
 -- ====================================================================================
 SELECT cron.schedule(
   'hourly-alert-check',
@@ -56,7 +72,7 @@ SELECT cron.schedule(
 );
 
 -- ====================================================================================
--- 4. Daily Bot Performance Snapshot (1 AM UTC)
+-- 5. Daily Bot Performance Snapshot (1 AM UTC)
 -- ====================================================================================
 SELECT cron.schedule(
   'daily-bot-performance-snapshot',
@@ -85,7 +101,7 @@ SELECT cron.schedule(
 );
 
 -- ====================================================================================
--- 5. Weekly Scan Cleanup (Sunday 3 AM UTC)
+-- 6. Weekly Scan Cleanup (Sunday 3 AM UTC)
 -- ====================================================================================
 SELECT cron.schedule(
   'weekly-scan-cleanup',
