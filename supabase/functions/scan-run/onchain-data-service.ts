@@ -44,8 +44,7 @@ class OnChainDataService {
   private blockchairKey = 'A___rjyAq3_WSXrBH1M7YfdNWJQr5QGZ';
   private blockchairRequestCount = 0;
   private blockchairDailyLimit = 30000;
-  private glassnodeApiKey = Deno.env.get('GLASSNODE_API_KEY') || '';
-  private coinMetricsApiKey = Deno.env.get('COINMETRICS_API_KEY') || '';
+  private intoTheBlockApiKey = Deno.env.get('INTOTHEBLOCK_API_KEY') || '';
   private WHALE_THRESHOLD_USD = 1000000;
 
   async getOnChainData(symbol: string): Promise<OnChainData | null> {
@@ -106,22 +105,13 @@ class OnChainDataService {
   }
 
   private async getWhaleActivityWithFallback(symbol: string, blockchain: string): Promise<WhaleData> {
-    if (this.glassnodeApiKey) {
-      const data = await this.getWhaleActivityGlassnode(symbol);
+    if (this.intoTheBlockApiKey) {
+      const data = await this.getWhaleActivityIntoTheBlock(symbol);
       if (data && (data.largeTransactions > 0 || data.totalVolume > 0)) {
-        console.log(`✅ Glassnode: Whale data for ${symbol}`);
+        console.log(`✅ IntoTheBlock: Whale data for ${symbol}`);
         return data;
       }
-      console.log(`⚠️ Glassnode failed for ${symbol}, trying CoinMetrics...`);
-    }
-
-    if (this.coinMetricsApiKey) {
-      const data = await this.getWhaleActivityCoinMetrics(symbol);
-      if (data && (data.largeTransactions > 0 || data.totalVolume > 0)) {
-        console.log(`✅ CoinMetrics: Whale data for ${symbol}`);
-        return data;
-      }
-      console.log(`⚠️ CoinMetrics failed for ${symbol}, trying Blockchair...`);
+      console.log(`⚠️ IntoTheBlock failed for ${symbol}, trying Blockchair...`);
     }
 
     let data = await this.getWhaleActivityBlockchair(symbol, blockchain);
@@ -487,79 +477,57 @@ class OnChainDataService {
     return 'STABLE';
   }
 
-  private async getWhaleActivityGlassnode(symbol: string): Promise<WhaleData | null> {
+  private async getWhaleActivityIntoTheBlock(symbol: string): Promise<WhaleData | null> {
     try {
-      const asset = symbol.toLowerCase();
+      const assetMap: Record<string, string> = {
+        'BTC': 'bitcoin',
+        'ETH': 'ethereum',
+        'LTC': 'litecoin',
+        'BCH': 'bitcoin-cash',
+        'XRP': 'ripple',
+        'ADA': 'cardano',
+        'DOT': 'polkadot',
+        'LINK': 'chainlink',
+        'UNI': 'uniswap',
+        'MATIC': 'polygon',
+      };
+
+      const asset = assetMap[symbol.toUpperCase()];
+      if (!asset) {
+        return null;
+      }
+
       const response = await fetch(
-        `https://api.glassnode.com/v1/metrics/transactions/transfers_volume_sum?a=${asset}&api_key=${this.glassnodeApiKey}`,
+        `https://api.intotheblock.com/market/large_transactions?coin=${asset}`,
         {
           headers: {
             'Accept': 'application/json',
+            'x-api-key': this.intoTheBlockApiKey,
           },
         }
       );
 
       if (!response.ok) {
-        console.error(`Glassnode API error: ${response.status}`);
+        console.error(`IntoTheBlock API error: ${response.status}`);
         return null;
       }
 
       const data = await response.json();
 
-      if (!data || data.length === 0) {
+      if (!data || !data.data) {
         return null;
       }
 
-      const recentData = data.slice(-24);
-      const totalVolume = recentData.reduce((sum: number, item: any) => sum + (item.v || 0), 0);
-      const largeTransactions = recentData.filter((item: any) => item.v > this.WHALE_THRESHOLD_USD).length;
+      const largeTransactions = data.data.count || 0;
+      const totalVolume = data.data.volume || 0;
 
       return {
         largeTransactions,
         totalVolume,
-        averageSize: totalVolume / recentData.length,
+        averageSize: largeTransactions > 0 ? totalVolume / largeTransactions : 0,
       };
     } catch (error) {
-      console.error('Glassnode whale activity error:', error);
-      return null;
-    }
-  }
-
-  private async getWhaleActivityCoinMetrics(symbol: string): Promise<WhaleData | null> {
-    try {
-      const asset = symbol.toLowerCase();
-      const response = await fetch(
-        `https://api.coinmetrics.io/v4/timeseries/asset-metrics?assets=${asset}&metrics=TxTfrValAdjUSD&page_size=24`,
-        {
-          headers: {
-            'Accept': 'application/json',
-            'Api-Key': this.coinMetricsApiKey,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        console.error(`CoinMetrics API error: ${response.status}`);
-        return null;
-      }
-
-      const data = await response.json();
-
-      if (!data || !data.data || data.data.length === 0) {
-        return null;
-      }
-
-      const recentData = data.data;
-      const totalVolume = recentData.reduce((sum: number, item: any) => sum + (parseFloat(item.TxTfrValAdjUSD) || 0), 0);
-      const largeTransactions = recentData.filter((item: any) => parseFloat(item.TxTfrValAdjUSD) > this.WHALE_THRESHOLD_USD).length;
-
-      return {
-        largeTransactions,
-        totalVolume,
-        averageSize: totalVolume / recentData.length,
-      };
-    } catch (error) {
-      console.error('CoinMetrics whale activity error:', error);
+      console.error('IntoTheBlock whale activity error:', error);
       return null;
     }
   }
