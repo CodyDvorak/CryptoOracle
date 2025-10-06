@@ -299,7 +299,7 @@ function BotPerformance() {
       <div className="bot-header">
         <div>
           <h1>Bot Performance</h1>
-          <p>Track accuracy and performance of 54 trading bots</p>
+          <p>Track accuracy and performance of {bots.length} trading bots</p>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button className="refresh-btn" onClick={fetchBotPerformance}>
