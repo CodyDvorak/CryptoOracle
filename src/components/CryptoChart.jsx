@@ -57,7 +57,7 @@ function CryptoChart({ symbol, predictions = [], supportResistance = [] }) {
       height: 500,
     })
 
-    const candleSeries = chart.addCandlestickSeries({
+    const candleSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
       upColor: '#10b981',
       downColor: '#ef4444',
       borderUpColor: '#10b981',
@@ -66,7 +66,7 @@ function CryptoChart({ symbol, predictions = [], supportResistance = [] }) {
       wickDownColor: '#ef4444',
     })
 
-    const volumeSeries = chart.addHistogramSeries({
+    const volumeSeries = chart.addSeries(LightweightCharts.HistogramSeries, {
       color: '#667eea',
       priceFormat: {
         type: 'volume',
