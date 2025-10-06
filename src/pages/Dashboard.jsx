@@ -96,7 +96,7 @@ const ALL_BOTS = [
 ]
 
 const SCAN_TYPES = [
-  { id: 'oracle_scan', name: '🔮 Oracle Scan (Ultimate)', duration: '4-5 min', coins: 200, bots: 87, description: 'THE ULTIMATE SCAN: All 87 bots + TokenMetrics AI + Hybrid Aggregation Intelligence + Multi-Timeframe Analysis + Derivatives + On-Chain + Social Sentiment + Regime-Aware Weighting + Contrarian Detection + 80%+ Consensus Boost. Maximum feature integration for best possible results.', aiEnabled: true, featured: true },
+  { id: 'oracle_scan', name: '🔮 Oracle Scan (Ultimate)', duration: '4-5 min', coins: 120, bots: 86, description: 'THE ULTIMATE SCAN: All 86 bots + TokenMetrics AI + Hybrid Aggregation Intelligence + Multi-Timeframe Analysis + Derivatives + On-Chain + Social Sentiment + Regime-Aware Weighting + Contrarian Detection + 80%+ Consensus Boost. Optimized for maximum accuracy within timeout limits.', aiEnabled: true, featured: true },
   { id: 'quick_scan', name: 'Quick Scan', duration: '2-3 min', coins: 100, bots: 87, description: 'Real-time TA analysis of top 100 coins using 87 specialized bots. Market regime classification with confidence gating.', aiEnabled: false },
   { id: 'deep_analysis', name: 'Deep Analysis', duration: '2-3 min', coins: 50, bots: 87, description: 'Comprehensive OHLCV + derivatives analysis with regime-aware bot weighting across all 87 bots.', aiEnabled: true },
   { id: 'top200_scan', name: 'Top 200 Scan', duration: '2-3 min', coins: 200, bots: 87, description: 'Extensive market scan with real API data across CMC, CoinGecko, CryptoCompare analyzed by 87 bots.', aiEnabled: false },
@@ -644,7 +644,7 @@ function Dashboard() {
         <div className="info-card">
           <h3>Scan Types</h3>
           <ul>
-            <li><strong>🔮 Oracle Scan (Ultimate):</strong> 12-15 min, 200 coins - All 87 bots + TokenMetrics AI + Hybrid Aggregation + Multi-Timeframe + All APIs + Max Features</li>
+            <li><strong>🔮 Oracle Scan (Ultimate):</strong> 4-5 min, 120 coins - All 86 bots + TokenMetrics AI + Hybrid Aggregation + Multi-Timeframe + All APIs. Optimized for maximum accuracy.</li>
             <li><strong>Quick Scan:</strong> 7-8 min, 100 coins - Real-time TA analysis with market regime classification</li>
             <li><strong>Deep Analysis:</strong> 4-5 min, 50 coins - Comprehensive OHLCV + derivatives with AI refinement</li>
             <li><strong>Top 200/500 Scan:</strong> 14-40 min - Extended market coverage across multiple data providers</li>
