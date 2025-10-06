@@ -16,14 +16,14 @@ function Insights() {
   const [viewMode, setViewMode] = useState('all')
 
   const VIEW_MODES = [
-    { id: 'all', name: 'All Signals', icon: '🎯' },
-    { id: 'whale_activity', name: 'Whale Activity', icon: '🐋' },
-    { id: 'trending_markets', name: 'Trending Markets', icon: '📈' },
-    { id: 'futures_signals', name: 'Futures & Options', icon: '📊' },
-    { id: 'breakout_hunter', name: 'Breakout Opportunities', icon: '🚀' },
-    { id: 'reversal_opportunities', name: 'Reversal Setups', icon: '🔄' },
-    { id: 'volatile_markets', name: 'Volatile Markets', icon: '🌊' },
-    { id: 'elliott_wave', name: 'Elliott Wave', icon: '〰️' }
+    { id: 'all', name: 'All Signals', icon: '🎯', botFilter: null },
+    { id: 'whale_activity', name: 'Whale Activity', icon: '🐋', botFilter: ['Whale Activity Tracker', 'Order Flow Analysis', 'Volume Spike', 'Volume Breakout'] },
+    { id: 'trending_markets', name: 'Trending Markets', icon: '📈', botFilter: ['Momentum Trader', 'Trend Following', 'EMA Golden Cross', 'ADX Trend Strength'] },
+    { id: 'futures_signals', name: 'Futures & Options', icon: '📊', botFilter: ['Funding Rate Arbitrage', 'Open Interest Momentum', 'Options Flow Detector'] },
+    { id: 'breakout_hunter', name: 'Breakout Opportunities', icon: '🚀', botFilter: ['Breakout Hunter', 'Bollinger Breakout', 'Volume Breakout', 'Chart Patterns'] },
+    { id: 'reversal_opportunities', name: 'Reversal Setups', icon: '🔄', botFilter: ['Mean Reversion', 'RSI Oversold/Overbought', 'RSI Divergence', 'Stochastic Oscillator'] },
+    { id: 'volatile_markets', name: 'Volatile Markets', icon: '🌊', botFilter: ['ATR Volatility', 'Bollinger Squeeze', 'Volatility Breakout'] },
+    { id: 'elliott_wave', name: 'Elliott Wave', icon: '〰️', botFilter: ['Elliott Wave Pattern', 'Fibonacci Retracement', 'Harmonic Patterns'] }
   ]
 
   useEffect(() => {
@@ -184,6 +184,11 @@ function Insights() {
 
   const { onChain, sentiment, options } = insights
 
+  const currentViewMode = VIEW_MODES.find(m => m.id === viewMode)
+  const filteredBotPredictions = currentViewMode?.botFilter
+    ? insights.botPredictions.filter(pred => currentViewMode.botFilter.includes(pred.bot_name))
+    : insights.botPredictions
+
   return (
     <div className="insights-page">
       <RealtimeUpdates type="insights" />
@@ -264,7 +269,7 @@ function Insights() {
         <SummaryCard
           icon={Users}
           title="Bot Consensus"
-          value={`${insights.botPredictions.length} Bots`}
+          value={`${filteredBotPredictions.length} Bots`}
           confidence={insights.recommendation?.avg_confidence || 0.5}
           color="blue"
         />
@@ -274,7 +279,7 @@ function Insights() {
         <OnChainSection data={onChain} coin={selectedCoin} />
         <SentimentSection data={sentiment} coin={selectedCoin} />
         {options && <OptionsSection data={options} coin={selectedCoin} />}
-        <BotInsightsSection predictions={insights.botPredictions} coin={selectedCoin} />
+        <BotInsightsSection predictions={filteredBotPredictions} coin={selectedCoin} viewMode={viewMode} />
       </div>
 
       <NewsSection coinSymbol={selectedCoin} />
@@ -586,7 +591,7 @@ function OptionsSection({ data, coin }) {
   )
 }
 
-function BotInsightsSection({ predictions, coin }) {
+function BotInsightsSection({ predictions, coin, viewMode }) {
   const longCount = predictions.filter(p => p.position_direction === 'LONG').length
   const shortCount = predictions.filter(p => p.position_direction === 'SHORT').length
   const avgConfidence = predictions.length > 0
@@ -600,7 +605,26 @@ function BotInsightsSection({ predictions, coin }) {
 
   const topBots = [...predictions]
     .sort((a, b) => b.confidence_score - a.confidence_score)
-    .slice(0, 5)
+    .slice(0, 10)
+
+  if (predictions.length === 0) {
+    return (
+      <div className="insight-section bots-section">
+        <div className="section-header">
+          <Users size={20} />
+          <h2>Bot Insights for {coin}</h2>
+          <span className="signal-badge blue">0 Bots</span>
+        </div>
+        <div className="section-content">
+          <div className="empty-state" style={{ padding: '2rem', textAlign: 'center', color: '#9ca3af' }}>
+            <Users size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
+            <p>No bot predictions found for this filter.</p>
+            <p style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>Try selecting a different view mode or run a new scan.</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="insight-section bots-section">
@@ -638,7 +662,7 @@ function BotInsightsSection({ predictions, coin }) {
         </div>
 
         <div className="top-bots">
-          <h3>Top 5 Confident Bots</h3>
+          <h3>Top {Math.min(topBots.length, 10)} Confident Bots</h3>
           {topBots.map((bot, idx) => (
             <div key={bot.id} className="bot-item">
               <div className="bot-rank">#{idx + 1}</div>
