@@ -1,10 +1,20 @@
+import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
+
+interface BotPerformanceUpdate {
+  botName: string;
+  wasCorrect: boolean;
+  profitLoss: number;
+  marketRegime: string;
+  confidence: number;
+  predictionId: string;
+}
 
 interface BotMetrics {
   bot_name: string;
@@ -14,6 +24,13 @@ interface BotMetrics {
   accuracy_rate: number;
   avg_confidence: number;
 }
+
+/**
+ * Bot Learning Edge Function
+ *
+ * Handles real-time bot performance updates and learning.
+ * Provides API endpoints for bot metrics, outcomes evaluation, and weight adjustments.
+ */
 
 function generateInsights(bot: BotMetrics, historicalData: any[]): any[] {
   const insights = [];
@@ -132,10 +149,206 @@ Deno.serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: { persistSession: false }
+    });
 
     const url = new URL(req.url);
     const pathname = url.pathname;
+
+    // NEW ENDPOINTS FOR LEARNING SYSTEM
+
+    // Update bot performance (called after predictions are evaluated)
+    if (pathname.endsWith('/update') && req.method === 'POST') {
+      const updates: BotPerformanceUpdate[] = await req.json();
+
+      for (const update of updates) {
+        await supabase.from('bot_performance_history').insert({
+          bot_name: update.botName,
+          was_correct: update.wasCorrect,
+          confidence_score: update.confidence,
+          profit_loss: update.profitLoss,
+          market_regime: update.marketRegime,
+          prediction_id: update.predictionId,
+          recorded_at: new Date().toISOString(),
+        });
+      }
+
+      await supabase.rpc('update_bot_accuracy_metrics');
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: `Updated performance for ${updates.length} bots`,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Trigger outcome evaluation
+    if (pathname.endsWith('/evaluate') && req.method === 'POST') {
+      const { timeframe = '24h' } = await req.json();
+
+      const { data: count } = await supabase.rpc('evaluate_pending_outcomes', {
+        p_timeframe: timeframe,
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          evaluated: count,
+          timeframe,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get bot accuracy metrics
+    if (pathname.endsWith('/accuracy-metrics') && req.method === 'GET') {
+      const botName = url.searchParams.get('bot');
+      const regime = url.searchParams.get('regime') || 'ALL';
+
+      let query = supabase
+        .from('bot_accuracy_metrics')
+        .select('*')
+        .order('accuracy_rate', { ascending: false });
+
+      if (botName) query = query.eq('bot_name', botName);
+      if (regime) query = query.eq('market_regime', regime);
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      return new Response(JSON.stringify({ success: true, metrics: data }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Get top performing bots
+    if (pathname.endsWith('/top-performers') && req.method === 'GET') {
+      const regime = url.searchParams.get('regime') || 'ALL';
+      const limit = parseInt(url.searchParams.get('limit') || '10');
+
+      const { data, error } = await supabase
+        .from('bot_accuracy_metrics')
+        .select('*')
+        .eq('market_regime', regime)
+        .eq('is_enabled', true)
+        .gte('total_predictions', 20)
+        .order('last_30_days_accuracy', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ success: true, topPerformers: data, regime }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get poor performing bots
+    if (pathname.endsWith('/poor-performers') && req.method === 'GET') {
+      const { data, error } = await supabase
+        .from('bot_accuracy_metrics')
+        .select('*')
+        .eq('is_enabled', true)
+        .gte('total_predictions', 50)
+        .lt('accuracy_rate', 0.40)
+        .order('accuracy_rate', { ascending: true })
+        .limit(20);
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ success: true, poorPerformers: data }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Manually adjust bot weight
+    if (pathname.endsWith('/adjust-weight') && req.method === 'POST') {
+      const { botName, regime, newWeight, reason } = await req.json();
+
+      const { data: bot } = await supabase
+        .from('bot_accuracy_metrics')
+        .select('*')
+        .eq('bot_name', botName)
+        .eq('market_regime', regime)
+        .single();
+
+      if (!bot) {
+        return new Response(
+          JSON.stringify({ error: 'Bot not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { error } = await supabase
+        .from('bot_accuracy_metrics')
+        .update({
+          current_weight: newWeight,
+          weight_history: [
+            ...(bot.weight_history || []),
+            {
+              timestamp: new Date().toISOString(),
+              old_weight: bot.current_weight,
+              new_weight: newWeight,
+              reason,
+              manual: true,
+            },
+          ],
+          last_updated: new Date().toISOString(),
+        })
+        .eq('bot_name', botName)
+        .eq('market_regime', regime);
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: `Updated weight for ${botName} in ${regime} to ${newWeight}`,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Toggle bot enabled/disabled
+    if (pathname.endsWith('/toggle-bot') && req.method === 'POST') {
+      const { botName, regime, enabled, reason } = await req.json();
+
+      const { error } = await supabase
+        .from('bot_accuracy_metrics')
+        .update({
+          is_enabled: enabled,
+          auto_disabled_at: enabled ? null : new Date().toISOString(),
+          auto_disabled_reason: enabled ? null : reason,
+          last_updated: new Date().toISOString(),
+        })
+        .eq('bot_name', botName)
+        .eq('market_regime', regime);
+
+      if (error) throw error;
+
+      await supabase
+        .from('bot_status_management')
+        .upsert({
+          bot_name: botName,
+          is_enabled: enabled,
+          disabled_reason: enabled ? null : reason,
+          last_modified: new Date().toISOString(),
+        });
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: `${enabled ? 'Enabled' : 'Disabled'} ${botName}`,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // EXISTING ENDPOINTS BELOW
 
     if (pathname.endsWith('/insights')) {
       const { data: insights } = await supabase
