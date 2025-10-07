@@ -218,6 +218,18 @@ function Dashboard() {
 
   const checkScanStatus = async () => {
     try {
+      // Timeout protection: Auto-stop after 5 minutes
+      if (scanStartTime && Date.now() - scanStartTime > 300000) {
+        console.log('Scan timeout - stopping after 5 minutes')
+        setIsScanning(false)
+        setScanProgress(null)
+        setScanStartTime(null)
+        setElapsedTime(0)
+        setCurrentScanId(null)
+        setError('Scan timed out. Database connection issue - check .env file.')
+        return
+      }
+
       // Check if we have a specific scan ID to track
       if (currentScanId) {
         const { data: scanData, error } = await supabase
@@ -225,6 +237,20 @@ function Dashboard() {
           .select('status, completed_at')
           .eq('id', currentScanId)
           .maybeSingle()
+
+        if (error) {
+          console.error('Database error checking scan status:', error)
+          // If we get auth errors (401), stop the scan
+          if (error.message?.includes('401') || error.code === '401') {
+            setIsScanning(false)
+            setScanProgress(null)
+            setScanStartTime(null)
+            setElapsedTime(0)
+            setCurrentScanId(null)
+            setError('Authentication error - please update your .env file with a valid Supabase key')
+            return
+          }
+        }
 
         if (!error && scanData) {
           console.log('Checking scan:', currentScanId, 'Status:', scanData.status)
