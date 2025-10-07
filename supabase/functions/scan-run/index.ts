@@ -69,9 +69,11 @@ async function runScanProcess(
           continue;
         }
 
+        const derivativesData = { fundingRate: 0, openInterest: 0, longShortRatio: 1, liquidations24h: { longs: 0, shorts: 0 }, premiumIndex: 0 };
         const coinPredictions: any[] = [];
-        for (const bot of tradingBots) {
-          const prediction = await bot.analyze(coin, ohlcvData);
+        
+        for (const bot of tradingBots.slice(0, 10)) {
+          const prediction = await bot.analyze(ohlcvData, derivativesData, coin);
           if (prediction) {
             coinPredictions.push({
               run_id: scanRun.id,
@@ -84,9 +86,9 @@ async function runScanProcess(
               stop_loss: prediction.stopLoss,
               confidence_score: prediction.confidence,
               leverage: prediction.leverage,
-              timeframe: prediction.timeframe,
-              expected_gain_percent: prediction.expectedGain,
-              reasoning: prediction.reasoning,
+              timeframe: '4h',
+              expected_gain_percent: ((prediction.takeProfit - prediction.entry) / prediction.entry) * 100,
+              reasoning: `${bot.name} signal`,
               market_regime: ohlcvData.marketRegime,
               prediction_time: new Date().toISOString(),
             });
@@ -99,53 +101,36 @@ async function runScanProcess(
           if (aggregatedSignal && aggregatedSignal.confidence >= confidenceThreshold) {
             const entry = aggregatedSignal.avgEntry || coin.price;
             const takeProfit = aggregatedSignal.avgTakeProfit || entry * 1.1;
-            const predicted24h = entry + ((takeProfit - entry) * 0.33);
-            const predicted48h = entry + ((takeProfit - entry) * 0.66);
-            const predicted7d = takeProfit;
-            const change24h = ((predicted24h - entry) / entry) * 100;
-            const change48h = ((predicted48h - entry) / entry) * 100;
-            const change7d = ((predicted7d - entry) / entry) * 100;
 
             recommendations.push({
-            run_id: scanRun.id,
-            coin: coin.name,
-            ticker: coin.symbol,
-            current_price: coin.price,
-            consensus_direction: aggregatedSignal.direction,
-            avg_confidence: aggregatedSignal.confidence,
-            avg_entry: entry,
-            avg_take_profit: takeProfit,
-            avg_stop_loss: aggregatedSignal.avgStopLoss || entry * 0.95,
-            avg_predicted_24h: predicted24h,
-            avg_predicted_48h: predicted48h,
-            avg_predicted_7d: predicted7d,
-            avg_leverage: aggregatedSignal.avgLeverage || 3,
-            bot_count: coinPredictions.length,
-            predicted_percent_change: change24h,
-            predicted_dollar_change: predicted24h - coin.price,
-            market_regime: ohlcvData.marketRegime,
-            regime_confidence: ohlcvData.regimeConfidence,
-            predicted_change_24h: change24h,
-            predicted_change_48h: change48h,
-            predicted_change_7d: change7d,
-            bot_votes_long: aggregatedSignal.longBots,
-            bot_votes_short: aggregatedSignal.shortBots,
-          });
+              run_id: scanRun.id,
+              coin: coin.name,
+              ticker: coin.symbol,
+              current_price: coin.price,
+              consensus_direction: aggregatedSignal.direction,
+              avg_confidence: aggregatedSignal.confidence,
+              avg_entry: entry,
+              avg_take_profit: takeProfit,
+              avg_stop_loss: aggregatedSignal.avgStopLoss || entry * 0.95,
+              avg_leverage: aggregatedSignal.avgLeverage || 3,
+              bot_count: coinPredictions.length,
+              bot_votes_long: aggregatedSignal.longBots,
+              bot_votes_short: aggregatedSignal.shortBots,
+              market_regime: ohlcvData.marketRegime,
+            });
           }
         }
 
         botPredictions.push(...coinPredictions);
         processedCoins++;
 
-        if (botPredictions.length >= 1000) {
-          await supabase.from('bot_predictions').insert(botPredictions.splice(0));
-        }
-
-        if (recommendations.length >= 50) {
-          await supabase.from('recommendations').insert(recommendations.splice(0));
-        }
-
-        if (processedCoins % 10 === 0) {
+        if (processedCoins % 5 === 0) {
+          if (botPredictions.length > 0) {
+            await supabase.from('bot_predictions').insert(botPredictions.splice(0));
+          }
+          if (recommendations.length > 0) {
+            await supabase.from('recommendations').insert(recommendations.splice(0));
+          }
           const progress = Math.floor((processedCoins / coinsToScan.length) * 100);
           await supabase.from('scan_runs').update({ progress }).eq('id', scanRun.id);
         }
@@ -165,7 +150,6 @@ async function runScanProcess(
       status: 'completed',
       completed_at: new Date().toISOString(),
       progress: 100,
-      recommendations_count: recommendations.length
     }).eq('id', scanRun.id);
 
     console.log('Scan completed successfully');
