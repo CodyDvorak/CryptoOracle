@@ -34,8 +34,42 @@ export class HybridAggregationEngine {
   private optimizedParameters: Map<string, any> = new Map();
   private botStatusCache: Map<string, boolean> = new Map();
 
+  // Platt scaling parameters for confidence calibration
+  private plattA = 0.0;
+  private plattB = 0.9;
+
   constructor(supabaseClient?: any) {
     this.supabase = supabaseClient;
+  }
+
+  // Convert confidence (1-10) to probability using Platt scaling
+  private confidenceToProbability(confidence: number): number {
+    const x = confidence - 5.5; // Center around 5.5
+    return 1 / (1 + Math.exp(-(this.plattA + this.plattB * x)));
+  }
+
+  // Convert probability to log-odds for aggregation
+  private probabilityToLogit(p: number): number {
+    const clampedP = Math.max(0.000001, Math.min(0.999999, p));
+    return Math.log(clampedP / (1 - clampedP));
+  }
+
+  // Calculate disagreement entropy as penalty
+  private calculateDisagreementPenalty(longCount: number, shortCount: number): number {
+    const total = longCount + shortCount;
+    if (total === 0) return 1.0;
+
+    const pLong = longCount / total;
+    const pShort = shortCount / total;
+
+    // Calculate entropy (0 = perfect agreement, 1 = maximum disagreement)
+    let entropy = 0;
+    if (pLong > 0) entropy -= pLong * Math.log2(pLong);
+    if (pShort > 0) entropy -= pShort * Math.log2(pShort);
+
+    // Convert entropy to penalty (higher entropy = lower confidence)
+    // Perfect agreement (entropy=0) = 1.0x, max disagreement (entropy=1) = 0.7x
+    return 1.0 - (entropy * 0.3);
   }
 
   async loadOptimizedParameters(regime: string) {
@@ -221,7 +255,10 @@ export class HybridAggregationEngine {
       ? weightedLongScore / totalWeight
       : weightedShortScore / totalWeight;
 
-    let finalConfidence = avgConfidence;
+    // Apply disagreement penalty based on vote split
+    const disagreementPenalty = this.calculateDisagreementPenalty(longPreds.length, shortPreds.length);
+
+    let finalConfidence = avgConfidence * disagreementPenalty;
 
     // CONSENSUS-BASED ADJUSTMENTS
     // Strong consensus (80%+): High agreement = high confidence boost
@@ -297,6 +334,66 @@ export class HybridAggregationEngine {
     const perf = this.botPerformanceHistory.get(botName);
     if (!perf || perf.total < 10) return 0.7;
     return perf.correct / perf.total;
+  }
+
+  // Calculate trimmed mean (remove outliers)
+  private trimmedMean(values: number[], trimRatio: number = 0.2): number {
+    if (values.length === 0) return 0;
+    if (values.length <= 4) return values.reduce((a, b) => a + b, 0) / values.length;
+
+    const sorted = [...values].sort((a, b) => a - b);
+    const trimCount = Math.floor(sorted.length * trimRatio);
+    const trimmed = sorted.slice(trimCount, sorted.length - trimCount);
+
+    return trimmed.reduce((a, b) => a + b, 0) / trimmed.length;
+  }
+
+  // Synthesize TP/SL with regime-aware adjustments
+  synthesizeTPSL(
+    predictions: BotPrediction[],
+    direction: 'LONG' | 'SHORT',
+    currentPrice: number,
+    atr: number,
+    regime: MarketRegime
+  ): { tp: number; sl: number } {
+    const relevantPreds = predictions.filter(p => p.direction === direction);
+
+    // Extract TP/SL values
+    const tpValues = relevantPreds.map(p => p.takeProfit).filter(v => v > 0);
+    const slValues = relevantPreds.map(p => p.stopLoss).filter(v => v > 0);
+
+    let tp: number;
+    let sl: number;
+
+    // Use trimmed mean if enough data
+    if (tpValues.length >= 3) {
+      tp = this.trimmedMean(tpValues);
+    } else if (tpValues.length > 0) {
+      tp = tpValues.reduce((a, b) => a + b, 0) / tpValues.length;
+    } else {
+      // Fallback: use ATR-based targets
+      const atrMultiplier = regime.type === 'trending' ? 2.5 : regime.type === 'volatile' ? 1.8 : 2.0;
+      tp = direction === 'LONG' ? currentPrice + (atr * atrMultiplier) : currentPrice - (atr * atrMultiplier);
+    }
+
+    if (slValues.length >= 3) {
+      sl = this.trimmedMean(slValues);
+    } else if (slValues.length > 0) {
+      sl = slValues.reduce((a, b) => a + b, 0) / slValues.length;
+    } else {
+      // Fallback: use ATR-based stops
+      const stopMultiplier = regime.type === 'volatile' ? 1.5 : 1.2;
+      sl = direction === 'LONG' ? currentPrice - (atr * stopMultiplier) : currentPrice + (atr * stopMultiplier);
+    }
+
+    // Sanity check: ensure TP is beyond SL
+    if (direction === 'LONG' && tp <= sl) {
+      tp = sl + (atr * 1.5);
+    } else if (direction === 'SHORT' && sl <= tp) {
+      sl = tp + (atr * 1.5);
+    }
+
+    return { tp, sl };
   }
 
   applyAdaptiveWeighting(predictions: BotPrediction[], regime: MarketRegime): BotPrediction[] {

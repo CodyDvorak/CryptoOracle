@@ -736,12 +736,39 @@ function BotCard({ bot }) {
   const accuracy = (bot.accuracy_rate || 0) / 100
   const accuracyColor = accuracy >= 0.7 ? 'high' : accuracy >= 0.5 ? 'medium' : 'low'
 
+  // Determine bot status
+  const getBotStatus = () => {
+    const completed = (bot.successful_predictions || 0) + (bot.failed_predictions || 0)
+    if (completed < 10) return { status: 'new', label: 'New', color: '#3b82f6' }
+    if (accuracy >= 0.60) return { status: 'active', label: 'Active', color: '#10b981' }
+    if (accuracy >= 0.40) return { status: 'monitoring', label: 'Monitoring', color: '#f59e0b' }
+    if (accuracy >= 0.25) return { status: 'probation', label: 'Probation', color: '#ef4444' }
+    return { status: 'retired', label: 'Retired', color: '#6b7280' }
+  }
+
+  const statusInfo = getBotStatus()
+
   return (
     <div className="bot-card">
       <div className="bot-card-header">
         <div className="bot-info">
           <h3>{bot.bot_name}</h3>
           {bot.strategy && <span className="bot-strategy">{bot.strategy}</span>}
+          <span
+            className="bot-status-badge"
+            style={{
+              backgroundColor: `${statusInfo.color}20`,
+              color: statusInfo.color,
+              padding: '4px 10px',
+              borderRadius: '12px',
+              fontSize: '11px',
+              fontWeight: '600',
+              marginLeft: '8px',
+              display: 'inline-block'
+            }}
+          >
+            {statusInfo.label}
+          </span>
         </div>
         <div className={`accuracy-badge ${accuracyColor}`}>
           {(accuracy * 100).toFixed(1)}%
